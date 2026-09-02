@@ -389,7 +389,8 @@ export function buildResearchWebMCPTools(editorState) {
     {
       name: "get_navigation_targets",
       title: "Get manuscript navigation targets",
-      description: "List tracked manuscript objects that an agent may ask the researcher to inspect or navigate to, optionally filtered by object kind or verification state.",
+      description:
+        "List tracked manuscript objects that an agent may ask the researcher to inspect or navigate to, optionally filtered by object kind or verification state.",
       inputSchema: {
         type: "object",
         properties: {
