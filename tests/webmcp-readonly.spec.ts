@@ -217,7 +217,7 @@ test.describe("read-only WebMCP surface", () => {
     expect(targets.targets).toHaveLength(1);
     expect(targets.targets[0].kind).toBe("method");
     expect(targets.targets[0].verificationState).toBe("stale");
-    expect(targets.targets[0].anchor.sectionTitle).toBe("Methods");
+    expect(targets.targets[0].anchor.sectionTitle).toBe("3. Method");
     expect(after).toBe(before);
   });
 
