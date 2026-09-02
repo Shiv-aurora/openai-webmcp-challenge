@@ -1,5 +1,17 @@
 import { expect, Page, test } from "@playwright/test";
 
+const READ_TOOL_NAMES = [
+  "get_claim",
+  "get_current_section",
+  "get_current_selection",
+  "get_figure",
+  "get_integrity_status",
+  "get_manuscript_context",
+  "get_navigation_targets",
+  "get_provenance",
+  "get_table",
+];
+
 const installWebMCPHarness = async (page: Page) => {
   await page.addInitScript(() => {
     const tools = new Map();
@@ -31,7 +43,7 @@ const loadWorkspace = async (page: Page) => {
   await page.evaluate(() => localStorage.removeItem("myst/provenance/demo"));
   await page.reload();
   await page.waitForSelector(".cm-content");
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(9);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(19);
 };
 
 const selectText = async (page: Page, needle: string) => {
@@ -62,20 +74,11 @@ test.describe("read-only WebMCP surface", () => {
 
   test("registers the Phase 4 read tools with safe WebMCP annotations", async ({ page }) => {
     const tools = await page.evaluate(async () => (document as any).modelContext.getTools());
+    const readTools = tools.filter((tool: any) => READ_TOOL_NAMES.includes(tool.name));
 
-    expect(tools.map((tool: any) => tool.name).sort()).toEqual([
-      "get_claim",
-      "get_current_section",
-      "get_current_selection",
-      "get_figure",
-      "get_integrity_status",
-      "get_manuscript_context",
-      "get_navigation_targets",
-      "get_provenance",
-      "get_table",
-    ]);
-    expect(tools.every((tool: any) => tool.annotations?.readOnlyHint === true)).toBe(true);
-    expect(tools.every((tool: any) => tool.annotations?.untrustedContentHint === true)).toBe(true);
+    expect(readTools.map((tool: any) => tool.name).sort()).toEqual([...READ_TOOL_NAMES].sort());
+    expect(readTools.every((tool: any) => tool.annotations?.readOnlyHint === true)).toBe(true);
+    expect(readTools.every((tool: any) => tool.annotations?.untrustedContentHint === true)).toBe(true);
   });
 
   test("reads the live selection instead of a registration-time snapshot", async ({ page }) => {
