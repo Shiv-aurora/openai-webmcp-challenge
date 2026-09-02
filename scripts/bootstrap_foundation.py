@@ -130,7 +130,7 @@ def apply_focused_upstream_lint_fixes() -> None:
         ]
     )
     updated, count = re.subn(
-        r"async function setupFileConnections\(repo, props, branch, commitHash, files, getText\) \{.*?\n\}\n?$",
+        r"async function setupFileConnections\(repo, props, branch, commitHash, files, getText\) \{.*?\n\}\n(?=\nfunction cleanupConnections)",
         replacement,
         source,
         count=1,
