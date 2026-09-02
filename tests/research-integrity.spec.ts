@@ -227,7 +227,7 @@ test.describe("Research integrity workspace", () => {
 
     await page.getByTestId("toggle-xray").click();
 
-    await expect(page.getByText("Research X-Ray", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Research X-Ray", exact: true })).toBeVisible();
     await expect(page.getByTestId("xray-summary")).toBeVisible();
     await expect(page.getByTestId("xray-count-verified")).toHaveText("1");
     await expect(page.locator(".cm-xray-verified")).toHaveCount(1);

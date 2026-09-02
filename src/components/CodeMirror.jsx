@@ -12,7 +12,7 @@ import { FoldChevron, MdStyles } from "./Preview";
 import { Logger } from "../logger";
 import { deriveManuscriptSelection } from "../integrity/selection";
 import { ensureProvenanceStore } from "../integrity/provenance";
-import { createXrayExtension, xrayCompartment } from "../integrity/xray";
+import { refreshXray, xrayCompartment, xrayField } from "../integrity/xray";
 
 const CodeEditor = styled.div`
   border-radius: var(--border-radius);
@@ -348,7 +348,7 @@ const CodeMirror = () => {
     const active = provenance.xrayActive.value;
     const objects = provenance.data.value.objects;
     if (!view?.dispatch) return;
-    view.dispatch({ effects: xrayCompartment.reconfigure(createXrayExtension(active, objects, view.state.doc)) });
+    refreshXray(view, active, objects);
   });
 
   useSignalEffect(() => {
@@ -407,7 +407,7 @@ const CodeMirror = () => {
         .useLanguage(options.language.value, options.transforms.value)
         .useLineNumbers()
         .useCompartment(userExtensionsCompartment, [])
-        .useCompartment(xrayCompartment, [])
+        .useCompartment(xrayCompartment, xrayField)
         .useSpellcheck(options.spellcheckOpts.value)
         .if(options.collaboration.value.enabled, (b) => {
           return b.useCollaboration({ collabClient: collab.value, editorView });

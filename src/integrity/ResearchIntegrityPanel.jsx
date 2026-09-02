@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { MystState } from "../mystState";
 import { manuscriptStats } from "./selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "./provenance";
-import { resolveXrayRange } from "./xray";
+import { refreshXray, resolveXrayRange } from "./xray";
 
 const Panel = styled.aside`
   flex: 0 0 350px;
@@ -538,7 +538,11 @@ export default function ResearchIntegrityPanel() {
           aria-pressed={xrayActive}
           data-testid="toggle-xray"
           type="button"
-          onClick={() => (provenance.xrayActive.value = !provenance.xrayActive.peek())}
+          onClick={() => {
+            const next = !provenance.xrayActive.peek();
+            provenance.xrayActive.value = next;
+            refreshXray(editorState.editorView.value, next, provenance.data.peek().objects);
+          }}
         >
           {xrayActive ? "Exit X-Ray" : "Enter X-Ray"}
         </ActionButton>

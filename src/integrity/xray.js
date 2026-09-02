@@ -1,7 +1,20 @@
-import { Compartment } from "@codemirror/state";
+import { Compartment, StateEffect, StateField } from "@codemirror/state";
 import { Decoration, EditorView } from "@codemirror/view";
 
 export const xrayCompartment = new Compartment();
+export const setXrayDecorations = StateEffect.define();
+
+export const xrayField = StateField.define({
+  create: () => Decoration.set([]),
+  update(decorations, transaction) {
+    let next = decorations.map(transaction.changes);
+    for (const effect of transaction.effects) {
+      if (effect.is(setXrayDecorations)) next = effect.value;
+    }
+    return next;
+  },
+  provide: (field) => EditorView.decorations.from(field),
+});
 
 const statusClasses = {
   verified: "cm-xray-verified",
@@ -30,8 +43,8 @@ export function resolveXrayRange(doc, object) {
   return to > from ? { from, to } : null;
 }
 
-export function createXrayExtension(active, objects, doc) {
-  if (!active || !doc || !objects?.length) return [];
+export function buildXrayDecorations(objects, doc) {
+  if (!doc || !objects?.length) return Decoration.set([]);
 
   const ranges = objects
     .map((object) => {
@@ -50,5 +63,11 @@ export function createXrayExtension(active, objects, doc) {
     .filter(Boolean)
     .sort((left, right) => left.from - right.from || left.to - right.to);
 
-  return EditorView.decorations.of(Decoration.set(ranges, true));
+  return Decoration.set(ranges, true);
+}
+
+export function refreshXray(view, active, objects) {
+  if (!view?.dispatch) return;
+  const decorations = active ? buildXrayDecorations(objects, view.state.doc) : Decoration.set([]);
+  view.dispatch({ effects: setXrayDecorations.of(decorations) });
 }
