@@ -1,0 +1,10 @@
+dist
+node_modules
+.env
+test-results
+playwright-report
+docs/build/
+docs/*.pyc
+docs/*.sw*
+docs/venv/
+docs/.venv/

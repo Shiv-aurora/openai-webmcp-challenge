@@ -1,0 +1,79 @@
+{
+  "name": "research-integrity-editor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "host": "vite --host",
+    "server": "cd bin && npm install && node server.js",
+    "check-format": "prettier --check src tests bin package.json vite.config.js .eslintrc.cjs",
+    "lint": "eslint --ext js,jsx .",
+    "format": "prettier --write src tests bin package.json vite.config.js .eslintrc.cjs",
+    "test": "PW_TEST_HTML_REPORT_OPEN=never playwright test -c tests/playwright.config.js --reporter html"
+  },
+  "prettier": {
+    "printWidth": 150
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.2.4",
+    "@codemirror/lang-markdown": "^6.2.3",
+    "@codemirror/lang-yaml": "^6.1.1",
+    "@codemirror/language": "^6.11.0",
+    "@codemirror/merge": "^6.0.0",
+    "@codemirror/state": "^6.2.1",
+    "@codemirror/view": "^6.36.4",
+    "@lezer/highlight": "^1.2.1",
+    "@lezer/markdown": "^1.4.2",
+    "@open-rpc/client-js": "^1.8.1",
+    "@preact/compat": "^17.1.2",
+    "@preact/signals": "^1.3.0",
+    "@replit/codemirror-vim": "^6.2.1",
+    "codemirror": "^6.0.1",
+    "codemirror-languageserver": "^1.12.1",
+    "dompurify": "^3.2.6",
+    "events": "^3.3.0",
+    "highlight.js": "^11.11.1",
+    "imurmurhash": "^0.1.4",
+    "markdown-it": "^12.3.2",
+    "markdown-it-docutils": "^0.1.3",
+    "mermaid": "^11.2.0",
+    "preact": "^10.11.3",
+    "styled-components": "^6.1.2",
+    "stylis": "^4.3.0",
+    "typo-js": "1.2.4",
+    "vite-plugin-node-polyfills": "^0.23.0",
+    "vscode-languageserver-protocol": "^3.17.5",
+    "vscode-languageserver-textdocument": "^1.0.12",
+    "y-codemirror.next": "^0.3.2",
+    "y-protocols": "^1.0.5",
+    "y-websocket": "^3.0.0",
+    "yaml-language-server": "github:antmicro/yaml-language-server",
+    "yjs": "^13.5.44"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.1",
+    "@preact/preset-vite": "^2.4.0",
+    "babel-plugin-macros": "^3.1.0",
+    "babel-plugin-styled-components": "^2.1.4",
+    "eslint": "latest",
+    "eslint-config-preact": "^1.5.0",
+    "eslint-plugin-jsdoc": "^50.6.3",
+    "playwright": "^1.45.1",
+    "prettier": "^3.2.5",
+    "vite": "^3.2.3",
+    "vite-plugin-babel-macros": "^1.0.6"
+  },
+  "alias": {
+    "react": "@preact/compat",
+    "react-dom": "@preact/compat"
+  },
+  "description": "A provenance-aware scientific editor with a WebMCP agent control surface.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shiv-aurora/openai-webmcp-challenge.git"
+  }
+}

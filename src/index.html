@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Research Integrity Editor</title>
+    <link rel="stylesheet" href="./styles/MystEditor.css" />
+    <link rel="icon" href="data:," />
+    <style>
+      body {
+        margin: 0;
+      }
+
+      #myst {
+        height: 100vh;
+      }
+    </style>
+    <script type="module">
+      let exampleText = `---
+title: Regime-Aware Volatility Forecasting
+authors:
+  - name: Research Integrity Demo Team
+abstract: |
+  We evaluate a regime-aware forecasting system across normal and stressed markets. This manuscript intentionally contains linked values that will later demonstrate verification and research-diff workflows.
+---
+
+# Regime-Aware Volatility Forecasting
+
+## Abstract
+
+Financial forecasting papers are frequently updated by copying values from experiment outputs into prose, tables, and figures. We evaluate a multi-signal forecasting system and report stronger performance during stressed market regimes. The manuscript currently reports an **18.2% improvement in stress-regime accuracy** over the baseline.
+
+## 1. Introduction
+
+A scientific manuscript should remain connected to the experiments that produced it. In this study, market news, technical signals, company fundamentals, events, and discussion data are combined to estimate next-day volatility. The central result is a measurable improvement during high-volatility periods.
+
+## 2. Data
+
+The study uses **481,000 market observations** after filtering and alignment. Data are divided chronologically to avoid leakage between training, validation, and evaluation windows.
+
+## 3. Method
+
+The forecasting model is optimized with AdamW using a learning rate of **3e-4**. Signals are combined only after each source-specific component produces an auditable intermediate result.
+
+The objective is:
+
+$$
+\mathcal{L} = \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2
+$$
+
+## 4. Results
+
+| Evaluation regime | Baseline accuracy | Proposed accuracy | Relative improvement |
+| --- | ---: | ---: | ---: |
+| Normal | 71.4% | 75.1% | 5.2% |
+| Stress | 59.3% | 70.1% | 18.2% |
+
+The stress-regime result is the primary quantitative claim. Later project phases will connect this sentence and table row to the exact experiment output, evaluation script, metric, and commit that produced them.
+
+## 5. Reproducibility
+
+Every consequential number, method statement, table, and figure should carry inspectable provenance. The editor will surface whether each relationship is verified, stale, contradicted, unlinked, or awaiting review.
+
+## 6. Conclusion
+
+Research artifacts already contain the information needed to keep a manuscript current. The missing layer is a writing environment that preserves those relationships while leaving final scientific judgment with the researcher.`;
+      console.log("Welcome to the MyST editor demo. The right hand side should auto update.");
+
+      import MystEditor, { defaultButtons } from "./MystEditor.jsx";
+
+      const usercolors = ["#30bced", "#60c771", "#e6aa3a", "#cbb63e", "#ee6352", "#9ac2c9", "#8acb88", "#14b2c4"];
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const room = urlParams.get("room") || "0";
+      const username = urlParams.get("username") || Math.floor(Math.random() * 1000).toString();
+      const color = usercolors[Math.floor(Math.random() * usercolors.length)];
+      let exampleCustomRoles = [
+        {
+          target: "say",
+          transform: async (content) => username + " says: '" + content + "'",
+        },
+      ];
+
+      let exampleCustomDirectives = [
+        {
+          target: "bold",
+          transform: (_, data) => `<b style="white-space: pre-wrap;">${data.body}</b>`,
+        },
+      ];
+
+      let exampleTransforms = [
+        {
+          // Other repo issue links
+          target: /[0-9a-z\-]+\/[0-9a-z\-]+#\d{1,10}/g,
+          transform: (match) => {
+            const [repo, issueId] = match.split("#");
+            return `<a href="https://github.com/${repo}/issues/${issueId}">${match}</a>`;
+          },
+        },
+        {
+          // Other repo PR links
+          target: /[0-9a-z\-]+\/[0-9a-z\-]+\!\d+/g,
+          transform: (match) => {
+            const [repo, prid] = match.split("!");
+            return `<a href="https://github.com/${repo}/pull/${prid}">${match}</a>`;
+          },
+        },
+        {
+          // Same repo issue links
+          target: /(^|(?<=\s))#\d+/g,
+          transform: (match) => {
+            const issueId = match.slice(1);
+            return `<a href="https://github.com/antmicro/myst-editor/issues/${issueId}">${match}</a>`;
+          },
+        },
+        {
+          // Same repo PR links
+          target: /(^|(?<=\s))!\d+/g,
+          transform: (match) => {
+            const prid = match.slice(1);
+            return `<a href="https://github.com/antmicro/myst-editor/pull/${prid}">${match}</a>`;
+          },
+        },
+        {
+          // User links
+          target: /@[0-9a-z\-]+/g,
+          transform: (match) => {
+            const user = match.slice(1);
+            return `
+          <a href='https://github.com/${user}'>
+            ${user}
+          </a>`;
+          },
+        },
+        {
+          target: /\|date\|/g,
+          transform: (match) => new Promise((r) => r(new Date().toLocaleString("en-GB", { timeZone: "UTC" }))),
+        },
+      ];
+
+      const collabEnabled = !(import.meta.env.VITE_COLLAB == "OFF") && urlParams.get("collab") != "false";
+      const collabUrl = import.meta.env.VITE_WS_URL ?? urlParams.get("collab_server");
+
+      MystEditor(
+        {
+          id: "research-integrity-editor",
+          templatelist: "linkedtemplatelist.json",
+          initialText: exampleText,
+          title: "Research Integrity Editor",
+          transforms: exampleTransforms,
+          collapsibleHeadingMarker: true,
+          collaboration: {
+            enabled: collabEnabled,
+            commentsEnabled: collabEnabled,
+            resolvingCommentsEnabled: collabEnabled,
+            wsUrl: collabUrl ?? "#",
+            username,
+            room,
+            color,
+            mode: collabUrl ? "websocket" : "local",
+          },
+          customRoles: exampleCustomRoles,
+          customDirectives: exampleCustomDirectives,
+          includeButtons: defaultButtons,
+          spellcheckOpts: { dict: "en_US", dictionaryPath: `${window.location.pathname}dictionaries` },
+          syncScroll: true,
+        },
+        document.getElementById("myst"),
+      );
+    </script>
+  </head>
+  <body>
+    <div id="myst"></div>
+  </body>
+</html>
