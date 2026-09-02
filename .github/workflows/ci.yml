@@ -48,6 +48,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Format Phase 2 branch for diagnostics
+        if: github.head_ref == 'phase-2-provenance-native'
+        run: |
+          npx prettier --write src/integrity/provenance.js
+          git diff -- src/integrity/provenance.js
+
       - name: Check formatting
         run: npm run check-format
 
