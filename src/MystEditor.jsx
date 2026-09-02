@@ -15,6 +15,7 @@ import { TableOfContents } from "./components/TableOfContents";
 import ErrorModal from "./components/ErrorModal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { createLogger, Logger } from "./logger";
+import ResearchIntegrityPanel from "./integrity/ResearchIntegrityPanel";
 
 const EditorParent = styled.div`
   font-family: "Lato";
@@ -85,7 +86,7 @@ const FlexWrapper = styled.div`
 const hideBodyScrollIf = (val) => (document.documentElement.style.overflow = val ? "hidden" : "visible");
 
 const MystEditor = () => {
-  const { editorView, cache, options, collab, text, suggestMode } = useContext(MystState);
+  const { editorView, cache, options, collab, text, suggestMode, integrityPanelOpen } = useContext(MystState);
   const fullscreen = useSignal(false);
   useSignalEffect(() => hideBodyScrollIf(fullscreen.value));
 
@@ -113,6 +114,7 @@ const MystEditor = () => {
         alertFor("Rich links refreshed!", 1);
       },
       "suggest-mode": () => (suggestMode.value = !suggestMode.peek()),
+      "integrity-panel": () => (integrityPanelOpen.value = !integrityPanelOpen.peek()),
     }),
     [],
   );
@@ -183,6 +185,7 @@ const MystEditor = () => {
                   <TableOfContents />
                 </FlexWrapper>
               )}
+              {options.integrityPanel.value && integrityPanelOpen.value && <ResearchIntegrityPanel />}
             </MystWrapper>
           </EditorParent>
         </ErrorBoundary>

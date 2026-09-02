@@ -13,6 +13,7 @@ import { TextManager } from "./text";
 import Templates from "./components/Templates";
 import { yRemoteAnnotation } from "./extensions/collab";
 import { syntaxTree } from "@codemirror/language";
+import { createEmptyManuscriptSelection } from "./integrity/selection";
 
 /** @type {{ id: string; tooltip?: string; text?: string; action?: Function; dropdown?: Function }} */
 export const predefinedButtons = {
@@ -27,9 +28,15 @@ export const predefinedButtons = {
   refresh: { id: "refresh", tooltip: "Refresh issue links" },
   settings: { id: "settings", tooltip: "Editor settings", dropdown: Settings },
   suggestMode: { id: "suggest-mode", tooltip: "Toggle suggest mode", active: (state) => state.suggestMode.value },
+  integrityPanel: {
+    id: "integrity-panel",
+    tooltip: "Toggle research integrity panel",
+    active: (state) => state.integrityPanelOpen.value,
+  },
 };
 
 export const defaultButtons = [
+  predefinedButtons.integrityPanel,
   predefinedButtons.fullscreen,
   predefinedButtons.settings,
   predefinedButtons.copyHtml,
@@ -203,6 +210,7 @@ const defaults = {
   initialText: "",
   includeButtons: defaultButtons,
   topbar: true,
+  integrityPanel: true,
   templatelist: "",
   collaboration: {
     enabled: false,
@@ -307,6 +315,8 @@ export function createMystState(/** @type {typeof defaults} */ opts) {
     /** @type {Signal<{ src: string; error: Error } | null>} */
     error: signal(null),
     suggestMode: signal(false),
+    integrityPanelOpen: signal(fullOptions.integrityPanel),
+    manuscriptSelection: signal(createEmptyManuscriptSelection()),
   };
   state.text = new TextManager({ ...signalOptions, ...state });
 

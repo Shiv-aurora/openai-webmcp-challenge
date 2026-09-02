@@ -314,7 +314,15 @@ const SuggestIcon = () => (
   </svg>
 );
 
+const IntegrityIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 3L20 6.5V12.2C20 16.8 16.9 20.6 12 22C7.1 20.6 4 16.8 4 12.2V6.5L12 3Z" stroke="currentColor" stroke-width="1.7" />
+    <path d="M8 12L10.6 14.6L16.4 8.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+);
+
 const icons = {
+  "integrity-panel": IntegrityIcon,
   fullscreen: FullscreenIcon,
   "copy-html": CopyIcon,
   refresh: RefreshIcon,
@@ -325,7 +333,7 @@ const icons = {
 };
 
 export const EditorTopbar = ({ alert, buttons }) => {
-  const { options, editorView, collab, suggestMode } = useContext(MystState);
+  const { options, editorView, collab, suggestMode, integrityPanelOpen } = useContext(MystState);
   const titleHtml = useComputed(() => purify.sanitize(renderMdLinks(options.title.value)));
   const subtitleHtml = useComputed(() => purify.sanitize(renderMdLinks(options.subtitle.value)));
   const emptyDiff = useSignal(false);
@@ -364,7 +372,7 @@ export const EditorTopbar = ({ alert, buttons }) => {
             <div key={button.id}>
               <TopbarButton
                 className="icon"
-                active={button.active?.({ suggestMode })}
+                active={button.active?.({ suggestMode, integrityPanelOpen })}
                 type="button"
                 title={button.tooltip}
                 name={button.id}
