@@ -9,6 +9,6 @@ Registered tools:
 - `get_claim` — returns the currently selected claim, or a tracked claim by id, including verification state and linked evidence.
 - `get_provenance` — returns provenance and linked evidence for the selected tracked manuscript object, or an explicit object id.
 
-All four tools declare the WebMCP `readOnlyHint`. They read editor and provenance state at invocation time and do not mutate manuscript or provenance data.
+All four tools declare the WebMCP `readOnlyHint`. They read editor and provenance state at invocation time and do not mutate manuscript or provenance data. Missing claim or provenance context is returned as an explicit structured tool error rather than inferred or fabricated state.
 
 The integration uses the current WebMCP imperative surface at `document.modelContext.registerTool()`. Browsers without WebMCP support continue to run the editor normally; tool registration becomes a no-op.
