@@ -28,7 +28,7 @@ test.describe.parallel("With collaboration disabled", () => {
   test("Loads initial document", async ({ page }) => {
     await expect(async () => {
       const editorContent = await page.evaluate((id) => window.myst_editor[id].text, id);
-      expect(editorContent).toMatch(/^# This is MyST Editor/);
+      expect(editorContent).toMatch(/^---\ntitle: Regime-Aware Volatility Forecasting/);
       expect(editorContent.indexOf(editorContent.slice(0, 20))).toBe(editorContent.lastIndexOf(editorContent.slice(0, 20))); // Assert that content isn't duplicated
     }).toPass();
   });
@@ -313,7 +313,7 @@ test.describe.parallel("With collaboration enabled", () => {
 
     await expect(async () => {
       const editorContent = await page.evaluate((id) => window.myst_editor[id].text, id);
-      expect(editorContent).toMatch(/^# This is MyST Editor/);
+      expect(editorContent).toMatch(/^---\ntitle: Regime-Aware Volatility Forecasting/);
       expect(editorContent.indexOf(editorContent.slice(0, 20))).toBe(editorContent.lastIndexOf(editorContent.slice(0, 20))); // Assert that content isn't duplicated
     }).toPass();
   });
@@ -332,7 +332,7 @@ test.describe.parallel("With collaboration enabled", () => {
 
     await expect(async () => {
       const editorContent = await pageB.evaluate((id) => window.myst_editor[id].text, id);
-      expect(editorContent).not.toContain("# This is MyST Editor");
+      expect(editorContent).not.toContain("# Regime-Aware Volatility Forecasting");
       expect(editorContent).toContain("Some content");
       expect(editorContent.indexOf("Some content")).toBe(editorContent.lastIndexOf("Some content")); // Assert that content isn't duplicated
     }).toPass();
@@ -630,7 +630,7 @@ test.describe.parallel("With collaboration enabled", () => {
         window.myst_editor.demo.state.options.subtitle.value = "A subtitle";
       });
       await expect(page.locator("#document-subtitle")).toContainText("A subtitle");
-      await expect(page.locator("#topbar .side:last-child .btns button")).toHaveCount(2);
+      await expect(page.locator("#topbar .side:last-child .btns button")).toHaveCount(1);
       await expect(page.locator("#resolved-wrapper")).toBeVisible();
     });
 
