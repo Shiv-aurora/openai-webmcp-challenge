@@ -16,6 +16,7 @@ import ErrorModal from "./components/ErrorModal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { createLogger, Logger } from "./logger";
 import ResearchIntegrityPanel from "./integrity/ResearchIntegrityPanel";
+import { registerResearchWebMCPTools } from "./webmcp/register";
 
 const EditorParent = styled.div`
   font-family: "Lato";
@@ -220,6 +221,7 @@ export default ({ additionalStyles, id, ...params }, /** @type {HTMLElement} */ 
 
   const state = createMystState({ id: editorId, ...params });
   window.myst_editor[editorId].state = state;
+  state.cleanups.push(registerResearchWebMCPTools(state));
   const logger = createLogger(state);
   window.myst_editor[editorId].logger = logger;
 
