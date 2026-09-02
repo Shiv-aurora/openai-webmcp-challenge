@@ -1,7 +1,7 @@
 # Status
 
-Current phase: Phase 3 — Build Research X-Ray
-Current objective: Turn durable provenance relationships and verification states into a visual manuscript integrity map.
+Current phase: Phase 4 — Expose Read-Only WebMCP Tools
+Current objective: Let agents inspect the live manuscript selection, context, claims, and provenance through a minimal read-only WebMCP surface.
 
 Completed:
 - Imported and attributed Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
@@ -15,7 +15,11 @@ Completed:
 - Added manual create, inspect, edit, remove, and review workflows for provenance relationships.
 - Added verification states for unlinked, needs review, verified, stale, and contradicted manuscript objects.
 - Persisted provenance state across browser reloads and exposed it on the live editor state for later WebMCP tools.
-- Added browser coverage for provenance creation, evidence linking, verification review, evidence editing/removal, object removal, and persistence.
+- Added a global Research X-Ray mode that turns tracked manuscript content into a visual integrity map without changing manuscript text.
+- Added distinct X-Ray treatments and manuscript-level counts for verified, needs-review, stale, contradicted, and unlinked objects.
+- Added a navigable X-Ray integrity list that returns the researcher to the source manuscript object and its provenance/evidence inspector.
+- Added an honest empty X-Ray state when no provenance objects have been tracked.
+- Added browser coverage for one-interaction X-Ray toggling, all five integrity states across claims, methods, tables, and figures, viewport-aware highlighting and navigation, provenance drill-down, and empty-map behavior.
 - Added repeatable CI for formatting, lint, production build, collaboration runtime, and browser tests.
 
 Last verified:
@@ -23,15 +27,15 @@ Last verified:
 - `npm run check-format`
 - `npm run lint` with zero errors
 - `npm run build`
-- `npm run test` — 55 Playwright tests passed against the production preview and live collaboration server
+- `npm run test` — 59 Playwright tests passed against the production preview and live collaboration server
 
 Blockers:
-- None for Phase 3 implementation.
+- None for Phase 4 implementation.
 
 Known risks:
 - The inherited dependency lock reports 43 npm audit findings that require production-impact triage before public deployment.
 - The pinned upstream code still emits non-blocking lint warnings that should be addressed only when touched or shown to affect behavior.
-- Phase 2 provenance persistence is browser-local and is not yet synchronized through the inherited collaboration server; the storage/synchronization boundary must be resolved before multi-user or production WebMCP use.
+- Provenance and X-Ray state remain browser-local and are not yet synchronized through the inherited collaboration server; the storage/synchronization boundary must be resolved before multi-user or production WebMCP use.
 
 Next:
-- Build X-Ray mode that renders verified, stale, contradicted, unlinked, and review-required status across tracked manuscript objects and provides manuscript-level integrity counts.
+- Expose `get_current_selection`, `get_manuscript_context`, `get_claim`, and `get_provenance` as read-only WebMCP tools with stable schemas grounded in the live editor state.
