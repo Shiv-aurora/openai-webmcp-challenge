@@ -10,6 +10,7 @@ import { userExtensionsCompartment } from "./Settings";
 import { useSignalEffect } from "@preact/signals";
 import { FoldChevron, MdStyles } from "./Preview";
 import { Logger } from "../logger";
+import { deriveManuscriptSelection } from "../integrity/selection";
 
 const CodeEditor = styled.div`
   border-radius: var(--border-radius);
@@ -295,7 +296,7 @@ const CodeEditor = styled.div`
 `;
 
 const CodeMirror = () => {
-  const { editorView, options, collab, userSettings, linter, text, headings, error, suggestMode } = useContext(MystState);
+  const { editorView, options, collab, userSettings, linter, text, headings, error, suggestMode, manuscriptSelection } = useContext(MystState);
   const logger = useContext(Logger);
   const editorMountpoint = useRef(null);
   const focusScroll = useRef(null);
@@ -365,6 +366,9 @@ const CodeMirror = () => {
         .if(!options.collaboration.value.enabled, (b) => b.useDefaultHistory())
         .if(options.collaboration.value.commentsEnabled, (b) => b.useComments({ ycomments: collab.value.ycomments }))
         .addUpdateListener((update) => {
+          if (update.selectionSet || update.docChanged) {
+            manuscriptSelection.value = deriveManuscriptSelection(update.state);
+          }
           if (!update.docChanged) return;
           clearTimeout(renderTimer.current);
           renderTimer.current = setTimeout(() => {
@@ -393,6 +397,7 @@ const CodeMirror = () => {
     });
     editorView.value = view;
     window.myst_editor[options.id.value].main_editor = view;
+    manuscriptSelection.value = deriveManuscriptSelection(view.state);
 
     if (options.unfoldedHeadings.value != undefined) {
       skipAndFoldAll(view, options.unfoldedHeadings.value);
