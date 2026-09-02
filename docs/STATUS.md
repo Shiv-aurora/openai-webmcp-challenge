@@ -1,7 +1,7 @@
 # Status
 
-Current phase: Phase 4 — Expose Read-Only WebMCP Tools
-Current objective: Let agents inspect the live manuscript selection, context, claims, and provenance through a minimal read-only WebMCP surface.
+Current phase: Phase 4 — Define the WebMCP Surface
+Current objective: Extend the verified read-only WebMCP foundation across the remaining manuscript object views, then add review-safe provenance and manuscript actions.
 
 Completed:
 - Imported and attributed Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
@@ -19,7 +19,11 @@ Completed:
 - Added distinct X-Ray treatments and manuscript-level counts for verified, needs-review, stale, contradicted, and unlinked objects.
 - Added a navigable X-Ray integrity list that returns the researcher to the source manuscript object and its provenance/evidence inspector.
 - Added an honest empty X-Ray state when no provenance objects have been tracked.
-- Added browser coverage for one-interaction X-Ray toggling, all five integrity states across claims, methods, tables, and figures, viewport-aware highlighting and navigation, provenance drill-down, and empty-map behavior.
+- Registered WebMCP tools through `document.modelContext.registerTool()` with editor-lifecycle cleanup and graceful no-op behavior when WebMCP is unavailable.
+- Added `get_current_selection`, `get_manuscript_context`, `get_claim`, and `get_provenance` as read-only tools grounded in the live editor and provenance state at invocation time.
+- Added stable tool schemas, bounded manuscript-context retrieval, and explicit structured errors for missing claim or provenance context.
+- Marked manuscript/evidence tool output as read-only and untrusted content so researcher-authored text remains data rather than agent instructions.
+- Added browser coverage for WebMCP registration metadata, live selection changes, scoped manuscript context, claim/provenance retrieval, non-mutation, and missing-context errors.
 - Added repeatable CI for formatting, lint, production build, collaboration runtime, and browser tests.
 
 Last verified:
@@ -27,10 +31,10 @@ Last verified:
 - `npm run check-format`
 - `npm run lint` with zero errors
 - `npm run build`
-- `npm run test` — 59 Playwright tests passed against the production preview and live collaboration server
+- `npm run test` — 64 Playwright tests passed against the production preview and live collaboration server
 
 Blockers:
-- None for Phase 4 implementation.
+- None for the next Phase 4 milestone.
 
 Known risks:
 - The inherited dependency lock reports 43 npm audit findings that require production-impact triage before public deployment.
@@ -38,4 +42,5 @@ Known risks:
 - Provenance and X-Ray state remain browser-local and are not yet synchronized through the inherited collaboration server; the storage/synchronization boundary must be resolved before multi-user or production WebMCP use.
 
 Next:
-- Expose `get_current_selection`, `get_manuscript_context`, `get_claim`, and `get_provenance` as read-only WebMCP tools with stable schemas grounded in the live editor state.
+- Complete Phase 4 read coverage for the selected figure, selected table, current section, manuscript integrity status, and navigation targets.
+- Then expose review-safe claim, evidence, verification, comment, and manuscript-change actions without silently overriding researcher decisions.
