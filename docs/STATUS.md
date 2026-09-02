@@ -1,7 +1,7 @@
 # Status
 
-Current phase: Phase 4 — Define the WebMCP Surface
-Current objective: Build review-safe provenance and manuscript actions on top of the verified nine-tool read-only WebMCP surface without silently overriding researcher decisions.
+Current phase: Phase 5 — Build Verify This
+Current objective: Implement the one-click verification loop for selected quantitative claims by resolving linked evidence, comparing manuscript claim values with stored evidence metrics, identifying stale, missing, or mismatched evidence, and returning a deterministic pass/fail reason without fabricating external execution.
 
 Completed:
 - Imported and attributed Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
@@ -14,18 +14,17 @@ Completed:
 - Added structured research evidence and provenance links with evidence type, source/artifact, artifact identity, experiment identity, commit, metric, relationship, URI/path, and notes.
 - Added manual create, inspect, edit, remove, and review workflows for provenance relationships.
 - Added verification states for unlinked, needs review, verified, stale, and contradicted manuscript objects.
-- Persisted provenance state across browser reloads and exposed it on the live editor state for later WebMCP tools.
-- Added a global Research X-Ray mode that turns tracked manuscript content into a visual integrity map without changing manuscript text.
-- Added distinct X-Ray treatments and manuscript-level counts for verified, needs-review, stale, contradicted, and unlinked objects.
-- Added a navigable X-Ray integrity list that returns the researcher to the source manuscript object and its provenance/evidence inspector.
-- Added an honest empty X-Ray state when no provenance objects have been tracked.
+- Persisted provenance state across browser reloads and exposed it on the live editor state for WebMCP tools.
+- Added a global Research X-Ray mode with distinct verified, needs-review, stale, contradicted, and unlinked treatments, manuscript-level counts, navigation, and an honest empty state.
 - Registered WebMCP tools through `document.modelContext.registerTool()` with editor-lifecycle cleanup and graceful no-op behavior when WebMCP is unavailable.
-- Added `get_current_selection`, `get_manuscript_context`, `get_claim`, and `get_provenance` as read-only tools grounded in the live editor and provenance state at invocation time.
-- Added `get_figure`, `get_table`, `get_current_section`, `get_integrity_status`, and `get_navigation_targets` to complete the read-only Phase 4 coverage.
-- Added stable bounded schemas for manuscript, provenance, integrity, and navigation reads with explicit structured errors for missing claim, figure, table, section, or provenance context.
-- Marked all nine read tools with `readOnlyHint: true` and `untrustedContentHint: true` so researcher-authored manuscript and evidence text remains data rather than agent instructions.
-- Kept navigation-target retrieval discovery-only: it returns source anchors without moving the editor or changing researcher state.
-- Added browser coverage for WebMCP registration metadata, live selection changes, scoped manuscript context, claim/figure/table/provenance retrieval, exact current-section retrieval, integrity summaries, filtered navigation targets, non-mutation, and missing-context errors.
+- Completed nine invocation-time read tools for selection, manuscript context, claims, figures, tables, current section, provenance, integrity status, and navigation targets.
+- Completed ten action/review tools for claim creation, evidence attachment/update, evidence-gated verification, review-only claim and selection replacements, additive comments, object navigation, pending review diff retrieval, and review-diff navigation.
+- Kept all researcher-authored manuscript and evidence content marked as untrusted WebMCP content.
+- Added exact-text stale-selection guards for claim creation and manuscript replacement actions.
+- Kept consequential manuscript rewrites reviewable: WebMCP stages CriticMarkup proposals, while only the researcher has the existing visible accept/reject controls.
+- Kept comments additive rather than overwriting existing threads and kept navigation actions non-destructive to manuscript/provenance content.
+- Preserved the product's evidence-gated verification rules through the WebMCP action surface.
+- Added browser coverage for the complete 19-tool WebMCP surface, shared human/agent provenance state, stale-context rejection, evidence workflows, verification gating, review-only manuscript writes, additive comments, non-mutating navigation, and pending review diffs.
 - Added repeatable CI for formatting, lint, production build, collaboration runtime, and browser tests.
 
 Last verified:
@@ -33,10 +32,10 @@ Last verified:
 - `npm run check-format`
 - `npm run lint` with zero errors
 - `npm run build`
-- `npm run test` — all 69 Playwright tests completed successfully against the production preview and live collaboration server: 68 clean passes plus one inherited collaboration test that passed on retry and was reported as flaky; no WebMCP test was flaky or failing
+- `npm run test` — 79/79 Playwright tests passed against the production preview and live collaboration server
 
 Blockers:
-- None for the next Phase 4 milestone.
+- None for Phase 5 implementation.
 
 Known risks:
 - The inherited dependency lock reports 43 npm audit findings that require production-impact triage before public deployment.
@@ -44,5 +43,7 @@ Known risks:
 - Provenance and X-Ray state remain browser-local and are not yet synchronized through the inherited collaboration server; the storage/synchronization boundary must be resolved before multi-user or production WebMCP use.
 
 Next:
-- Expose review-safe claim, evidence, verification, comment, and manuscript-change actions with explicit mutating/destructive annotations and researcher-review boundaries.
-- Keep agent writes reversible or reviewable where practical and never silently reinterpret researcher-authored manuscript or evidence content as instructions.
+- Build the deterministic Verify This loop for a selected quantitative claim.
+- Resolve the claim's linked evidence and parse comparable manuscript/evidence metric values without inventing missing data.
+- Distinguish verified, mismatched, stale, and missing-evidence outcomes with explicit reasons and provenance references.
+- Surface the result through the researcher UI and WebMCP while keeping external experiment execution out of scope until a real execution backend exists.
