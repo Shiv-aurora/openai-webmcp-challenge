@@ -179,7 +179,7 @@ const provenanceSnapshot = (editorState, provenance, input = {}) => {
 export function buildResearchWebMCPTools(editorState) {
   const provenance = ensureProvenanceStore(editorState);
   const noInputSchema = { type: "object", properties: {}, additionalProperties: false };
-  const readOnlyAnnotations = { readOnlyHint: true, untrustedContentHint: false };
+  const readOnlyAnnotations = { readOnlyHint: true, untrustedContentHint: true };
 
   return [
     {
