@@ -241,7 +241,9 @@ test("inserts an additive comment without overwriting an existing thread", async
   await loadWorkspace(page, true);
   const text = "18.2% improvement in stress-regime accuracy";
   await selectText(page, text);
-  const first = payload(await executeTool(page, "insert_comment", { text: "Agent review: confirm this result against the locked evaluation artifact." }));
+  const first = payload(
+    await executeTool(page, "insert_comment", { text: "Agent review: confirm this result against the locked evaluation artifact." }),
+  );
 
   expect(first.ok).toBe(true);
   const stored = await page.evaluate((commentId) => {

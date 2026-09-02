@@ -60,11 +60,15 @@ const assertExpectedText = (actual, expected, code = "STALE_SELECTION") => {
 const stageReplacement = (editorState, range, expectedText, replacementText) => {
   const view = getView(editorState);
   if (!view) return toolError("EDITOR_UNAVAILABLE", "The manuscript editor is not ready.");
-  if (!boundedString(expectedText, 10000)) return toolError("INVALID_EXPECTED_TEXT", "expectedText must be a non-empty string of at most 10,000 characters.");
+  if (!boundedString(expectedText, 10000))
+    return toolError("INVALID_EXPECTED_TEXT", "expectedText must be a non-empty string of at most 10,000 characters.");
   if (typeof replacementText !== "string" || replacementText.length > 10000)
     return toolError("INVALID_REPLACEMENT_TEXT", "replacementText must be a string of at most 10,000 characters.");
   if (hasCriticSyntax(expectedText) || hasCriticSyntax(replacementText))
-    return toolError("UNSUPPORTED_CRITIC_MARKUP", "The current review format cannot safely nest CriticMarkup syntax. Revise the proposed text first.");
+    return toolError(
+      "UNSUPPORTED_CRITIC_MARKUP",
+      "The current review format cannot safely nest CriticMarkup syntax. Revise the proposed text first.",
+    );
 
   const actualText = view.state.sliceDoc(range.from, range.to);
   const stale = assertExpectedText(actualText, expectedText);
@@ -178,7 +182,8 @@ export function buildResearchWebMCPActionTools(editorState) {
     {
       name: "attach_evidence",
       title: "Attach research evidence",
-      description: "Attach structured evidence to the selected or explicitly identified tracked manuscript object. This visibly updates the same provenance state shown in the integrity panel.",
+      description:
+        "Attach structured evidence to the selected or explicitly identified tracked manuscript object. This visibly updates the same provenance state shown in the integrity panel.",
       inputSchema: evidenceInputSchema,
       annotations: mutatingAnnotations,
       execute: async (input = {}) => {
@@ -193,7 +198,8 @@ export function buildResearchWebMCPActionTools(editorState) {
     {
       name: "update_evidence",
       title: "Update linked research evidence",
-      description: "Update structured evidence already linked to a tracked manuscript object. The evidence must belong to that object; unrelated evidence cannot be edited through this call.",
+      description:
+        "Update structured evidence already linked to a tracked manuscript object. The evidence must belong to that object; unrelated evidence cannot be edited through this call.",
       inputSchema: {
         type: "object",
         properties: {
@@ -217,11 +223,14 @@ export function buildResearchWebMCPActionTools(editorState) {
         const object = resolveObject(editorState, provenance, input.objectId);
         if (!object) return toolError("OBJECT_NOT_FOUND", "Select a tracked manuscript object or provide a valid objectId.");
         const linked = provenance.evidenceForObject(object.id).find((entry) => entry.evidence.id === input.evidenceId);
-        if (!linked) return toolError("EVIDENCE_NOT_LINKED", "The requested evidence is not linked to the tracked object.", { evidenceId: input.evidenceId });
+        if (!linked)
+          return toolError("EVIDENCE_NOT_LINKED", "The requested evidence is not linked to the tracked object.", { evidenceId: input.evidenceId });
 
         const { objectId: _, evidenceId: __, relation, ...patch } = input;
-        if (Object.keys(patch).length === 0 && relation === undefined) return toolError("EMPTY_EVIDENCE_UPDATE", "Provide at least one evidence field to update.");
-        if (patch.label !== undefined && !boundedString(patch.label, 300)) return toolError("INVALID_EVIDENCE_LABEL", "Evidence label must be between 1 and 300 characters.");
+        if (Object.keys(patch).length === 0 && relation === undefined)
+          return toolError("EMPTY_EVIDENCE_UPDATE", "Provide at least one evidence field to update.");
+        if (patch.label !== undefined && !boundedString(patch.label, 300))
+          return toolError("INVALID_EVIDENCE_LABEL", "Evidence label must be between 1 and 300 characters.");
         provenance.updateEvidence(input.evidenceId, patch);
         if (relation !== undefined) provenance.updateLink(linked.link.id, { relation });
         const updated = provenance.evidenceForObject(object.id).find((entry) => entry.evidence.id === input.evidenceId);
@@ -246,7 +255,8 @@ export function buildResearchWebMCPActionTools(editorState) {
       execute: async (input = {}) => {
         const object = resolveObject(editorState, provenance, input.objectId);
         if (!object) return toolError("OBJECT_NOT_FOUND", "Select a tracked manuscript object or provide a valid objectId.");
-        if (!VERIFICATION_STATES.includes(input.verificationState)) return toolError("INVALID_VERIFICATION_STATE", "Provide a supported verification state.");
+        if (!VERIFICATION_STATES.includes(input.verificationState))
+          return toolError("INVALID_VERIFICATION_STATE", "Provide a supported verification state.");
         const evidence = provenance.evidenceForObject(object.id);
         if (input.verificationState === "unlinked" && evidence.length > 0)
           return toolError("EVIDENCE_PRESENT", "Remove or relink the object's evidence before marking it unlinked.");
@@ -310,8 +320,14 @@ export function buildResearchWebMCPActionTools(editorState) {
         if (input.objectId && !object) return toolError("OBJECT_NOT_FOUND", "No tracked manuscript object exists with the requested objectId.");
         const selection = getSelection(editorState);
         const line = input.line || object?.anchor?.line || selection?.line || 1;
-        if (!Number.isInteger(line) || line < 1 || line > view.state.doc.lines) return toolError("INVALID_COMMENT_LINE", "The requested comment line is outside the current manuscript.");
-        if (ycomments.findCommentOn(line)) return toolError("COMMENT_ALREADY_EXISTS", "That manuscript line already has a comment. The agent will not overwrite or merge into the researcher's existing thread.", { line });
+        if (!Number.isInteger(line) || line < 1 || line > view.state.doc.lines)
+          return toolError("INVALID_COMMENT_LINE", "The requested comment line is outside the current manuscript.");
+        if (ycomments.findCommentOn(line))
+          return toolError(
+            "COMMENT_ALREADY_EXISTS",
+            "That manuscript line already has a comment. The agent will not overwrite or merge into the researcher's existing thread.",
+            { line },
+          );
 
         const commentId = ycomments.newComment(line);
         ycomments.getTextForComment(commentId).insert(0, input.text.trim());
@@ -346,7 +362,8 @@ export function buildResearchWebMCPActionTools(editorState) {
     {
       name: "navigate_to_object",
       title: "Navigate to manuscript object",
-      description: "Move the visible editor selection to a tracked claim, method, figure, or table. This changes navigation state only; it does not modify manuscript or provenance content.",
+      description:
+        "Move the visible editor selection to a tracked claim, method, figure, or table. This changes navigation state only; it does not modify manuscript or provenance content.",
       inputSchema: {
         type: "object",
         properties: { objectId: { type: "string" } },
@@ -379,7 +396,8 @@ export function buildResearchWebMCPActionTools(editorState) {
     {
       name: "navigate_to_research_diff",
       title: "Navigate to reviewable manuscript change",
-      description: "Move the visible editor selection to a pending CriticMarkup change so the researcher can inspect and accept or reject it with the normal editor controls.",
+      description:
+        "Move the visible editor selection to a pending CriticMarkup change so the researcher can inspect and accept or reject it with the normal editor controls.",
       inputSchema: {
         type: "object",
         properties: { from: { type: "integer", minimum: 0, description: "The pending diff's `from` value returned by get_research_diffs." } },
@@ -391,7 +409,8 @@ export function buildResearchWebMCPActionTools(editorState) {
         const view = getView(editorState);
         if (!view) return toolError("EDITOR_UNAVAILABLE", "The manuscript editor is not ready.");
         const diff = pendingResearchDiffs(editorState).find((item) => item.from === input.from);
-        if (!diff) return toolError("RESEARCH_DIFF_NOT_FOUND", "No pending reviewable manuscript change exists at that position.", { from: input.from });
+        if (!diff)
+          return toolError("RESEARCH_DIFF_NOT_FOUND", "No pending reviewable manuscript change exists at that position.", { from: input.from });
         view.dispatch({ selection: { anchor: diff.from, head: diff.to }, scrollIntoView: true });
         view.focus();
         refreshSelection(editorState, view);
