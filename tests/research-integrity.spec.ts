@@ -230,8 +230,12 @@ test.describe("Research integrity workspace", () => {
     await expect(page.getByRole("heading", { name: "Research X-Ray", exact: true })).toBeVisible();
     await expect(page.getByTestId("xray-summary")).toBeVisible();
     await expect(page.getByTestId("xray-count-verified")).toHaveText("1");
-    await expect(page.locator(".cm-xray-verified")).toHaveCount(1);
-    await expect(page.locator('[data-xray-state="verified"]')).toContainText("18.2% improvement");
+    await expect.poll(async () => page.locator(".cm-xray-verified").count()).toBeGreaterThan(0);
+    const verifiedObjectIds = await page
+      .locator('[data-xray-state="verified"]')
+      .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute("data-xray-object-id")))].filter(Boolean));
+    expect(verifiedObjectIds).toHaveLength(1);
+    await expect.poll(async () => (await page.locator('[data-xray-state="verified"]').allTextContents()).join("")).toContain("18.2% improvement");
 
     await page.getByTestId("toggle-xray").click();
     await expect(page.locator(".cm-xray-object")).toHaveCount(0);
@@ -272,9 +276,22 @@ test.describe("Research integrity workspace", () => {
 
     await page.getByTestId("toggle-xray").click();
 
+    const stateLabels = {
+      verified: "Verified",
+      "needs-review": "Needs review",
+      stale: "Stale",
+      contradicted: "Contradicted",
+      unlinked: "Unlinked",
+    };
+
     for (const state of ["verified", "needs-review", "stale", "contradicted", "unlinked"]) {
       await expect(page.getByTestId(`xray-count-${state}`)).toHaveText("1");
-      await expect(page.locator(`.cm-xray-${state}`)).toHaveCount(1);
+      await page.getByTestId("xray-item").filter({ hasText: stateLabels[state] }).click();
+      await expect.poll(async () => page.locator(`.cm-xray-${state}`).count()).toBeGreaterThan(0);
+      const renderedObjectIds = await page
+        .locator(`[data-xray-state="${state}"]`)
+        .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute("data-xray-object-id")))].filter(Boolean));
+      expect(renderedObjectIds).toHaveLength(1);
     }
     await expect(page.getByTestId("xray-item")).toHaveCount(5);
     await expect(page.getByTestId("xray-list")).toContainText("Quantitative claim");
