@@ -193,10 +193,14 @@ test.describe("read-only WebMCP surface", () => {
   test("reports integrity status and filtered navigation targets without mutating provenance", async ({ page }) => {
     await selectText(page, "18.2% improvement in stress-regime accuracy");
     await page.getByTestId("create-provenance-object").click();
+    await page.getByTestId("evidence-label").fill("results/stress_eval.json");
+    await page.getByTestId("save-evidence").click();
     await page.getByTestId("verification-state").selectOption("verified");
 
     await selectText(page, "The forecasting model is optimized with AdamW using a learning rate of **3e-4**.");
     await page.getByTestId("create-provenance-object").click();
+    await page.getByTestId("evidence-label").fill("configs/train.yaml");
+    await page.getByTestId("save-evidence").click();
     await page.getByTestId("verification-state").selectOption("stale");
 
     const before = await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()));
