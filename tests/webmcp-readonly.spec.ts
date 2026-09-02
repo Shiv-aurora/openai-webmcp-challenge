@@ -65,6 +65,7 @@ test.describe("read-only WebMCP surface", () => {
 
     expect(tools.map((tool: any) => tool.name).sort()).toEqual(["get_claim", "get_current_selection", "get_manuscript_context", "get_provenance"]);
     expect(tools.every((tool: any) => tool.annotations?.readOnlyHint === true)).toBe(true);
+    expect(tools.every((tool: any) => tool.annotations?.untrustedContentHint === true)).toBe(true);
   });
 
   test("reads the live selection instead of a registration-time snapshot", async ({ page }) => {
