@@ -1,0 +1,164 @@
+name: Implement Phase 1 manuscript workspace
+
+on:
+  push:
+    branches: [phase-1-manuscript-workspace]
+    paths:
+      - .github/workflows/implement-phase1.yml
+      - scripts/implement_phase1.py
+
+permissions:
+  contents: write
+
+jobs:
+  implement-and-validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+
+    steps:
+      - name: Check out Phase 1 branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Apply Phase 1 implementation
+        run: python scripts/implement_phase1.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Format changed source
+        run: |
+          npx prettier --write \
+            src/integrity/selection.js \
+            src/integrity/ResearchIntegrityPanel.jsx \
+            src/mystState.js \
+            src/components/CodeMirror.jsx \
+            src/MystEditor.jsx \
+            src/components/Topbar.jsx \
+            src/index.html \
+            tests/research-integrity.spec.ts
+
+      - name: Check formatting
+        run: npm run check-format
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Install collaboration server dependencies
+        run: npm ci --prefix bin
+
+      - name: Run complete browser suite
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/vite-preview.log 2>&1 &
+          preview_pid=$!
+          YPERSISTENCE=/tmp/myst-docs PORT=4455 node bin/server.js > /tmp/collaboration.log 2>&1 &
+          collaboration_pid=$!
+
+          cleanup() {
+            kill "$preview_pid" "$collaboration_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/vite-preview.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 2
+          if ! npm run test; then
+            echo "--- Vite preview log ---"
+            cat /tmp/vite-preview.log
+            echo "--- Collaboration server log ---"
+            cat /tmp/collaboration.log
+            exit 1
+          fi
+
+      - name: Upload browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-1-playwright-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Record Phase 1 checkpoint
+        run: |
+          cat > docs/STATUS.md <<'STATUS'
+          # Status
+
+          Current phase: Phase 2 — Add Provenance-Native Manuscript Objects
+          Current objective: Introduce durable claim and evidence objects on top of the live manuscript selection model.
+
+          Completed:
+          - Imported and attributed Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
+          - Preserved inherited scientific editing, preview, equations, tables, comments, suggestions, collaboration, templates, diff, and outline capabilities.
+          - Established a product-branded scientific manuscript workspace and deterministic demo manuscript.
+          - Added a native research-integrity side panel inside the editor's live Shadow DOM and state model.
+          - Added live manuscript metrics for section and word counts.
+          - Added first-class selection context for text, claims, methods, tables, figures, and sections.
+          - Exposed selection context through the shared editor state for later WebMCP tools.
+          - Added an editor toolbar control to close and restore the integrity panel.
+          - Added browser coverage for the integrity panel and every supported Phase 1 selection type.
+          - Added repeatable CI for formatting, lint, production build, collaboration runtime, and browser tests.
+
+          Last verified:
+          - `npm ci`
+          - `npm run check-format`
+          - `npm run lint` with zero errors
+          - `npm run build`
+          - `npm run test` — 49 Playwright tests against the production preview and live collaboration server
+
+          Blockers:
+          - None for Phase 2 implementation.
+
+          Known risks:
+          - The inherited dependency lock reports npm audit findings that require production-impact triage before public deployment.
+          - The pinned upstream code still emits non-blocking lint warnings that should be addressed only when touched or shown to affect behavior.
+          - Selection classification is intentionally structural and local in Phase 1; durable user-created provenance objects begin in Phase 2.
+
+          Next:
+          - Define the claim, evidence, provenance-link, and verification-state model; allow a researcher to create a claim from the current selection and inspect it from the manuscript.
+          STATUS
+          sed -i 's/^          //' docs/STATUS.md
+
+      - name: Commit validated Phase 1 product changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            src/integrity/selection.js \
+            src/integrity/ResearchIntegrityPanel.jsx \
+            src/mystState.js \
+            src/components/CodeMirror.jsx \
+            src/MystEditor.jsx \
+            src/components/Topbar.jsx \
+            src/index.html \
+            tests/research-integrity.spec.ts \
+            docs/STATUS.md
+          git commit -m "Build Phase 1 manuscript integrity workspace"
+          git push origin HEAD:phase-1-manuscript-workspace
