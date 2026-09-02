@@ -57,14 +57,11 @@ export function createProvenanceStore(editorId) {
     if (!selection?.snippet) return null;
     const objects = data.value.objects;
     const exactRange = objects.find(
-      (object) => object.anchor.from === selection.from && object.anchor.to === selection.to && object.anchor.sectionTitle === sectionTitle(selection),
+      (object) =>
+        object.anchor.from === selection.from && object.anchor.to === selection.to && object.anchor.sectionTitle === sectionTitle(selection),
     );
     if (exactRange) return exactRange;
-    return (
-      objects.find(
-        (object) => object.anchor.snippet === selection.snippet && object.anchor.sectionTitle === sectionTitle(selection),
-      ) || null
-    );
+    return objects.find((object) => object.anchor.snippet === selection.snippet && object.anchor.sectionTitle === sectionTitle(selection)) || null;
   };
 
   const createObject = (selection, requestedKind) => {
@@ -146,9 +143,7 @@ export function createProvenanceStore(editorId) {
     data.value = {
       ...current,
       objects: current.objects.map((item) =>
-        item.id === objectId && item.verificationState === "unlinked"
-          ? { ...item, verificationState: "needs-review", updatedAt: timestamp }
-          : item,
+        item.id === objectId && item.verificationState === "unlinked" ? { ...item, verificationState: "needs-review", updatedAt: timestamp } : item,
       ),
       evidence: [...current.evidence, evidence],
       links: [...current.links, link],
