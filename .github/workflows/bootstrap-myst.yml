@@ -1,0 +1,205 @@
+name: Bootstrap MyST foundation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/bootstrap-myst.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out project state
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Preserve project-owned files
+        run: |
+          mkdir -p /tmp/project/docs /tmp/project/workflows
+          cp README.md NOTICE.md /tmp/project/
+          cp docs/VISION.md docs/IMPLEMENTATION.md docs/STATUS.md /tmp/project/docs/
+          cp .github/workflows/ci.yml /tmp/project/workflows/
+
+      - name: Import pinned Antmicro MyST Editor
+        run: |
+          git clone https://github.com/antmicro/myst-editor.git /tmp/myst-editor
+          git -C /tmp/myst-editor checkout c32e8e77f504a57aee253e07d4e7a44b8c8ecc30
+          rsync -a --delete --exclude=.git /tmp/myst-editor/ ./
+
+          mkdir -p docs .github/workflows
+          cp /tmp/myst-editor/README.md docs/UPSTREAM_MYST_EDITOR.md
+          cp /tmp/project/README.md /tmp/project/NOTICE.md ./
+          cp /tmp/project/docs/VISION.md /tmp/project/docs/IMPLEMENTATION.md /tmp/project/docs/STATUS.md docs/
+
+          rm -rf .github/workflows
+          mkdir -p .github/workflows
+          cp /tmp/project/workflows/ci.yml .github/workflows/ci.yml
+
+      - name: Apply the product foundation
+        run: |
+          python <<'PY'
+          import json
+          import pathlib
+          import re
+
+          manuscript = r"""---
+          title: Regime-Aware Volatility Forecasting
+          authors:
+            - name: Research Integrity Demo Team
+          abstract: |
+            We evaluate a regime-aware forecasting system across normal and stressed markets. This manuscript intentionally contains linked values that will later demonstrate verification and research-diff workflows.
+          ---
+
+          # Regime-Aware Volatility Forecasting
+
+          ## Abstract
+
+          Financial forecasting papers are frequently updated by copying values from experiment outputs into prose, tables, and figures. We evaluate a multi-signal forecasting system and report stronger performance during stressed market regimes. The manuscript currently reports an **18.2% improvement in stress-regime accuracy** over the baseline.
+
+          ## 1. Introduction
+
+          A scientific manuscript should remain connected to the experiments that produced it. In this study, market news, technical signals, company fundamentals, events, and discussion data are combined to estimate next-day volatility. The central result is a measurable improvement during high-volatility periods.
+
+          ## 2. Data
+
+          The study uses **481,000 market observations** after filtering and alignment. Data are divided chronologically to avoid leakage between training, validation, and evaluation windows.
+
+          ## 3. Method
+
+          The forecasting model is optimized with AdamW using a learning rate of **3e-4**. Signals are combined only after each source-specific component produces an auditable intermediate result.
+
+          The objective is:
+
+          $$
+          \mathcal{L} = \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2
+          $$
+
+          ## 4. Results
+
+          | Evaluation regime | Baseline accuracy | Proposed accuracy | Relative improvement |
+          | --- | ---: | ---: | ---: |
+          | Normal | 71.4% | 75.1% | 5.2% |
+          | Stress | 59.3% | 70.1% | 18.2% |
+
+          The stress-regime result is the primary quantitative claim. Later project phases will connect this sentence and table row to the exact experiment output, evaluation script, metric, and commit that produced them.
+
+          ## 5. Reproducibility
+
+          Every consequential number, method statement, table, and figure should carry inspectable provenance. The editor will surface whether each relationship is verified, stale, contradicted, unlinked, or awaiting review.
+
+          ## 6. Conclusion
+
+          Research artifacts already contain the information needed to keep a manuscript current. The missing layer is a writing environment that preserves those relationships while leaving final scientific judgment with the researcher.
+          """
+          manuscript = "\n".join(line[10:] if line.startswith("          ") else line for line in manuscript.splitlines()).strip()
+
+          index_path = pathlib.Path("src/index.html")
+          index = index_path.read_text()
+          index = index.replace("<title>MyST editor Demo</title>", "<title>Research Integrity Editor</title>")
+          index = index.replace(
+              'console.log("Welcome to the MyST editor demo. The right hand side should auto update.");',
+              'console.log("Research Integrity Editor foundation loaded.");',
+          )
+          index = re.sub(
+              r"let exampleText = `.*?`;\n\s*console\.log\(",
+              lambda _: f"let exampleText = `{manuscript}`;\n      console.log(",
+              index,
+              count=1,
+              flags=re.DOTALL,
+          )
+          index = index.replace('id: "demo"', 'id: "research-integrity-editor"')
+          index = index.replace(
+              'title: "[MyST Editor](https://github.com/antmicro/myst-editor/) demo",',
+              'title: "Research Integrity Editor",',
+          )
+          index = re.sub(
+              r"includeButtons: defaultButtons\.concat\(\[\s*\{.*?\},\s*\]\),",
+              "includeButtons: defaultButtons,",
+              index,
+              count=1,
+              flags=re.DOTALL,
+          )
+          index_path.write_text(index)
+
+          package_path = pathlib.Path("package.json")
+          package = json.loads(package_path.read_text())
+          package.update(
+              {
+                  "name": "research-integrity-editor",
+                  "version": "0.1.0",
+                  "description": "A provenance-aware scientific editor with a WebMCP agent control surface.",
+                  "private": True,
+                  "license": "Apache-2.0",
+                  "repository": {
+                      "type": "git",
+                      "url": "https://github.com/Shiv-aurora/openai-webmcp-challenge.git",
+                  },
+              }
+          )
+          package_path.write_text(json.dumps(package, indent=2) + "\n")
+
+          lock_path = pathlib.Path("package-lock.json")
+          lock = json.loads(lock_path.read_text())
+          lock["name"] = package["name"]
+          lock["version"] = package["version"]
+          root_package = lock.setdefault("packages", {}).setdefault("", {})
+          root_package["name"] = package["name"]
+          root_package["version"] = package["version"]
+          lock_path.write_text(json.dumps(lock, indent=2) + "\n")
+
+          pathlib.Path(".nvmrc").write_text("20\n")
+          PY
+
+      - name: Install and validate foundation
+        run: |
+          npm ci
+          npm run check-format
+          npm run lint
+          npm run build
+
+      - name: Record verified state
+        run: |
+          cat > docs/STATUS.md <<'STATUS'
+          # Status
+
+          Current phase: Phase 1 — Build the Core Manuscript Experience
+          Current objective: Establish the manuscript workspace shell, research-integrity panel, and selection model without weakening inherited editor capabilities.
+
+          Completed:
+          - Imported Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
+          - Retained the Apache-2.0 license and added explicit upstream attribution.
+          - Preserved the original upstream README in `docs/UPSTREAM_MYST_EDITOR.md`.
+          - Persisted `docs/VISION.md`, `docs/IMPLEMENTATION.md`, and this execution checkpoint.
+          - Rebranded the default application entry point as Research Integrity Editor.
+          - Added a polished scientific demo manuscript containing the values needed for later verification and Research Diff workflows.
+          - Added Node 20 project metadata and repeatable CI for formatting, lint, and build validation.
+
+          Last verified:
+          - `npm ci`
+          - `npm run check-format`
+          - `npm run lint`
+          - `npm run build`
+
+          Blockers:
+          - None.
+
+          Next:
+          - Build the manuscript-first application shell around the MyST editor, including the research-integrity side panel and first-class selection state for claims, figures, tables, and sections.
+          STATUS
+          sed -i 's/^          //' docs/STATUS.md
+
+      - name: Commit imported and validated foundation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Establish MyST editor foundation"
+          git push origin HEAD:main
