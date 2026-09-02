@@ -51,6 +51,7 @@ const hasQuantitativeValue = (text) => /(?:\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?(?:e
 export function createProvenanceStore(editorId) {
   const storageKey = `myst/provenance/${editorId}`;
   const data = signal(safeLoad(storageKey));
+  const xrayActive = signal(false);
   const persistenceCleanup = effect(() => safeSave(storageKey, data.value));
 
   const findObjectForSelection = (selection) => {
@@ -224,15 +225,21 @@ export function createProvenanceStore(editorId) {
   const stats = () => {
     const current = data.value;
     const linkedObjectIds = new Set(current.links.map((link) => link.objectId));
+    const stateCounts = Object.fromEntries(VERIFICATION_STATES.map((state) => [state, 0]));
+    current.objects.forEach((object) => {
+      if (object.verificationState in stateCounts) stateCounts[object.verificationState] += 1;
+    });
     return {
       objectCount: current.objects.length,
       linkedObjectCount: linkedObjectIds.size,
       evidenceCount: current.evidence.length,
+      stateCounts,
     };
   };
 
   return {
     data,
+    xrayActive,
     storageKey,
     cleanup: persistenceCleanup,
     findObjectForSelection,

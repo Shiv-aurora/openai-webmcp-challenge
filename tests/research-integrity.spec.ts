@@ -219,4 +219,102 @@ test.describe("Research integrity workspace", () => {
     await expect(page.getByTestId("selection-status")).toHaveText("Unlinked");
     await expect(page.getByTestId("create-provenance-object")).toBeVisible();
   });
+
+  test("turns the manuscript into Research X-Ray in one interaction", async ({ page }) => {
+    await trackStressClaim(page);
+    await addStressEvidence(page);
+    await page.getByTestId("verification-state").selectOption("verified");
+
+    await page.getByTestId("toggle-xray").click();
+
+    await expect(page.getByRole("heading", { name: "Research X-Ray", exact: true })).toBeVisible();
+    await expect(page.getByTestId("xray-summary")).toBeVisible();
+    await expect(page.getByTestId("xray-count-verified")).toHaveText("1");
+    await expect.poll(async () => page.locator(".cm-xray-verified").count()).toBeGreaterThan(0);
+    const verifiedObjectIds = await page
+      .locator('[data-xray-state="verified"]')
+      .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute("data-xray-object-id")))].filter(Boolean));
+    expect(verifiedObjectIds).toHaveLength(1);
+    await expect.poll(async () => (await page.locator('[data-xray-state="verified"]').allTextContents()).join("")).toContain("18.2% improvement");
+
+    await page.getByTestId("toggle-xray").click();
+    await expect(page.locator(".cm-xray-object")).toHaveCount(0);
+  });
+
+  test("distinguishes all five integrity states across claims, methods, tables, and figures", async ({ page }) => {
+    const figure = "![Stress-regime accuracy](stress-regime-accuracy.svg)";
+    await page.evaluate((figureText) => {
+      const view = (window as any).myst_editor.demo.main_editor;
+      const insertAt = view.state.doc.length;
+      view.dispatch({ changes: { from: insertAt, insert: `\n\n${figureText}\n` } });
+    }, figure);
+
+    const objects = [
+      { needle: "18.2% improvement in stress-regime accuracy", kind: "claim", state: "verified", label: "claim evidence" },
+      {
+        needle: "The forecasting model is optimized with AdamW using a learning rate of **3e-4**.",
+        kind: "method",
+        state: "needs-review",
+        label: "method evidence",
+      },
+      { needle: "| Stress | 59.3% | 70.1% | 18.2% |", kind: "table", state: "stale", label: "table evidence" },
+      { needle: figure, kind: "figure", state: "contradicted", label: "figure evidence" },
+      { needle: "481,000 market observations", kind: "claim", state: "unlinked", label: null },
+    ];
+
+    for (const item of objects) {
+      await selectText(page, item.needle);
+      await page.getByTestId("create-provenance-object").click();
+      await page.evaluate(({ state, label }) => {
+        const store = (window as any).myst_editor.demo.state.provenance;
+        const selection = (window as any).myst_editor.demo.state.manuscriptSelection.value;
+        const object = store.findObjectForSelection(selection);
+        if (label) store.addEvidence(object.id, { label, type: "result-file", relation: "supports" });
+        if (state !== "unlinked") store.updateObject(object.id, { verificationState: state });
+      }, item);
+    }
+
+    await page.getByTestId("toggle-xray").click();
+
+    const stateLabels = {
+      verified: "Verified",
+      "needs-review": "Needs review",
+      stale: "Stale",
+      contradicted: "Contradicted",
+      unlinked: "Unlinked",
+    };
+
+    for (const state of ["verified", "needs-review", "stale", "contradicted", "unlinked"]) {
+      await expect(page.getByTestId(`xray-count-${state}`)).toHaveText("1");
+      await page.getByTestId("xray-item").filter({ hasText: stateLabels[state] }).click();
+      await expect.poll(async () => page.locator(`.cm-xray-${state}`).count()).toBeGreaterThan(0);
+      const renderedObjectIds = await page
+        .locator(`[data-xray-state="${state}"]`)
+        .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute("data-xray-object-id")))].filter(Boolean));
+      expect(renderedObjectIds).toHaveLength(1);
+    }
+    await expect(page.getByTestId("xray-item")).toHaveCount(5);
+    await expect(page.getByTestId("xray-list")).toContainText("Quantitative claim");
+    await expect(page.getByTestId("xray-list")).toContainText("Method");
+    await expect(page.getByTestId("xray-list")).toContainText("Table");
+    await expect(page.getByTestId("xray-list")).toContainText("Figure");
+  });
+
+  test("navigates from an X-Ray item back to its manuscript provenance", async ({ page }) => {
+    const method = "The forecasting model is optimized with AdamW using a learning rate of **3e-4**.";
+    await selectText(page, method);
+    await trackCurrentSelection(page);
+    await page.getByTestId("evidence-label").fill("configs/train.yaml");
+    await page.getByTestId("save-evidence").click();
+    await page.getByTestId("verification-state").selectOption("stale");
+
+    await selectText(page, "The central result is a measurable improvement during high-volatility periods.");
+    await page.getByTestId("toggle-xray").click();
+    await page.getByRole("button", { name: "Inspect Method Stale" }).click();
+
+    await expect(page.getByTestId("selection-kind")).toHaveText("Method");
+    await expect(page.getByTestId("selection-status")).toHaveText("Stale");
+    await expect(page.getByTestId("provenance-object")).toContainText("AdamW");
+    await expect(page.getByTestId("evidence-card")).toContainText("configs/train.yaml");
+  });
 });

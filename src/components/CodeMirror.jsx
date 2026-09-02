@@ -11,6 +11,8 @@ import { useSignalEffect } from "@preact/signals";
 import { FoldChevron, MdStyles } from "./Preview";
 import { Logger } from "../logger";
 import { deriveManuscriptSelection } from "../integrity/selection";
+import { ensureProvenanceStore } from "../integrity/provenance";
+import { refreshXray, xrayCompartment, xrayField } from "../integrity/xray";
 
 const CodeEditor = styled.div`
   border-radius: var(--border-radius);
@@ -106,6 +108,42 @@ const CodeEditor = styled.div`
 
   .cm-error {
     text-decoration: underline var(--error-bg) 2px;
+  }
+
+  .cm-xray-object {
+    border-radius: 3px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+
+  .cm-xray-verified {
+    background: color-mix(in srgb, var(--accent-dark) 12%, transparent);
+    text-decoration: underline solid var(--accent-dark) 2px;
+    text-underline-offset: 3px;
+  }
+
+  .cm-xray-needs-review {
+    background: color-mix(in srgb, var(--orange-500) 12%, transparent);
+    text-decoration: underline dashed var(--orange-500) 2px;
+    text-underline-offset: 3px;
+  }
+
+  .cm-xray-stale {
+    background: color-mix(in srgb, var(--orange-500) 20%, transparent);
+    text-decoration: underline double var(--orange-500) 2px;
+    text-underline-offset: 3px;
+  }
+
+  .cm-xray-contradicted {
+    background: color-mix(in srgb, var(--error-bg) 18%, transparent);
+    text-decoration: underline wavy var(--error-bg) 2px;
+    text-underline-offset: 3px;
+  }
+
+  .cm-xray-unlinked {
+    background: color-mix(in srgb, var(--border) 30%, transparent);
+    text-decoration: underline dotted var(--editor-gutter-fg) 2px;
+    text-underline-offset: 3px;
   }
 
   .cm-link {
@@ -296,12 +334,22 @@ const CodeEditor = styled.div`
 `;
 
 const CodeMirror = () => {
-  const { editorView, options, collab, userSettings, linter, text, headings, error, suggestMode, manuscriptSelection } = useContext(MystState);
+  const editorState = useContext(MystState);
+  const { editorView, options, collab, userSettings, linter, text, headings, error, suggestMode, manuscriptSelection } = editorState;
+  const provenance = ensureProvenanceStore(editorState);
   const logger = useContext(Logger);
   const editorMountpoint = useRef(null);
   const focusScroll = useRef(null);
   const lastTyped = useRef(null);
   const renderTimer = useRef(null);
+
+  useSignalEffect(() => {
+    const view = editorView.value;
+    const active = provenance.xrayActive.value;
+    const objects = provenance.data.value.objects;
+    if (!view?.dispatch) return;
+    refreshXray(view, active, objects);
+  });
 
   useSignalEffect(() => {
     if (!options.collaboration.value.enabled || (collab.value.ready.value && !collab.value.lockMsg.value && !error.value)) return;
@@ -359,6 +407,7 @@ const CodeMirror = () => {
         .useLanguage(options.language.value, options.transforms.value)
         .useLineNumbers()
         .useCompartment(userExtensionsCompartment, [])
+        .useCompartment(xrayCompartment, xrayField)
         .useSpellcheck(options.spellcheckOpts.value)
         .if(options.collaboration.value.enabled, (b) => {
           return b.useCollaboration({ collabClient: collab.value, editorView });
