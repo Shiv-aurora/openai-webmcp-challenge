@@ -13,12 +13,12 @@ export function registerResearchWebMCPTools(editorState, ownerDocument = documen
   if (!registrationState.supported) return () => controller.abort();
 
   const tools = buildResearchWebMCPTools(editorState);
-  registrationState.registration = Promise.allSettled(
-    tools.map((tool) => modelContext.registerTool(tool, { signal: controller.signal })),
-  ).then((results) => {
-    registrationState.results = results;
-    return results;
-  });
+  registrationState.registration = Promise.allSettled(tools.map((tool) => modelContext.registerTool(tool, { signal: controller.signal }))).then(
+    (results) => {
+      registrationState.results = results;
+      return results;
+    },
+  );
 
   return () => controller.abort();
 }

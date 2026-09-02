@@ -63,12 +63,7 @@ test.describe("read-only WebMCP surface", () => {
   test("registers the four Phase 4 tools as read-only WebMCP tools", async ({ page }) => {
     const tools = await page.evaluate(async () => (document as any).modelContext.getTools());
 
-    expect(tools.map((tool: any) => tool.name).sort()).toEqual([
-      "get_claim",
-      "get_current_selection",
-      "get_manuscript_context",
-      "get_provenance",
-    ]);
+    expect(tools.map((tool: any) => tool.name).sort()).toEqual(["get_claim", "get_current_selection", "get_manuscript_context", "get_provenance"]);
     expect(tools.every((tool: any) => tool.annotations?.readOnlyHint === true)).toBe(true);
   });
 
