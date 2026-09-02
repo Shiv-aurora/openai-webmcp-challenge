@@ -1,0 +1,144 @@
+name: Finalize browser-verified foundation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/finalize-foundation.yml
+      - scripts/finalize_foundation.py
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Reconcile the product entry point and browser contract
+        run: python scripts/finalize_foundation.py
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run check-format
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Install collaboration server dependencies
+        run: npm ci --prefix bin
+
+      - name: Run complete browser suite
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/vite-preview.log 2>&1 &
+          preview_pid=$!
+          YPERSISTENCE=/tmp/myst-docs PORT=4455 node bin/server.js > /tmp/collaboration.log 2>&1 &
+          collaboration_pid=$!
+
+          cleanup() {
+            kill "$preview_pid" "$collaboration_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/vite-preview.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 2
+          if ! npm run test; then
+            echo "--- Vite preview log ---"
+            cat /tmp/vite-preview.log
+            echo "--- Collaboration server log ---"
+            cat /tmp/collaboration.log
+            exit 1
+          fi
+
+      - name: Upload browser report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: foundation-playwright-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Record verified project state
+        run: |
+          cat > docs/STATUS.md <<'STATUS'
+          # Status
+
+          Current phase: Phase 1 — Build the Core Manuscript Experience
+          Current objective: Establish the manuscript workspace shell, research-integrity panel, and selection model without weakening inherited editor capabilities.
+
+          Completed:
+          - Imported Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
+          - Retained the Apache-2.0 license and added explicit upstream attribution.
+          - Preserved the original upstream README in `docs/UPSTREAM_MYST_EDITOR.md`.
+          - Persisted `docs/VISION.md`, `docs/IMPLEMENTATION.md`, and this execution checkpoint.
+          - Rebranded the default application entry point as Research Integrity Editor.
+          - Added a polished scientific demo manuscript containing the values needed for later verification and Research Diff workflows.
+          - Added Node 20 project metadata and repeatable CI for formatting, lint, build, and browser validation.
+          - Applied focused corrections for blocking lint defects in the pinned upstream revision.
+          - Reconciled the inherited browser suite with the product manuscript while preserving upstream editor behavior.
+          - Verified the production build in Chromium with the complete inherited Playwright suite and collaboration server.
+
+          Last verified:
+          - `npm ci`
+          - `npm run check-format`
+          - `npm run lint` with zero errors
+          - `npm run build`
+          - `npm run test` against the production preview and live collaboration server
+
+          Blockers:
+          - None for Phase 1 implementation.
+
+          Known risks:
+          - The inherited dependency lock reports npm audit findings that require production-impact triage before public deployment.
+          - The pinned upstream code still emits non-blocking lint warnings that should be addressed only when touched or shown to affect behavior.
+
+          Next:
+          - Build the manuscript-first application shell around the MyST editor, including the research-integrity side panel and first-class selection state for claims, figures, tables, and sections.
+          STATUS
+          sed -i 's/^          //' docs/STATUS.md
+
+      - name: Commit verified foundation
+        run: |
+          rm -f .github/workflows/finalize-foundation.yml scripts/finalize_foundation.py
+          rmdir scripts 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Verify editor foundation in browser"
+          git push origin HEAD:main
