@@ -12,6 +12,7 @@ on:
       - vite.config.js
       - .eslintrc.cjs
       - .eslintignore
+      - .github/workflows/ci.yml
   pull_request:
     paths:
       - src/**
@@ -22,6 +23,7 @@ on:
       - vite.config.js
       - .eslintrc.cjs
       - .eslintignore
+      - .github/workflows/ci.yml
 
 permissions:
   contents: read
@@ -29,7 +31,9 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
 
     steps:
       - name: Check out repository
@@ -52,3 +56,52 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Install collaboration server dependencies
+        run: npm ci --prefix bin
+
+      - name: Run browser tests
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/vite-preview.log 2>&1 &
+          preview_pid=$!
+          YPERSISTENCE=/tmp/myst-docs PORT=4455 node bin/server.js > /tmp/collaboration.log 2>&1 &
+          collaboration_pid=$!
+
+          cleanup() {
+            kill "$preview_pid" "$collaboration_pid" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ > /dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              cat /tmp/vite-preview.log
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 2
+          if ! npm run test; then
+            echo "--- Vite preview log ---"
+            cat /tmp/vite-preview.log
+            echo "--- Collaboration server log ---"
+            cat /tmp/collaboration.log
+            exit 1
+          fi
+
+      - name: Upload browser test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore
+          retention-days: 7
