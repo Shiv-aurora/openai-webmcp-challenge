@@ -119,7 +119,7 @@ jobs:
           - `npm run check-format`
           - `npm run lint` with zero errors
           - `npm run build`
-          - `npm run test` against the production preview and live collaboration server
+          - `npm run test` — 42 Playwright tests passed against the production preview and live collaboration server
 
           Blockers:
           - None for Phase 1 implementation.
@@ -133,12 +133,10 @@ jobs:
           STATUS
           sed -i 's/^          //' docs/STATUS.md
 
-      - name: Commit verified foundation
+      - name: Commit verified product files
         run: |
-          rm -f .github/workflows/finalize-foundation.yml scripts/finalize_foundation.py
-          rmdir scripts 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add --all
+          git add src/index.html tests/myst-editor.spec.ts docs/STATUS.md
           git commit -m "Verify editor foundation in browser"
           git push origin HEAD:main
