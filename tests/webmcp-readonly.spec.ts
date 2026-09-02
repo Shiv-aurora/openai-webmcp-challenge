@@ -119,7 +119,7 @@ test.describe("read-only WebMCP surface", () => {
   });
 
   test("returns explicit structured errors when claim or provenance context is missing", async ({ page }) => {
-    await selectText(page, "A provenance-aware editor should support ordinary writing without forcing every sentence into a claim.");
+    await selectText(page, "A scientific manuscript should remain connected to the experiments that produced it.");
 
     const claimResult = await executeTool(page, "get_claim");
     const provenanceResult = await executeTool(page, "get_provenance");
