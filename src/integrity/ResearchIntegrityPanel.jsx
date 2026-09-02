@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { MystState } from "../mystState";
 import { manuscriptStats } from "./selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "./provenance";
+import { resolveXrayRange } from "./xray";
 
 const Panel = styled.aside`
   flex: 0 0 350px;
@@ -332,6 +333,77 @@ const EvidenceForm = styled.form`
   border-top: 1px solid var(--border);
 `;
 
+const XraySummaryGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 14px;
+`;
+
+const XraySummaryItem = styled.div`
+  min-width: 0;
+  padding: 9px 5px;
+  border: 1px solid ${(props) => statusTone(props.$status)};
+  border-radius: var(--border-radius);
+  background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 9%, transparent);
+  text-align: center;
+`;
+
+const XrayCount = styled.strong`
+  display: block;
+  font-size: 17px;
+`;
+
+const XrayLabel = styled.span`
+  display: block;
+  margin-top: 3px;
+  font-size: 9px;
+  line-height: 1.2;
+  text-transform: uppercase;
+  opacity: 0.72;
+`;
+
+const XrayList = styled.div`
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+`;
+
+const XrayItem = styled.button`
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-left: 4px solid ${(props) => statusTone(props.$status)};
+  border-radius: var(--border-radius);
+  background: var(--editor-bg);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: var(--button-bg-hover);
+  }
+`;
+
+const XrayItemTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+`;
+
+const XraySnippet = styled.div`
+  margin-top: 5px;
+  font-size: 10px;
+  line-height: 1.35;
+  opacity: 0.72;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`;
+
 const kindLabels = {
   none: "No selection",
   text: "Text",
@@ -350,6 +422,8 @@ const statusLabels = {
   stale: "Stale",
   contradicted: "Contradicted",
 };
+
+const xrayStatuses = ["verified", "needs-review", "stale", "contradicted", "unlinked"];
 
 const prettyValue = (value) => value.replaceAll("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 
@@ -388,6 +462,9 @@ export default function ResearchIntegrityPanel() {
   const selectionStatus = statusLabels[selectionState] || prettyValue(selectionState);
   const canTrack = Boolean(selection.snippet) && ["text", "claim", "method", "figure", "table"].includes(selection.kind);
   const requestedKind = selection.kind === "text" ? "claim" : selection.kind;
+  const xrayActive = provenance.xrayActive.value;
+  const xrayObjects = provenance.data.value.objects;
+  const stateCounts = provenanceStats.stateCounts;
 
   const resetEvidenceForm = () => {
     setEvidenceForm(emptyEvidenceForm());
@@ -433,17 +510,78 @@ export default function ResearchIntegrityPanel() {
     });
   };
 
+  const inspectXrayObject = (object) => {
+    const view = editorState.editorView.value;
+    if (!view) return;
+    const range = resolveXrayRange(view.state.doc, object);
+    if (!range) return;
+    view.dispatch({ selection: { anchor: range.from, head: range.to }, scrollIntoView: true });
+    view.focus();
+  };
+
   return (
     <Panel aria-label="Research integrity" data-testid="integrity-panel">
       <Header>
         <div>
-          <Kicker>Manuscript state</Kicker>
-          <Title>Research integrity</Title>
+          <Kicker>{xrayActive ? "Global integrity map" : "Manuscript state"}</Kicker>
+          <Title>{xrayActive ? "Research X-Ray" : "Research integrity"}</Title>
         </div>
         <CloseButton aria-label="Close research integrity panel" type="button" onClick={() => (integrityPanelOpen.value = false)}>
           ×
         </CloseButton>
       </Header>
+
+      <Section>
+        <SectionHeading>Research X-Ray</SectionHeading>
+        <ActionButton
+          $primary={!xrayActive}
+          aria-pressed={xrayActive}
+          data-testid="toggle-xray"
+          type="button"
+          onClick={() => (provenance.xrayActive.value = !provenance.xrayActive.peek())}
+        >
+          {xrayActive ? "Exit X-Ray" : "Enter X-Ray"}
+        </ActionButton>
+        <Muted>
+          {xrayActive
+            ? "The manuscript is showing provenance health directly on every tracked research object."
+            : "Turn the manuscript into a visual integrity map without changing its content."}
+        </Muted>
+        {xrayActive && (
+          <>
+            <XraySummaryGrid data-testid="xray-summary">
+              {xrayStatuses.map((status) => (
+                <XraySummaryItem $status={status} key={status}>
+                  <XrayCount data-testid={`xray-count-${status}`}>{stateCounts[status] || 0}</XrayCount>
+                  <XrayLabel>{status === "needs-review" ? "Review" : statusLabels[status]}</XrayLabel>
+                </XraySummaryItem>
+              ))}
+            </XraySummaryGrid>
+            {xrayObjects.length ? (
+              <XrayList data-testid="xray-list">
+                {xrayObjects.map((object) => (
+                  <XrayItem
+                    $status={object.verificationState}
+                    aria-label={`Inspect ${objectLabel(object)} ${statusLabels[object.verificationState]}`}
+                    data-testid="xray-item"
+                    key={object.id}
+                    type="button"
+                    onClick={() => inspectXrayObject(object)}
+                  >
+                    <XrayItemTop>
+                      <span>{objectLabel(object)}</span>
+                      <Status $status={object.verificationState}>{statusLabels[object.verificationState]}</Status>
+                    </XrayItemTop>
+                    <XraySnippet>{object.text}</XraySnippet>
+                  </XrayItem>
+                ))}
+              </XrayList>
+            ) : (
+              <EmptyState>No tracked manuscript objects yet. Track a claim, method, figure, or table to populate X-Ray.</EmptyState>
+            )}
+          </>
+        )}
+      </Section>
 
       <Section>
         <SectionHeading>Provenance coverage</SectionHeading>
