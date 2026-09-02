@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/implement-phase1.yml
       - scripts/implement_phase1.py
+      - scripts/fix_phase1.py
 
 permissions:
   contents: write
@@ -31,7 +32,9 @@ jobs:
           cache: npm
 
       - name: Apply Phase 1 implementation
-        run: python scripts/implement_phase1.py
+        run: |
+          python scripts/implement_phase1.py
+          python scripts/fix_phase1.py
 
       - name: Install dependencies
         run: npm ci
