@@ -8,6 +8,7 @@ export const EXPERIMENT_WEBMCP_TOOL_NAMES = [
   "create_experiment",
   "update_experiment",
   "add_experiment_metric",
+  "log_experiment_metric_point",
   "add_experiment_parameter",
   "attach_experiment_artifact",
   "set_experiment_status",
@@ -225,6 +226,29 @@ export function buildExperimentWebMCPTools(editorState) {
         return experiment
           ? result({ ok: true, experiment })
           : error("PARAMETER_UPDATE_FAILED", "Provide an existing experiment, parameter name, and value.");
+      },
+    },
+    {
+      name: "log_experiment_metric_point",
+      title: "Log experiment metric history",
+      description: "Append a numeric metric point at a training step and update the run's latest value, like an MLflow metric history.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          experimentId: string("Experiment run id"),
+          key: string("Metric name"),
+          value: { type: "number" },
+          step: { type: "number", minimum: 0 },
+        },
+        required: ["experimentId", "key", "value"],
+        additionalProperties: false,
+      },
+      annotations: mutating,
+      execute: async ({ experimentId, key, value, step } = {}) => {
+        const experiment = provenance.addExperimentMetricPoint(experimentId, key, value, step);
+        return experiment
+          ? result({ ok: true, experiment, metricHistory: experiment.metricHistory?.[key] || [] })
+          : error("METRIC_HISTORY_UPDATE_FAILED", "Provide an existing experiment, metric name, and numeric value.");
       },
     },
     {

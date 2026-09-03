@@ -15,7 +15,7 @@ import { ensureProvenanceStore } from "../integrity/provenance";
 import { refreshXray, xrayCompartment, xrayField } from "../integrity/xray";
 
 const CodeEditor = styled.div`
-  background: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--panel-bg)")};
+  background: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--paper)")};
   font-family: var(--font-mono);
   font-size: 13.5px;
   line-height: 1.65;
@@ -32,7 +32,7 @@ const CodeEditor = styled.div`
   position: relative;
 
   .cm-editor .cm-gutters {
-    background-color: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--panel-bg)")};
+    background-color: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--paper)")};
     border-right: 0;
   }
 

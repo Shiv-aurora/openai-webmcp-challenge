@@ -39,11 +39,11 @@ const installWebMCPHarness = async (page: Page) => {
 
 const loadWorkspace = async (page: Page) => {
   await installWebMCPHarness(page);
-  await page.goto("/?collab=false");
+  await page.goto("/?collab=false&empty=true");
   await page.evaluate(() => localStorage.removeItem("myst/provenance/demo"));
   await page.reload();
   await page.waitForSelector(".cm-content");
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(36);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(37);
 };
 
 const selectText = async (page: Page, needle: string) => {
@@ -82,36 +82,36 @@ test.describe("read-only WebMCP surface", () => {
   });
 
   test("reads the live selection instead of a registration-time snapshot", async ({ page }) => {
-    await selectText(page, "18.2% improvement in stress-regime accuracy");
+    await selectText(page, "76.9% on the Astra Reasoning Index");
     let payload = structuredPayload(await executeTool(page, "get_current_selection"));
     expect(payload.selection.kind).toBe("claim");
-    expect(payload.selection.snippet).toContain("18.2% improvement");
+    expect(payload.selection.snippet).toContain("76.9% on the Astra Reasoning Index");
 
-    await selectText(page, "The forecasting model is optimized with AdamW using a learning rate of **3e-4**.");
+    await selectText(page, "GPT-6 Astra is optimized with AdamW using a peak learning rate of **2.4e-4**.");
     payload = structuredPayload(await executeTool(page, "get_current_selection"));
     expect(payload.selection.kind).toBe("method");
     expect(payload.selection.snippet).toContain("AdamW");
   });
 
   test("returns current section manuscript context and integrity summary", async ({ page }) => {
-    await selectText(page, "18.2% improvement in stress-regime accuracy");
+    await selectText(page, "76.9% on the Astra Reasoning Index");
     const payload = structuredPayload(await executeTool(page, "get_manuscript_context", { scope: "section", maxChars: 2000 }));
 
     expect(payload.ok).toBe(true);
     expect(payload.scope).toBe("section");
     expect(payload.selection.section.title).toBe("Abstract");
     expect(payload.context.content).toContain("## Abstract");
-    expect(payload.context.content).toContain("18.2% improvement in stress-regime accuracy");
+    expect(payload.context.content).toContain("76.9% on the Astra Reasoning Index");
     expect(payload.document.wordCount).toBeGreaterThan(150);
     expect(payload.integrity.objectCount).toBe(0);
   });
 
   test("returns a selected claim and its provenance without mutating researcher state", async ({ page }) => {
-    await selectText(page, "18.2% improvement in stress-regime accuracy");
+    await selectText(page, "76.9% on the Astra Reasoning Index");
     await page.getByTestId("create-provenance-object").click();
     await page.getByTestId("evidence-label").fill("results/stress_eval.json");
     await page.getByTestId("evidence-artifact-id").fill("stress-eval-v7");
-    await page.getByTestId("evidence-metric").fill("stress_accuracy_improvement=18.2%");
+    await page.getByTestId("evidence-metric").fill("reasoning_index=76.9%");
     await page.getByTestId("save-evidence").click();
 
     const before = await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()));
@@ -122,12 +122,12 @@ test.describe("read-only WebMCP surface", () => {
     expect(claim.ok).toBe(true);
     expect(claim.tracked).toBe(true);
     expect(claim.claim.kind).toBe("claim");
-    expect(claim.claim.text).toContain("18.2% improvement");
+    expect(claim.claim.text).toContain("76.9% on the Astra Reasoning Index");
     expect(claim.evidence).toHaveLength(1);
     expect(claim.evidence[0].evidence.label).toBe("results/stress_eval.json");
     expect(provenance.object.id).toBe(claim.claim.id);
     expect(provenance.evidence[0].evidence.artifactId).toBe("stress-eval-v7");
-    expect(provenance.evidence[0].evidence.metric).toBe("stress_accuracy_improvement=18.2%");
+    expect(provenance.evidence[0].evidence.metric).toBe("reasoning_index=76.9%");
     expect(after).toBe(before);
   });
 
@@ -146,7 +146,7 @@ test.describe("read-only WebMCP surface", () => {
   });
 
   test("reads the selected table without requiring provenance", async ({ page }) => {
-    await selectText(page, "| Stress | 59.3% | 70.1% | 18.2% |");
+    await selectText(page, "| Astra MoE candidate | 76.9% | 81.2% | 92.6% |");
     const before = await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()));
     const payload = structuredPayload(await executeTool(page, "get_table"));
     const after = await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()));
@@ -154,7 +154,7 @@ test.describe("read-only WebMCP surface", () => {
     expect(payload.ok).toBe(true);
     expect(payload.tracked).toBe(false);
     expect(payload.table.kind).toBe("table");
-    expect(payload.table.text).toContain("Stress");
+    expect(payload.table.text).toContain("Astra MoE candidate");
     expect(payload.evidence).toHaveLength(0);
     expect(after).toBe(before);
   });
@@ -183,24 +183,24 @@ test.describe("read-only WebMCP surface", () => {
   });
 
   test("returns the named current section and its exact live section text", async ({ page }) => {
-    await selectText(page, "18.2% improvement in stress-regime accuracy");
+    await selectText(page, "76.9% on the Astra Reasoning Index");
     const payload = structuredPayload(await executeTool(page, "get_current_section"));
 
     expect(payload.ok).toBe(true);
     expect(payload.section.title).toBe("Abstract");
     expect(payload.context.content).toContain("## Abstract");
-    expect(payload.context.content).toContain("18.2% improvement in stress-regime accuracy");
+    expect(payload.context.content).toContain("76.9% on the Astra Reasoning Index");
     expect(payload.context.content).not.toContain("## Methods");
   });
 
   test("reports integrity status and filtered navigation targets without mutating provenance", async ({ page }) => {
-    await selectText(page, "18.2% improvement in stress-regime accuracy");
+    await selectText(page, "76.9% on the Astra Reasoning Index");
     await page.getByTestId("create-provenance-object").click();
     await page.getByTestId("evidence-label").fill("results/stress_eval.json");
     await page.getByTestId("save-evidence").click();
     await page.getByTestId("verification-state").selectOption("verified");
 
-    await selectText(page, "The forecasting model is optimized with AdamW using a learning rate of **3e-4**.");
+    await selectText(page, "GPT-6 Astra is optimized with AdamW using a peak learning rate of **2.4e-4**.");
     await page.getByTestId("create-provenance-object").click();
     await page.getByTestId("evidence-label").fill("configs/train.yaml");
     await page.getByTestId("save-evidence").click();
@@ -220,7 +220,7 @@ test.describe("read-only WebMCP surface", () => {
     expect(targets.targets).toHaveLength(1);
     expect(targets.targets[0].kind).toBe("method");
     expect(targets.targets[0].verificationState).toBe("stale");
-    expect(targets.targets[0].anchor.sectionTitle).toBe("3. Method");
+    expect(targets.targets[0].anchor.sectionTitle).toBe("3. Architecture and optimization");
     expect(after).toBe(before);
   });
 

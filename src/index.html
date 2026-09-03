@@ -15,55 +15,78 @@
     </style>
     <script type="module">
       let exampleText = String.raw`---
-title: Regime-Aware Volatility Forecasting
+title: "Making of GPT-6 Astra"
 authors:
-  - name: Research Integrity Demo Team
+  - name: Astra Systems Research (Fictional)
 abstract: |
-  We evaluate a regime-aware forecasting system across normal and stressed markets. This manuscript intentionally contains linked values that will later demonstrate verification and research-diff workflows.
+  We document the fictional training lifecycle of GPT-6 Astra, a sparse mixture-of-experts language model optimized for long-context reasoning and reliable tool use. The study connects every manuscript claim to synthetic runs, checkpoints, evaluation artifacts, and negative results.
 ---
 
-# Regime-Aware Volatility Forecasting
+# Making of GPT-6 Astra
 
 ## Abstract
 
-Financial forecasting papers are frequently updated by copying values from experiment outputs into prose, tables, and figures. We evaluate a multi-signal forecasting system and report stronger performance during stressed market regimes. The manuscript currently reports an **18.2% improvement in stress-regime accuracy** over the baseline.
+We present **GPT-6 Astra**, a fictional frontier-model program built to test whether sparse routing, long-context curriculum learning, and tool-aware post-training can coexist without turning inference into a small electrical weather event. The candidate activates 31B of 126B parameters per token and is evaluated on reasoning, code repair, browser tool use, calibration, and long-context retrieval. The manuscript currently reports **76.9% on the Astra Reasoning Index**; the locked evaluation later reaches 78.4%. Everything here is synthetic. The model, results, launch timing, and suspiciously dramatic codename exist only to demonstrate a reproducible AI research workflow.
 
-## 1. Introduction
+## 1. Motivation
 
-A scientific manuscript should remain connected to the experiments that produced it. In this study, market news, technical signals, company fundamentals, events, and discussion data are combined to estimate next-day volatility. The central result is a measurable improvement during high-volatility periods.
+Frontier-model announcements tend to arrive with a benchmark table, a cinematic gradient, and very little lineage. This study keeps the entertaining codename but replaces the fog machine with inspectable runs. Every consequential number is connected to a checkpoint, configuration, evaluation harness, and source revision.
 
-## 2. Data
+The technical objective is next-token prediction under a fixed active-compute budget, followed by post-training for multi-step reasoning and external tool use. Given token sequence $x_{1:T}$ and router $r_\phi$, the model minimizes autoregressive loss while distributing each token across the top two experts. We test three hypotheses: sparse experts improve capability per active parameter; a staged 8k-to-256k curriculum preserves short-context quality; and execution-grounded preference data reduces confident tool errors.
 
-The study uses **481,000 market observations** after filtering and alignment. Data are divided chronologically to avoid leakage between training, validation, and evaluation windows.
+Our contribution is not a claim that tomorrow's model has leaked. It is a compact, versioned example of what the paper trail behind such a model should look like.
 
-## 3. Method
+## 2. Training corpus
 
-The forecasting model is optimized with AdamW using a learning rate of **3e-4**. Signals are combined only after each source-specific component produces an auditable intermediate result.
+Pretraining uses **2.4 trillion deduplicated tokens** drawn from synthetic web, code, mathematics, scientific text, and multilingual mixtures. Documents are filtered for duplication, benchmark contamination, secrets, and unsafe executable payloads. Mixture weights are frozen before the final pretraining phase and recorded with the dataset manifest.
 
-The objective is:
+The held-out contamination suite contains exact, fuzzy, and semantic matches against all evaluation prompts. Long documents are sampled with position balancing so evidence does not always appear near the beginning of a sequence—a surprisingly effective way to stop a 256k model from behaving like an 8k model wearing a longer trench coat.
+
+## 3. Architecture and optimization
+
+GPT-6 Astra is optimized with AdamW using a peak learning rate of **2.4e-4**. The decoder contains 48 transformer blocks, grouped-query attention, rotary position embeddings, and 16 feed-forward experts per sparse layer. A learned router selects two experts per token, yielding 126B total parameters and 31B active parameters.
+
+The training objective combines language modeling, router load balancing, and z-loss:
 
 $$
-\mathcal{L} = \frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2
+\mathcal{L}=\mathcal{L}_{LM}+0.01\mathcal{L}_{balance}+10^{-3}\mathcal{L}_{z}
 $$
 
-## 4. Results
+Sequence length grows from 8k to 64k and finally 256k tokens. We use cosine decay, gradient clipping at 1.0, bfloat16 activations, FP32 optimizer states, and expert-parallel sharding. Every run logs throughput, loss, router entropy, expert utilization, gradient norm, and hardware faults.
 
-| Evaluation regime | Baseline accuracy | Proposed accuracy | Relative improvement |
+## 4. Post-training
+
+Post-training combines supervised reasoning traces, preference optimization, and execution-grounded tool trajectories. Tool calls are evaluated against deterministic sandboxes; a response receives credit only when the resulting state is correct. Failed calls, unnecessary calls, and plausible-looking fabricated outputs are penalized separately.
+
+One router-temperature sweep is deliberately retained as a failed run. It produced excellent benchmark screenshots and catastrophic expert collapse, which is exactly the sort of result that disappears when a project tracks only winners.
+
+## 5. Evaluation protocol
+
+All candidates are evaluated with a frozen harness and prompt set. The primary endpoint is the Astra Reasoning Index, a synthetic aggregate of math reasoning, repository repair, grounded browser tasks, and long-context retrieval. Secondary endpoints include tool-task completion, hallucination rate, 128k needle retrieval, tokens per second, and calibration error.
+
+| Model | Reasoning index | Tool completion | 128k retrieval |
 | --- | ---: | ---: | ---: |
-| Normal | 71.4% | 75.1% | 5.2% |
-| Stress | 59.3% | 70.1% | 18.2% |
+| Dense 34B baseline | 63.8% | 58.1% | 71.4% |
+| Astra MoE candidate | 76.9% | 81.2% | 92.6% |
 
-![Stress-regime accuracy comparison](demo/stress-regime-accuracy-v1.svg)
+![GPT-6 Astra evaluation](demo/astra-evaluation-v1.svg)
 
-The stress-regime result is the primary quantitative claim. Later project phases will connect this sentence and table row to the exact experiment output, evaluation script, metric, and commit that produced them.
+The locked run reaches 78.4% on the reasoning index, 84.7% tool completion, 95.1% retrieval, and a 5.8% hallucination rate. The older table and figure intentionally remain attached to the pre-lock candidate so Research Diff has genuine supersession to surface rather than a suspiciously perfect demo.
 
-## 5. Reproducibility
+## 6. Ablations
 
-Every consequential number, method statement, table, and figure should carry inspectable provenance. The editor will surface whether each relationship is verified, stale, contradicted, unlinked, or awaiting review.
+Removing execution feedback lowers tool completion by 9.6 percentage points while barely changing language-model loss. Disabling the router balance term concentrates 61% of tokens in three experts and increases tail latency. Long-context continuation without position balancing preserves perplexity but loses 17.3 points on evidence retrieval beyond 96k tokens.
 
-## 6. Conclusion
+## 7. Reproducibility and limitations
 
-Research artifacts already contain the information needed to keep a manuscript current. The missing layer is a writing environment that preserves those relationships while leaving final scientific judgment with the researcher.`;
+Each run stores its source commit, dataset version, configuration, metric history, artifacts, and supersession relationships. The locked evaluator consumes immutable prediction files and emits the summary table and figure from one protocol identifier.
+
+This is a fictional system study, not an OpenAI announcement, leak, release forecast, or statement about an actual GPT-6 model. The synthetic scores are designed to exercise experiment tracking and manuscript verification. They should not be cited anywhere except, perhaps, in a group chat with appropriate levels of disbelief.
+
+## 8. Conclusion
+
+If a frontier model really does arrive tomorrow, the interesting part should be more than the name. The useful artifact is the chain from training decision to run, from run to evidence, and from evidence to claim. Astra is fictional; the provenance problem is not.`;
+      window.__demoResearchText = exampleText;
       console.log("Potter's Wheel research workspace loaded.");
 
       import MystEditor, { defaultButtons } from "./MystEditor.jsx";
@@ -146,8 +169,7 @@ Research artifacts already contain the information needed to keep a manuscript c
           id: "demo",
           templatelist: "linkedtemplatelist.json",
           initialText: exampleText,
-          title: "Potter's Wheel",
-          subtitle: "Regime-Aware Volatility Forecasting · research workspace",
+          title: "Making of GPT-6 Astra",
           integrityPanel: true,
           transforms: exampleTransforms,
           collapsibleHeadingMarker: true,

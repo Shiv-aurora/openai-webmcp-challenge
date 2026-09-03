@@ -3,6 +3,7 @@ node_modules
 .env
 test-results
 playwright-report
+bin/docs/
 docs/build/
 docs/*.pyc
 docs/*.sw*

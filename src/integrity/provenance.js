@@ -22,7 +22,7 @@ const TRACKABLE_KINDS = new Set(["claim", "method", "figure", "table"]);
 
 const now = () => new Date().toISOString();
 const makeId = (prefix) => `${prefix}-${crypto.randomUUID()}`;
-const cloneEmptyData = () => ({ version: 2, experiments: [], objects: [], evidence: [], links: [], diffReviews: {} });
+const cloneEmptyData = () => ({ version: 2, demoProject: "", experiments: [], objects: [], evidence: [], links: [], diffReviews: {} });
 
 function safeLoad(storageKey) {
   try {
@@ -30,6 +30,7 @@ function safeLoad(storageKey) {
     if (!parsed || ![1, 2].includes(parsed.version)) return cloneEmptyData();
     return {
       version: 2,
+      demoProject: typeof parsed.demoProject === "string" ? parsed.demoProject : "",
       experiments: Array.isArray(parsed.experiments) ? parsed.experiments : [],
       objects: Array.isArray(parsed.objects) ? parsed.objects : [],
       evidence: Array.isArray(parsed.evidence) ? parsed.evidence : [],
@@ -79,6 +80,8 @@ export function createProvenanceStore(editorId) {
       method: input.method?.trim() || "",
       parameters: input.parameters && typeof input.parameters === "object" ? { ...input.parameters } : {},
       metrics: input.metrics && typeof input.metrics === "object" ? { ...input.metrics } : {},
+      metricHistory: input.metricHistory && typeof input.metricHistory === "object" ? { ...input.metricHistory } : {},
+      tags: input.tags && typeof input.tags === "object" ? { ...input.tags } : {},
       datasets: Array.isArray(input.datasets) ? [...input.datasets] : [],
       artifacts: Array.isArray(input.artifacts) ? [...input.artifacts] : [],
       figures: Array.isArray(input.figures) ? [...input.figures] : [],
@@ -118,6 +121,18 @@ export function createProvenanceStore(editorId) {
     const experiment = data.peek().experiments.find((item) => item.id === experimentId);
     if (!experiment) return null;
     return updateExperiment(experimentId, { metrics: { ...experiment.metrics, [key.trim()]: value } });
+  };
+
+  const addExperimentMetricPoint = (experimentId, key, value, step) => {
+    if (!key?.trim() || !Number.isFinite(Number(value))) return null;
+    const experiment = data.peek().experiments.find((item) => item.id === experimentId);
+    if (!experiment) return null;
+    const previous = Array.isArray(experiment.metricHistory?.[key.trim()]) ? experiment.metricHistory[key.trim()] : [];
+    const point = { step: Number.isFinite(Number(step)) ? Number(step) : previous.length + 1, value: Number(value), timestamp: now() };
+    return updateExperiment(experimentId, {
+      metrics: { ...experiment.metrics, [key.trim()]: Number(value) },
+      metricHistory: { ...(experiment.metricHistory || {}), [key.trim()]: [...previous, point] },
+    });
   };
 
   const addExperimentParameter = (experimentId, key, value) => {
@@ -510,6 +525,7 @@ export function createProvenanceStore(editorId) {
     if (!nextData || !Array.isArray(nextData.objects) || !Array.isArray(nextData.evidence) || !Array.isArray(nextData.links)) return false;
     data.value = {
       version: 2,
+      demoProject: typeof nextData.demoProject === "string" ? nextData.demoProject : "",
       experiments: Array.isArray(nextData.experiments) ? nextData.experiments : [],
       objects: nextData.objects,
       evidence: nextData.evidence,
@@ -528,6 +544,7 @@ export function createProvenanceStore(editorId) {
     createExperiment,
     updateExperiment,
     addExperimentMetric,
+    addExperimentMetricPoint,
     addExperimentParameter,
     attachExperimentArtifact,
     supersedeExperiment,

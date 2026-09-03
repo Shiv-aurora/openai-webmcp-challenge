@@ -1,5 +1,5 @@
 import { render } from "preact";
-import { useEffect, useRef, useMemo, useContext } from "preact/hooks";
+import { useEffect, useRef, useMemo, useContext, useState } from "preact/hooks";
 import { StyleSheetManager, styled } from "styled-components";
 import CodeMirror from "./components/CodeMirror";
 import Preview, { PreviewFocusHighlight } from "./components/Preview";
@@ -16,8 +16,11 @@ import ErrorModal from "./components/ErrorModal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { createLogger, Logger } from "./logger";
 import ResearchIntegrityPanel from "./integrity/ResearchIntegrityPanel";
+import ResearchActivityBar from "./integrity/ResearchActivityBar";
 import { registerResearchWebMCPTools } from "./webmcp/register";
 import { ResearchWorkspace } from "./workspace/ResearchWorkspace";
+import { getLineById } from "./markdown/markdownSourceMap";
+import { deriveManuscriptSelection } from "./integrity/selection";
 
 const EditorParent = styled.div`
   font-family: var(--font-sans);
@@ -94,14 +97,107 @@ const FlexWrapper = styled.div`
   }
 `;
 
+const PreviewVerifyButton = styled.button`
+  position: fixed;
+  z-index: 40;
+  top: ${(props) => props.$top}px;
+  left: ${(props) => props.$left}px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--paper);
+  box-shadow: var(--shadow-menu);
+  cursor: pointer;
+  font: 500 12px/1 var(--font-sans);
+
+  &:hover {
+    background: var(--ink-secondary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+`;
+
+const lineElementForNode = (node, previewElement) => {
+  const element = node?.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement;
+  const directLineElement = element?.closest?.("[data-line-id]");
+  if (directLineElement && previewElement.contains(directLineElement)) return directLineElement;
+
+  // Markdown emphasis and links can sit between the source-mapped text spans in a rendered block.
+  // In that case the block's first source marker still identifies the correct manuscript paragraph.
+  const block = element?.closest?.("p, h1, h2, h3, h4, h5, h6, li, td, th, blockquote, figcaption");
+  const lineElement = block?.querySelector?.("[data-line-id]");
+  return lineElement && previewElement.contains(lineElement) ? lineElement : null;
+};
+
+const sourceRangeForPreviewSelection = (selection, previewElement, lineMap, view) => {
+  if (!selection || selection.isCollapsed || !selection.rangeCount || !view) return null;
+  const browserRange = selection.getRangeAt(0);
+  const startElement = lineElementForNode(browserRange.startContainer, previewElement);
+  const endElement = lineElementForNode(browserRange.endContainer, previewElement);
+  if (!startElement || !endElement) return null;
+
+  const startLine = getLineById(lineMap, startElement.getAttribute("data-line-id"));
+  const endLine = getLineById(lineMap, endElement.getAttribute("data-line-id"));
+  if (!startLine || !endLine) return null;
+
+  const doc = view.state.doc;
+  let firstLine = Math.min(startLine, endLine);
+  let lastLine = Math.max(startLine, endLine);
+  while (firstLine > 1 && doc.line(firstLine - 1).text.trim()) firstLine -= 1;
+  while (lastLine < doc.lines && doc.line(lastLine + 1).text.trim()) lastLine += 1;
+
+  const windowFrom = doc.line(firstLine).from;
+  const windowTo = doc.line(lastLine).to;
+  const selectedText = selection.toString().replaceAll("\u00a0", " ").trim();
+  if (!selectedText) return null;
+
+  const source = doc.sliceString(windowFrom, windowTo);
+  const exactIndex = source.indexOf(selectedText);
+  if (exactIndex >= 0) return { from: windowFrom + exactIndex, to: windowFrom + exactIndex + selectedText.length };
+
+  const comparable = [];
+  const sourceIndexes = [];
+  let previousWasSpace = false;
+  for (let index = 0; index < source.length; index += 1) {
+    const character = source[index];
+    if (/[*_`~#{}]/.test(character)) continue;
+    if (/\s/.test(character)) {
+      if (previousWasSpace) continue;
+      comparable.push(" ");
+      sourceIndexes.push(index);
+      previousWasSpace = true;
+      continue;
+    }
+    comparable.push(character);
+    sourceIndexes.push(index);
+    previousWasSpace = false;
+  }
+
+  const normalizedSelection = selectedText.replace(/\s+/g, " ");
+  const normalizedSource = comparable.join("");
+  const normalizedIndex = normalizedSource.indexOf(normalizedSelection);
+  if (normalizedIndex < 0) return null;
+  const from = windowFrom + sourceIndexes[normalizedIndex];
+  const lastIndex = normalizedIndex + normalizedSelection.length - 1;
+  return { from, to: windowFrom + sourceIndexes[lastIndex] + 1 };
+};
+
 const hideBodyScrollIf = (val) => (document.documentElement.style.overflow = val ? "hidden" : "visible");
 
 const MystEditor = () => {
-  const { editorView, cache, options, collab, text, suggestMode, integrityPanelOpen } = useContext(MystState);
+  const editorState = useContext(MystState);
+  const { editorView, cache, options, collab, text, suggestMode, integrityPanelOpen, manuscriptSelection, integrityExperience, workspaceView } =
+    editorState;
   const fullscreen = useSignal(false);
   useSignalEffect(() => hideBodyScrollIf(fullscreen.value));
 
   const preview = useRef(null);
+  const [previewVerify, setPreviewVerify] = useState(null);
   useEffect(() => {
     text.preview.value = preview.current;
   }, [preview.current]);
@@ -139,6 +235,25 @@ const MystEditor = () => {
     [options.includeButtons.value, buttonActions],
   );
 
+  const syncPreviewSelection = () => {
+    const previewElement = preview.current;
+    const root = previewElement?.getRootNode?.();
+    const browserSelection = root?.getSelection?.() || window.getSelection();
+    const sourceRange = sourceRangeForPreviewSelection(browserSelection, previewElement, text.lineMap, editorView.value);
+    if (!sourceRange) {
+      setPreviewVerify(null);
+      return;
+    }
+
+    editorView.value.dispatch({ selection: { anchor: sourceRange.from, head: sourceRange.to } });
+    manuscriptSelection.value = deriveManuscriptSelection(editorView.value.state);
+    const rect = browserSelection.getRangeAt(0).getBoundingClientRect();
+    setPreviewVerify({
+      top: Math.max(8, rect.top - 34),
+      left: Math.min(window.innerWidth - 70, Math.max(8, rect.left + rect.width / 2 - 28)),
+    });
+  };
+
   return (
     <StyleSheetManager target={options.parent}>
       <MystContainer id="myst-css-namespace">
@@ -152,6 +267,8 @@ const MystEditor = () => {
             {options.collaboration.value.enabled && collab.value.lockMsg.value && <StatusBanner>{collab.value.lockMsg}</StatusBanner>}
             <ResearchWorkspace>
               <MystWrapper className="myst-editor-wrapper" fullscreen={fullscreen.value}>
+                {options.integrityPanel.value && <ResearchActivityBar />}
+                {options.integrityPanel.value && integrityPanelOpen.value && <ResearchIntegrityPanel />}
                 <FlexWrapper id="editor-wrapper" className="flex-wrapper">
                   <CodeMirror />
                 </FlexWrapper>
@@ -160,6 +277,9 @@ const MystEditor = () => {
                     className="myst-preview"
                     ref={preview}
                     mode={options.mode.value}
+                    onMouseUp={syncPreviewSelection}
+                    onKeyUp={syncPreviewSelection}
+                    onScroll={() => setPreviewVerify(null)}
                     onClick={(ev) => {
                       try {
                         if (options.onPreviewClick.value?.(ev)) return;
@@ -197,7 +317,23 @@ const MystEditor = () => {
                     <TableOfContents />
                   </FlexWrapper>
                 )}
-                {options.integrityPanel.value && integrityPanelOpen.value && <ResearchIntegrityPanel />}
+                {previewVerify && (
+                  <PreviewVerifyButton
+                    $left={previewVerify.left}
+                    $top={previewVerify.top}
+                    data-testid="preview-verify"
+                    type="button"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      workspaceView.value = "paper";
+                      integrityExperience.value = "verify";
+                      integrityPanelOpen.value = true;
+                      setPreviewVerify(null);
+                    }}
+                  >
+                    Verify
+                  </PreviewVerifyButton>
+                )}
               </MystWrapper>
             </ResearchWorkspace>
           </EditorParent>

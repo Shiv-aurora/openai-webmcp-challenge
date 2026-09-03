@@ -316,6 +316,7 @@ export function createMystState(/** @type {typeof defaults} */ opts) {
     error: signal(null),
     suggestMode: signal(false),
     integrityPanelOpen: signal(fullOptions.integrityPanel),
+    integrityExperience: signal("xray"),
     manuscriptSelection: signal(createEmptyManuscriptSelection()),
     workspaceView: signal("paper"),
     activeExperimentId: signal(null),

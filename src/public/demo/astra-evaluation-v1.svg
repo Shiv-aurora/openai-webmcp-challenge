@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="320" viewBox="0 0 760 320" role="img" aria-labelledby="title desc">
+  <title id="title">GPT-6 Astra candidate evaluation</title>
+  <desc id="desc">Grouped bars compare the dense 34B baseline and Astra MoE candidate on reasoning, tool completion, and 128k retrieval.</desc>
+  <rect width="760" height="320" rx="12" fill="#fbfbfa"/>
+  <text x="42" y="40" font-family="system-ui,sans-serif" font-size="18" font-weight="650" fill="#242725">Astra capability profile · candidate</text>
+  <text x="42" y="62" font-family="system-ui,sans-serif" font-size="12" fill="#777b78">Superseded experiment · astra-run-239 · synthetic</text>
+  <line x1="78" y1="252" x2="712" y2="252" stroke="#d9dcda"/>
+  <line x1="78" y1="88" x2="78" y2="252" stroke="#d9dcda"/>
+  <g font-family="system-ui,sans-serif" font-size="11" fill="#737874">
+    <text x="70" y="256" text-anchor="end">0</text><text x="70" y="215" text-anchor="end">25</text><text x="70" y="174" text-anchor="end">50</text><text x="70" y="133" text-anchor="end">75</text><text x="70" y="92" text-anchor="end">100</text>
+  </g>
+  <g fill="#d3d7d4"><rect x="142" y="147" width="34" height="105" rx="3"/><rect x="330" y="157" width="34" height="95" rx="3"/><rect x="518" y="135" width="34" height="117" rx="3"/></g>
+  <g fill="#414a45"><rect x="182" y="126" width="34" height="126" rx="3"/><rect x="370" y="119" width="34" height="133" rx="3"/><rect x="558" y="100" width="34" height="152" rx="3"/></g>
+  <g font-family="ui-monospace,monospace" font-size="11" text-anchor="middle"><text x="159" y="140" fill="#737874">63.8</text><text x="199" y="119" fill="#242725">76.9</text><text x="347" y="150" fill="#737874">58.1</text><text x="387" y="112" fill="#242725">81.2</text><text x="535" y="128" fill="#737874">71.4</text><text x="575" y="93" fill="#242725">92.6</text></g>
+  <g font-family="system-ui,sans-serif" font-size="12" text-anchor="middle" fill="#555b57"><text x="179" y="278">Reasoning</text><text x="367" y="278">Tool completion</text><text x="555" y="278">128k retrieval</text></g>
+  <g font-family="system-ui,sans-serif" font-size="11"><rect x="580" y="31" width="10" height="10" rx="2" fill="#d3d7d4"/><text x="596" y="40" fill="#777b78">Dense 34B</text><rect x="660" y="31" width="10" height="10" rx="2" fill="#414a45"/><text x="676" y="40" fill="#555b57">Astra</text></g>
+  <text x="712" y="62" text-anchor="end" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#a34d46">STALE</text>
+</svg>

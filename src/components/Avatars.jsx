@@ -11,7 +11,11 @@ const AvatarsWrapper = styled.div`
 
   .avatar {
     border-radius: 50%;
-    border: 2px solid;
+    /* The ring is the user's cursor color, so it has to stay saturated to stay meaningful. Thinning
+       it and floating each avatar on a bar-colored halo keeps that link readable without letting
+       the cluster become the loudest thing in an otherwise monochrome header. */
+    border: 1.5px solid;
+    box-shadow: 0 0 0 1.5px var(--navbar-bg);
     height: 24px;
     width: 24px;
     margin: 0 0 0 -6px;

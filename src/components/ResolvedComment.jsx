@@ -42,7 +42,7 @@ const OptionsContainer = styled.span`
 const DropdownContainer = styled.div`
   align-items: center;
   position: absolute;
-  background-color: var(--panel-bg);
+  background-color: var(--paper);
   transform: translate(calc(-100% + 22px), calc(100% - 10px));
   width: max-content;
   border: 1px solid var(--border);

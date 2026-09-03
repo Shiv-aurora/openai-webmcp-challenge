@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test("Research X-Ray explains an empty integrity map without inventing provenance", async ({ page }) => {
-  await page.goto("/?collab=false");
+  await page.goto("/?collab=false&empty=true");
   await page.waitForSelector(".cm-content");
 
   await page.getByTestId("toggle-xray").click();

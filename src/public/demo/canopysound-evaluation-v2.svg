@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="300" viewBox="0 0 700 300" role="img" aria-labelledby="title desc">
+  <title id="title">CanopySound locked field evaluation</title>
+  <desc id="desc">Bar chart comparing test macro F1 and rare species recall across the CNN baseline, transformer, and locked final run.</desc>
+  <rect width="700" height="300" fill="#fbfbfa"/>
+  <text x="42" y="38" font-family="system-ui,sans-serif" font-size="18" font-weight="650" fill="#242725">Locked field evaluation</text>
+  <text x="42" y="60" font-family="system-ui,sans-serif" font-size="12" fill="#777b78">Current experiment · audio-run-154</text>
+  <line x1="78" y1="236" x2="650" y2="236" stroke="#d9dcda"/><line x1="78" y1="86" x2="78" y2="236" stroke="#d9dcda"/>
+  <rect x="124" y="127" width="38" height="109" fill="#aeb5b0"/><rect x="168" y="145" width="38" height="91" fill="#d3d7d4"/>
+  <rect x="298" y="111" width="38" height="125" fill="#7f8983"/><rect x="342" y="121" width="38" height="115" fill="#b6bdb8"/>
+  <rect x="472" y="105" width="38" height="131" fill="#356d54"/><rect x="516" y="110" width="38" height="126" fill="#74a188"/>
+  <text x="165" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#555b57">CNN</text><text x="339" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#555b57">Transformer</text><text x="513" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#555b57">Locked final</text>
+  <text x="491" y="98" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#28513f">87.6</text><text x="535" y="103" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" fill="#3f7058">84.2</text>
+  <text x="650" y="38" text-anchor="end" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#356d54">CURRENT</text>
+</svg>

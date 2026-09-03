@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="300" viewBox="0 0 700 300" role="img" aria-labelledby="title desc">
+  <title id="title">CanopySound field evaluation, version one</title>
+  <desc id="desc">Bar chart comparing test macro F1 and rare species recall for the CNN baseline and first audio transformer run.</desc>
+  <rect width="700" height="300" fill="#fbfbfa"/>
+  <text x="42" y="38" font-family="system-ui,sans-serif" font-size="18" font-weight="650" fill="#242725">Field evaluation · v1</text>
+  <text x="42" y="60" font-family="system-ui,sans-serif" font-size="12" fill="#777b78">Superseded experiment · audio-run-139</text>
+  <line x1="78" y1="236" x2="650" y2="236" stroke="#d9dcda"/>
+  <line x1="78" y1="86" x2="78" y2="236" stroke="#d9dcda"/>
+  <rect x="150" y="127" width="54" height="109" fill="#aeb5b0"/><rect x="216" y="145" width="54" height="91" fill="#d3d7d4"/>
+  <rect x="390" y="111" width="54" height="125" fill="#414a45"/><rect x="456" y="121" width="54" height="115" fill="#859189"/>
+  <text x="210" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#555b57">CNN baseline</text>
+  <text x="450" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#555b57">Audio transformer</text>
+  <text x="177" y="120" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#343835">72.4</text><text x="243" y="138" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#666b67">60.4</text>
+  <text x="417" y="104" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#343835">83.6</text><text x="483" y="114" text-anchor="middle" font-family="ui-monospace,monospace" font-size="12" fill="#666b67">76.6</text>
+  <text x="650" y="38" text-anchor="end" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#a34d46">STALE</text>
+</svg>

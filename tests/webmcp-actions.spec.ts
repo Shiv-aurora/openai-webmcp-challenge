@@ -26,12 +26,12 @@ const installWebMCPHarness = async (page: Page) => {
 
 const loadWorkspace = async (page: Page, collaboration = false) => {
   await installWebMCPHarness(page);
-  await page.goto(collaboration ? "/" : "/?collab=false");
+  await page.goto(collaboration ? "/" : "/?collab=false&empty=true");
   await page.evaluate(() => localStorage.removeItem("myst/provenance/demo"));
   await page.reload();
   await page.waitForSelector(".cm-content");
   if (collaboration) await page.waitForFunction(() => (window as any).myst_editor?.demo?.state?.collab?.value?.ready?.value === true);
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(36);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(37);
 };
 
 const selectText = async (page: Page, needle: string) => {
@@ -58,7 +58,7 @@ const executeTool = async (page: Page, name: string, input: Record<string, unkno
 const payload = (result: any) => result.structuredContent || JSON.parse(result.content[0].text);
 
 const createStressClaim = async (page: Page) => {
-  const text = "18.2% improvement in stress-regime accuracy";
+  const text = "76.9% on the Astra Reasoning Index";
   await selectText(page, text);
   const result = payload(await executeTool(page, "create_claim", { expectedText: text }));
   expect(result.ok).toBe(true);
@@ -70,7 +70,7 @@ test.describe("review-safe WebMCP actions", () => {
 
   test("registers the Phase 5 surface with current WebMCP annotations", async ({ page }) => {
     const tools = await page.evaluate(async () => (document as any).modelContext.getTools());
-    expect(tools).toHaveLength(36);
+    expect(tools).toHaveLength(37);
 
     const byName = new Map(tools.map((tool: any) => [tool.name, tool]));
     for (const name of [
@@ -102,11 +102,11 @@ test.describe("review-safe WebMCP actions", () => {
     const read = payload(await executeTool(page, "get_claim"));
     expect(read.tracked).toBe(true);
     expect(read.claim.id).toBe(claim.id);
-    expect(read.claim.text).toContain("18.2% improvement");
+    expect(read.claim.text).toContain("76.9% on the Astra Reasoning Index");
   });
 
   test("fails claim creation safely when the agent's selected text is stale", async ({ page }) => {
-    const text = "18.2% improvement in stress-regime accuracy";
+    const text = "76.9% on the Astra Reasoning Index";
     await selectText(page, text);
     const before = await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()));
     const result = await executeTool(page, "create_claim", { expectedText: "18.1% improvement in stress-regime accuracy" });
@@ -124,7 +124,7 @@ test.describe("review-safe WebMCP actions", () => {
         type: "experiment-result",
         label: "results/stress_eval.json",
         artifactId: "stress-eval-v7",
-        metric: "stress_accuracy_improvement=18.2%",
+        metric: "reasoning_index=76.9%",
         relation: "supports",
       }),
     );
@@ -135,12 +135,12 @@ test.describe("review-safe WebMCP actions", () => {
     const updated = payload(
       await executeTool(page, "update_evidence", {
         evidenceId: attached.evidence.id,
-        metric: "stress_accuracy_improvement=18.2%; n=481000",
+        metric: "reasoning_index=76.9%; n=12480",
         relation: "derived-from",
         notes: "Recomputed from the locked stress-regime evaluation artifact.",
       }),
     );
-    expect(updated.evidence.metric).toContain("n=481000");
+    expect(updated.evidence.metric).toContain("n=12480");
     expect(updated.link.relation).toBe("derived-from");
 
     const verified = payload(await executeTool(page, "set_verification_state", { verificationState: "verified" }));
@@ -209,18 +209,18 @@ test.describe("review-safe WebMCP actions", () => {
   });
 
   test("guards selected replacement with exact text and exposes the pending review diff", async ({ page }) => {
-    const text = "The central result is a measurable improvement during high-volatility periods.";
+    const text = "All names and values in this project are synthetic and are provided solely to demonstrate the workflow.";
     await selectText(page, text);
     const before = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
     const stale = await executeTool(page, "replace_selected_content", {
-      expectedText: "The central result changed elsewhere.",
+      expectedText: "The synthetic project changed elsewhere.",
       replacementText: "A replacement that must not be staged.",
     });
     expect(stale.isError).toBe(true);
     expect(payload(stale).error.code).toBe("STALE_SELECTION");
     expect(await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString())).toBe(before);
 
-    const replacement = "The central result is strongest during high-volatility periods.";
+    const replacement = "The project is synthetic and provided solely to demonstrate the workflow.";
     const staged = payload(await executeTool(page, "replace_selected_content", { expectedText: text, replacementText: replacement }));
     expect(staged.reviewRequired).toBe(true);
     expect(staged.applied).toBe(false);
@@ -238,17 +238,17 @@ test.describe("review-safe WebMCP actions", () => {
 
     const result = payload(await executeTool(page, "navigate_to_object", { objectId: claim.id }));
     expect(result.ok).toBe(true);
-    expect(result.selection.snippet).toContain("18.2% improvement");
+    expect(result.selection.snippet).toContain("76.9% on the Astra Reasoning Index");
     expect(await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString())).toBe(beforeDoc);
     expect(await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()))).toBe(beforeProvenance);
   });
 
   test("navigates to a pending research diff without accepting it", async ({ page }) => {
-    const text = "The central result is a measurable improvement during high-volatility periods.";
+    const text = "All names and values in this project are synthetic and are provided solely to demonstrate the workflow.";
     await selectText(page, text);
     await executeTool(page, "replace_selected_content", {
       expectedText: text,
-      replacementText: "The central result is strongest during high-volatility periods.",
+      replacementText: "The project is synthetic and provided solely to demonstrate the workflow.",
     });
     const diffs = payload(await executeTool(page, "get_research_diffs"));
     const diff = diffs.diffs[0];
@@ -267,7 +267,7 @@ test.describe("review-safe WebMCP actions", () => {
 
 test("inserts an additive comment without overwriting an existing thread", async ({ page }) => {
   await loadWorkspace(page, true);
-  const text = "18.2% improvement in stress-regime accuracy";
+  const text = "76.9% on the Astra Reasoning Index";
   await selectText(page, text);
   const first = payload(
     await executeTool(page, "insert_comment", { text: "Agent review: confirm this result against the locked evaluation artifact." }),
@@ -297,7 +297,7 @@ test("runs deterministic Verify This through WebMCP", async ({ page }) => {
       objectId: claim.id,
       label: "results/stress_eval.json",
       type: "experiment-result",
-      metric: "stress_accuracy_improvement=16.8%",
+      metric: "reasoning_index=78.4%",
       artifactId: "stress-eval-v8",
       relation: "supports",
     }),
@@ -306,7 +306,7 @@ test("runs deterministic Verify This through WebMCP", async ({ page }) => {
   const result = payload(await executeTool(page, "verify_claim", { claimId: claim.id }));
   expect(result.ok).toBe(true);
   expect(result.verification.outcome).toBe("contradicted");
-  expect(result.verification.suggestedValue.raw).toBe("16.8%");
+  expect(result.verification.suggestedValue.raw).toBe("78.4%");
   expect(result.verification.evidenceReferences[0].evidenceId).toBe(attached.evidence.id);
   await expect(page.getByTestId("verification-result")).toContainText("Contradicted");
 });
@@ -318,7 +318,7 @@ test("records an external agent conclusion without changing manuscript text", as
     await executeTool(page, "attach_evidence", {
       objectId: claim.id,
       label: "results/stress_eval.json",
-      metric: "stress_accuracy_improvement=18.2%",
+      metric: "reasoning_index=76.9%",
       relation: "supports",
     }),
   );
@@ -349,7 +349,7 @@ test("detects, navigates, defers, and stages an evidence-driven Research Diff", 
     await executeTool(page, "attach_evidence", {
       objectId: claim.id,
       label: "results/stress_eval.json",
-      metric: "stress_accuracy_improvement=16.8%",
+      metric: "reasoning_index=78.4%",
       relation: "supports",
     }),
   );
@@ -358,12 +358,12 @@ test("detects, navigates, defers, and stages an evidence-driven Research Diff", 
   const listed = payload(await executeTool(page, "get_research_diffs"));
   expect(listed.researchDiffs).toHaveLength(1);
   const diff = listed.researchDiffs[0];
-  expect(diff.changes[0]).toMatchObject({ before: "18.2%", after: "16.8%" });
+  expect(diff.changes[0]).toMatchObject({ before: "76.9%", after: "78.4%" });
 
   const navigated = payload(await executeTool(page, "navigate_to_research_diff", { diffId: diff.id }));
   expect(navigated.ok).toBe(true);
   expect(navigated.selection.trackedObjectId).toBeUndefined();
-  expect(navigated.selection.snippet).toContain("18.2%");
+  expect(navigated.selection.snippet).toContain("76.9%");
 
   const deferred = payload(
     await executeTool(page, "review_research_diff", { diffId: diff.id, decision: "deferred", reason: "Wait for the locked run." }),
@@ -375,5 +375,5 @@ test("detects, navigates, defers, and stages an evidence-driven Research Diff", 
   expect(staged.reviewRequired).toBe(true);
   expect(staged.applied).toBe(false);
   const source = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
-  expect(source).toContain("{~~18.2% improvement in stress-regime accuracy~>16.8% improvement in stress-regime accuracy~~}");
+  expect(source).toContain("{~~76.9% on the Astra Reasoning Index~>78.4% on the Astra Reasoning Index~~}");
 });

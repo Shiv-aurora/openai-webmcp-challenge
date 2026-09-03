@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from "preact/hooks";
+import { useContext, useEffect, useMemo, useState } from "preact/hooks";
 import { styled } from "styled-components";
 import { MystState } from "../mystState";
 import { ensureProvenanceStore, EXPERIMENT_STATUSES } from "../integrity/provenance";
@@ -11,7 +11,7 @@ const Shell = styled.div`
   width: 100%;
   height: calc(100% - 45px);
   min-height: 0;
-  background: var(--paper);
+  background: var(--canvas);
 `;
 
 /** Tab strip rather than a stepper: the three stages are places you move between freely, and an
@@ -23,7 +23,9 @@ const Lifecycle = styled.nav`
   height: 40px;
   padding: 0 16px;
   border-bottom: 1px solid var(--hairline);
-  background: var(--paper);
+  /* One step below the topbar and below the content it switches, so the navigation layer reads as
+     chrome rather than as the top of the document. */
+  background: var(--panel-bg);
   box-sizing: border-box;
 `;
 
@@ -237,6 +239,161 @@ const SectionTitle = styled.h2`
   font-weight: 600;
   letter-spacing: -0.01em;
 `;
+
+const ChartGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin: 14px 0 22px;
+
+  @media (max-width: 850px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ChartFigure = styled.figure`
+  min-width: 0;
+  margin: 0;
+  padding: 14px 14px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--panel-bg);
+
+  figcaption {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  figcaption span {
+    color: var(--ink-faint);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 400;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+`;
+
+const formatMetric = (value) => {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return String(value ?? "—");
+  return number > 0 && number <= 1 ? `${(number * 100).toFixed(1)}%` : number.toLocaleString(undefined, { maximumFractionDigits: 3 });
+};
+
+function RunPerformanceChart({ runs, activeId }) {
+  const metricKey = runs.some((item) => Number.isFinite(Number(item.metrics?.reasoning_index))) ? "reasoning_index" : "test_macro_f1";
+  const metricLabel = metricKey === "reasoning_index" ? "Astra Reasoning Index" : "Test macro-F1";
+  const values = runs.filter((item) => Number.isFinite(Number(item.metrics?.[metricKey])));
+  if (!values.length) return null;
+  const width = 360;
+  const height = 190;
+  const left = 34;
+  const bottom = 36;
+  const plotHeight = height - bottom - 14;
+  const slot = (width - left - 10) / values.length;
+  const lowerBound = metricKey === "reasoning_index" ? 0.45 : 0.55;
+  const upperBound = metricKey === "reasoning_index" ? 0.85 : 0.95;
+  const ticks = metricKey === "reasoning_index" ? [0.5, 0.6, 0.7, 0.8] : [0.6, 0.7, 0.8, 0.9];
+  return (
+    <ChartFigure data-testid="run-performance-chart">
+      <figcaption>
+        {metricLabel} <span>tracked evaluation runs</span>
+      </figcaption>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${metricLabel} across experiment runs`}>
+        {ticks.map((tick) => {
+          const y = 14 + plotHeight * (1 - (tick - lowerBound) / (upperBound - lowerBound));
+          return (
+            <g key={tick}>
+              <line x1={left} x2={width - 10} y1={y} y2={y} stroke="var(--hairline)" />
+              <text x={left - 6} y={y + 3} text-anchor="end" fill="var(--ink-faint)" font-size="9">
+                {Math.round(tick * 100)}
+              </text>
+            </g>
+          );
+        })}
+        {values.map((item, index) => {
+          const value = Number(item.metrics[metricKey]);
+          const barHeight = Math.max(2, plotHeight * ((value - lowerBound) / (upperBound - lowerBound)));
+          const x = left + index * slot + slot * 0.2;
+          const y = 14 + plotHeight - barHeight;
+          return (
+            <g key={item.id}>
+              <rect x={x} y={y} width={slot * 0.58} height={barHeight} rx="2" fill={item.id === activeId ? "var(--ink)" : "var(--gray-300)"} />
+              <text x={x + slot * 0.29} y={y - 5} text-anchor="middle" fill="var(--ink-secondary)" font-size="9">
+                {(value * 100).toFixed(1)}
+              </text>
+              <text x={x + slot * 0.29} y={height - 16} text-anchor="middle" fill="var(--ink-faint)" font-size="9">
+                #{item.name.match(/#(\d+)/)?.[1] || index + 1}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </ChartFigure>
+  );
+}
+
+function MetricHistoryChart({ metricHistory }) {
+  const series = Object.entries(metricHistory || {}).find(([, points]) => Array.isArray(points) && points.length > 1);
+  if (!series) return null;
+  const [key, points] = series;
+  const width = 360;
+  const height = 190;
+  const values = points.map((point) => Number(point.value));
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const coords = points.map((point, index) => ({
+    x: 28 + (index / Math.max(1, points.length - 1)) * 316,
+    y: 18 + (1 - (Number(point.value) - min) / range) * 122,
+    value: point.value,
+    step: point.step,
+  }));
+  return (
+    <ChartFigure data-testid="metric-history-chart">
+      <figcaption>
+        {key.replaceAll("_", " ")} <span>{points.length} logged steps</span>
+      </figcaption>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${key} metric history`}>
+        {[18, 79, 140].map((y) => (
+          <line key={y} x1="28" x2="344" y1={y} y2={y} stroke="var(--hairline)" />
+        ))}
+        <polyline
+          points={coords.map((point) => `${point.x},${point.y}`).join(" ")}
+          fill="none"
+          stroke="var(--ink)"
+          stroke-width="2"
+          stroke-linejoin="round"
+        />
+        {coords.map((point) => (
+          <circle key={point.step} cx={point.x} cy={point.y} r="2.5" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.5">
+            <title>{`Step ${point.step}: ${formatMetric(point.value)}`}</title>
+          </circle>
+        ))}
+        <text x="28" y="160" fill="var(--ink-faint)" font-size="9">
+          step {points[0].step}
+        </text>
+        <text x="344" y="160" text-anchor="end" fill="var(--ink-faint)" font-size="9">
+          step {points.at(-1).step}
+        </text>
+        <text x="344" y="12" text-anchor="end" fill="var(--ink-secondary)" font-size="10">
+          latest {formatMetric(points.at(-1).value)}
+        </text>
+      </svg>
+    </ChartFigure>
+  );
+}
 
 const Form = styled.form`
   display: grid;
@@ -483,7 +640,7 @@ function ExperimentsWorkspace({ provenance }) {
 
   const loadDemo = () => {
     provenance.replaceData(buildDemoResearchProject(editorState.text.text.value));
-    editorState.activeExperimentId.value = "stress-run-08";
+    editorState.activeExperimentId.value = "astra-run-254";
   };
 
   return (
@@ -531,7 +688,7 @@ function ExperimentsWorkspace({ provenance }) {
         <Content>
           <Heading>{creating ? "Record a research run" : active ? active.name : "What did the research produce?"}</Heading>
           <Intro>
-            Runs are useful here because they create traceable evidence—not because Potter’s Wheel is trying to orchestrate infrastructure.
+            Synthetic pretraining, post-training, and evaluation runs—tracked with the same lineage as a real model program.
           </Intro>
 
           {creating && (
@@ -580,6 +737,22 @@ function ExperimentsWorkspace({ provenance }) {
                   <dd>{active.sourceCommit ? <Mono>{active.sourceCommit}</Mono> : "—"}</dd>
                 </PropertyRow>
                 <PropertyRow>
+                  <dt>Duration</dt>
+                  <dd>
+                    {active.startedAt && active.completedAt
+                      ? `${Math.round((new Date(active.completedAt) - new Date(active.startedAt)) / 60000)} min`
+                      : "—"}
+                  </dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Tags</dt>
+                  <dd>
+                    {Object.entries(active.tags || {})
+                      .map(([key, value]) => `${key}:${value}`)
+                      .join(" · ") || "—"}
+                  </dd>
+                </PropertyRow>
+                <PropertyRow>
                   <dt>Method</dt>
                   <dd>{active.method || "—"}</dd>
                 </PropertyRow>
@@ -624,6 +797,10 @@ function ExperimentsWorkspace({ provenance }) {
 
               <Section>
                 <SectionTitle>Metrics</SectionTitle>
+                <ChartGrid>
+                  <RunPerformanceChart runs={data.experiments} activeId={active.id} />
+                  <MetricHistoryChart metricHistory={active.metricHistory} />
+                </ChartGrid>
                 {Object.entries(active.metrics).length ? (
                   <KeyValues>
                     {Object.entries(active.metrics).map(([key, value]) => {
@@ -1124,6 +1301,30 @@ export function ResearchWorkspace({ children }) {
   const data = provenance.data.value;
   const view = editorState.workspaceView.value;
   const linkedCount = useMemo(() => new Set(data.links.map((link) => link.objectId)).size, [data.links]);
+
+  useEffect(() => {
+    const allowEmpty = new URLSearchParams(window.location.search).get("empty") === "true";
+    const isEmpty = !data.experiments.length && !data.objects.length && !data.evidence.length && !data.links.length;
+    const isPreviousDemo =
+      (!!data.demoProject && data.demoProject !== "gpt6-astra-v1") ||
+      data.experiments.some((run) => run.id.startsWith("audio-run-")) ||
+      (!data.demoProject && data.experiments.length > 0 && data.experiments.every((run) => run.id.startsWith("stress-run-")));
+    const source = editorState.editorView.value?.state.doc.toString() || editorState.text.text.value || "";
+    const isPreviousManuscript = source.includes("Regime-Aware Volatility Forecasting");
+    const isLegacyCanopySoundManuscript = source.includes("# CanopySound Bird Call Classification");
+    const isCanopySoundManuscript = source.includes("# CanopySound: Domain-Robust Bioacoustic Classification");
+    const isAstraManuscript = source.includes("# Making of GPT-6 Astra");
+    if (!allowEmpty && (isPreviousDemo || (isEmpty && (isAstraManuscript || isCanopySoundManuscript || isLegacyCanopySoundManuscript || isPreviousManuscript)))) {
+      const manuscript = (isPreviousManuscript || isLegacyCanopySoundManuscript || isCanopySoundManuscript) && window.__demoResearchText ? window.__demoResearchText : source;
+      if (manuscript !== source && editorState.editorView.value) {
+        editorState.editorView.value.dispatch({ changes: { from: 0, to: source.length, insert: manuscript } });
+      }
+      provenance.replaceData(buildDemoResearchProject(manuscript));
+      editorState.activeExperimentId.value = "astra-run-254";
+    }
+    // This migration intentionally runs once: later graph edits must never trigger a demo reset.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <Shell>

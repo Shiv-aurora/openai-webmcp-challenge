@@ -94,7 +94,7 @@ const MoreIcon = () => (
   </svg>
 );
 
-const ButtonGroup = ({ buttons, clickedId, mainButtonsNum = buttons.value.length }) => {
+const ButtonGroup = ({ buttons, clickedId, mainButtonsNum = buttons.value.length, showOverflow = true }) => {
   useEffect(() => {
     buttons.value[clickedId].action();
   }, []);
@@ -119,32 +119,34 @@ const ButtonGroup = ({ buttons, clickedId, mainButtonsNum = buttons.value.length
           {typeof button.icon == "function" ? <button.icon /> : <img src={button.icon} />}
         </RadioButton>
       ))}
-      <div>
-        <RadioButton className="icon radio-icon more" title="More views" type="button" $active={clickedId >= mainButtonsNum}>
-          <MoreIcon />
-        </RadioButton>
-        <div className="btn-dropdown">
-          <div className="dropdown-content">
-            <div className="dropdown-btns">
-              {dropdownButtons.value.map((button, i) => (
-                <DropdownButton
-                  type="button"
-                  disabled={button.disabled}
-                  key={button.id}
-                  name={button.id}
-                  onClick={() => button.action()}
-                  onMouseOver={() => button.hover?.()}
-                  title={button.tooltip}
-                  $active={i + mainButtonsNum === clickedId}
-                >
-                  {typeof button.icon == "function" ? <button.icon /> : <img src={button.icon} />}
-                  <span>{button.text}</span>
-                </DropdownButton>
-              ))}
+      {showOverflow && dropdownButtons.value.length > 0 && (
+        <div>
+          <RadioButton className="icon radio-icon more" title="More views" type="button" $active={clickedId >= mainButtonsNum}>
+            <MoreIcon />
+          </RadioButton>
+          <div className="btn-dropdown">
+            <div className="dropdown-content">
+              <div className="dropdown-btns">
+                {dropdownButtons.value.map((button, i) => (
+                  <DropdownButton
+                    type="button"
+                    disabled={button.disabled}
+                    key={button.id}
+                    name={button.id}
+                    onClick={() => button.action()}
+                    onMouseOver={() => button.hover?.()}
+                    title={button.tooltip}
+                    $active={i + mainButtonsNum === clickedId}
+                  >
+                    {typeof button.icon == "function" ? <button.icon /> : <img src={button.icon} />}
+                    <span>{button.text}</span>
+                  </DropdownButton>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </GroupContainer>
   );
 };

@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { buildDemoResearchProject } from "../demo/researchProject";
 import { MystState } from "../mystState";
 import { detectResearchDiffs, groupResearchDiffs } from "./researchDiff";
-import { deriveManuscriptSelection, manuscriptStats } from "./selection";
+import { deriveManuscriptSelection } from "./selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "./provenance";
 import { verifyQuantitativeClaim } from "./verification";
 import { refreshXray, resolveXrayRange } from "./xray";
@@ -21,8 +21,9 @@ const Panel = styled.aside`
   @media (max-width: 1180px) {
     position: absolute;
     top: 12px;
-    right: 12px;
+    left: 60px;
     bottom: 12px;
+    right: auto;
     margin-left: 0;
     max-width: calc(100% - 24px);
     border-radius: var(--radius-lg);
@@ -30,8 +31,9 @@ const Panel = styled.aside`
   }
 
   @media (max-width: 680px) {
-    left: 12px;
+    right: 12px;
     width: auto;
+    max-width: none;
   }
 
   @media print {
@@ -51,61 +53,23 @@ const PanelTop = styled.div`
 
 const Header = styled.header`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 14px 12px 18px;
-`;
-
-const Kicker = styled.div`
-  margin-bottom: 3px;
-  color: var(--ink-faint);
-  font-size: 12px;
-  font-weight: 500;
+  min-height: 42px;
+  padding: 6px 8px 6px 14px;
 `;
 
 const Title = styled.h2`
   margin: 0;
-  font-size: 17px;
+  font-size: 14px;
   line-height: 1.3;
   font-weight: 600;
   letter-spacing: -0.015em;
 `;
 
-const PromiseLine = styled.p`
-  max-width: 280px;
-  margin: 6px 0 0;
-  color: var(--ink-tertiary);
-  font-size: 13px;
-  line-height: 1.5;
-`;
-
-const ExperienceNav = styled.nav`
-  display: flex;
-  gap: 16px;
-  padding: 0 18px;
-`;
-
-const ExperienceButton = styled.button`
-  padding: 0 1px 8px;
-  border: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
-  color: var(--ink-tertiary);
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  transition: color 20ms ease-in;
-
-  &:hover,
-  &:focus-visible {
-    color: var(--ink);
-  }
-`;
-
 const Section = styled.section`
-  padding: 20px 18px;
+  padding: 16px 14px;
   border-bottom: 1px solid var(--hairline);
   scroll-margin-top: 116px;
 
@@ -147,31 +111,49 @@ const Muted = styled.p`
   }
 `;
 
-/** Four counts as plain figure/label pairs. Dividers between them would imply they are being
- * compared with each other, which they are not. */
-const MetricGrid = styled.div`
+const SourceHistory = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px 8px;
-  margin-top: 16px;
+  margin-top: 18px;
+  border-top: 1px solid var(--hairline);
 `;
 
-const Metric = styled.div`
-  min-width: 0;
-`;
+const SourceRun = styled.button`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 10px;
+  padding: 9px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--hairline);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
 
-const MetricValue = styled.div`
-  font-size: 18px;
-  font-weight: 600;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-`;
+  &:hover {
+    background: var(--hover);
+  }
 
-const MetricLabel = styled.div`
-  margin-top: 3px;
-  color: var(--ink-tertiary);
-  font-size: 13px;
-  line-height: 1.3;
+  strong {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  code {
+    color: var(--ink-secondary);
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+
+  span {
+    grid-column: 1 / -1;
+    color: var(--ink-faint);
+    font-size: 11px;
+  }
 `;
 
 const SelectionHeading = styled.div`
@@ -493,7 +475,6 @@ export default function ResearchIntegrityPanel() {
   const [editing, setEditing] = useState(null);
 
   const selection = manuscriptSelection.value;
-  const stats = manuscriptStats(text.text.value);
   const provenanceStats = provenance.stats();
   const activeObject = provenance.findObjectForSelection(selection);
   const activeEvidence = activeObject ? provenance.evidenceForObject(activeObject.id) : [];
@@ -508,6 +489,14 @@ export default function ResearchIntegrityPanel() {
   const stateCounts = provenanceStats.stateCounts;
   const provenanceData = provenance.data.value;
   const researchDiffGroups = groupResearchDiffs(detectResearchDiffs(provenanceData));
+  const experience = editorState.integrityExperience.value;
+  const experienceTitle =
+    {
+      xray: "X-Ray",
+      github: "Source",
+      diff: "Diff",
+      verify: "Verify",
+    }[experience] || "Research";
 
   useEffect(() => {
     const markdown = text.text.value;
@@ -613,471 +602,452 @@ export default function ResearchIntegrityPanel() {
     provenance.reviewResearchDiff(diff.id, "in-review", { reviewRequired: true });
   };
 
-  const navigateExperience = (event, experience) => {
-    event.currentTarget.closest("aside")?.querySelector(`[data-experience="${experience}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   return (
-    <Panel aria-label="Research integrity" data-testid="integrity-panel">
+    <Panel aria-label="Research tools" data-testid="integrity-panel">
       <PanelTop>
         <Header>
-          <div>
-            <Kicker>{xrayActive ? "Global integrity map" : "Live provenance"}</Kicker>
-            <Title>{xrayActive ? "Research X-Ray" : "Research integrity"}</Title>
-            <PromiseLine>Every claim in your paper stays connected to the research that produced it.</PromiseLine>
-          </div>
+          <Title>{experienceTitle}</Title>
           <IconButton aria-label="Close research integrity panel" type="button" onClick={() => (integrityPanelOpen.value = false)}>
             <CloseIcon />
           </IconButton>
         </Header>
-
-        <ExperienceNav aria-label="Integrity workflows">
-          <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "xray")}>
-            Research X-Ray
-          </ExperienceButton>
-          <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "verify")}>
-            Verify This
-          </ExperienceButton>
-          <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "diff")}>
-            Research Diff
-          </ExperienceButton>
-        </ExperienceNav>
       </PanelTop>
 
-      <Section data-experience="xray">
-        <SectionHeading>Research X-Ray</SectionHeading>
-        <DefaultButton
-          $variant={xrayActive ? "outline" : "primary"}
-          aria-pressed={xrayActive}
-          data-testid="toggle-xray"
-          type="button"
-          onClick={() => {
-            const next = !provenance.xrayActive.peek();
-            provenance.xrayActive.value = next;
-            refreshXray(editorState.editorView.value, next, provenance.data.peek().objects);
-          }}
-        >
-          {xrayActive ? "Exit X-Ray" : "Enter X-Ray"}
-        </DefaultButton>
-        <Muted>
-          {xrayActive
-            ? "The manuscript is showing provenance health directly on every tracked research object."
-            : "Turn the manuscript into a visual integrity map without changing its content."}
-        </Muted>
-        {!provenanceStats.objectCount && (
-          <ButtonRow>
-            <DefaultButton
-              $variant="outline"
-              data-testid="load-demo-research"
-              type="button"
-              onClick={() => provenance.replaceData(buildDemoResearchProject(text.text.value))}
-            >
-              Start the deterministic demo
-            </DefaultButton>
-          </ButtonRow>
-        )}
-        {xrayActive && (
-          <>
-            <XraySummaryGrid data-testid="xray-summary">
-              {xrayStatuses.map((status) => (
-                <XraySummaryItem key={status}>
-                  <XrayCount $status={status} data-testid={`xray-count-${status}`}>
-                    {stateCounts[status] || 0}
-                  </XrayCount>
-                  <XrayLabel>{status === "needs-review" ? "Review" : statusLabels[status]}</XrayLabel>
-                </XraySummaryItem>
-              ))}
-            </XraySummaryGrid>
-            {xrayObjects.length ? (
-              <XrayList data-testid="xray-list">
-                {xrayObjects.map((object) => (
-                  <XrayItem
-                    aria-label={`Inspect ${objectLabel(object)} ${statusLabels[object.verificationState]}`}
-                    data-testid="xray-item"
-                    key={object.id}
-                    type="button"
-                    onClick={() => inspectXrayObject(object)}
-                  >
-                    <XrayItemTop>
-                      <span>{objectLabel(object)}</span>
-                      <Tag $status={object.verificationState}>{statusLabels[object.verificationState]}</Tag>
-                    </XrayItemTop>
-                    <XraySnippet>{object.text}</XraySnippet>
-                  </XrayItem>
-                ))}
-              </XrayList>
-            ) : (
-              <EmptyState>No tracked manuscript objects yet. Track a claim, method, figure, or table to populate X-Ray.</EmptyState>
-            )}
-          </>
-        )}
-      </Section>
-
-      <Section>
-        <SectionHeading>Provenance coverage</SectionHeading>
-        <CoverageRow>
-          <CoverageValue data-testid="linked-object-count">{provenanceStats.linkedObjectCount} linked</CoverageValue>
-          <Tag $status="tracked">{provenanceStats.objectCount} tracked</Tag>
-        </CoverageRow>
-        <Muted>Tracked manuscript objects remain connected to their evidence metadata across browser reloads.</Muted>
-        <MetricGrid>
-          <Metric>
-            <MetricValue data-testid="manuscript-section-count">{stats.sectionCount}</MetricValue>
-            <MetricLabel>Sections</MetricLabel>
-          </Metric>
-          <Metric>
-            <MetricValue data-testid="manuscript-word-count">{stats.wordCount}</MetricValue>
-            <MetricLabel>Words</MetricLabel>
-          </Metric>
-          <Metric>
-            <MetricValue data-testid="provenance-object-count">{provenanceStats.objectCount}</MetricValue>
-            <MetricLabel>Tracked objects</MetricLabel>
-          </Metric>
-          <Metric>
-            <MetricValue data-testid="evidence-count">{provenanceStats.evidenceCount}</MetricValue>
-            <MetricLabel>Evidence items</MetricLabel>
-          </Metric>
-        </MetricGrid>
-      </Section>
-
-      <Section>
-        <SectionHeading>Current selection</SectionHeading>
-        <SelectionHeading>
-          <SelectionKind data-testid="selection-kind">{selectionKind}</SelectionKind>
-          <Tag data-testid="selection-status" $status={selectionState}>
-            {selectionStatus}
-          </Tag>
-        </SelectionHeading>
-        {selection.snippet ? (
-          <>
-            <Snippet data-testid="selection-snippet">{selection.snippet}</Snippet>
-            <Meta>
-              <dt>Section</dt>
-              <dd>{selection.section?.title || "Front matter"}</dd>
-              <dt>Line</dt>
-              <dd>{selection.line}</dd>
-              <dt>Range</dt>
-              <dd>{selection.hasSelection ? "Explicit selection" : "Cursor context"}</dd>
-            </Meta>
-          </>
-        ) : (
-          <EmptyState data-testid="selection-snippet">
-            Select a claim, method statement, table, figure, or section to inspect its manuscript context.
-          </EmptyState>
-        )}
-      </Section>
-
-      <Section>
-        <SectionHeading>Provenance object</SectionHeading>
-        {activeObject ? (
-          <ObjectCard data-testid="provenance-object">
-            <div>
-              <ObjectTitle data-testid="tracked-object-kind">{objectLabel(activeObject)}</ObjectTitle>
-              <Muted>{activeObject.text}</Muted>
-            </div>
-            <Field $disabled={!activeEvidence.length}>
-              Verification state
-              <Select
-                aria-label="Verification state"
-                data-testid="verification-state"
-                disabled={!activeEvidence.length}
-                value={activeObject.verificationState}
-                onChange={(event) => provenance.updateObject(activeObject.id, { verificationState: event.currentTarget.value })}
-              >
-                {VERIFICATION_STATES.map((status) => (
-                  <option value={status} key={status}>
-                    {statusLabels[status] || prettyValue(status)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            {!activeEvidence.length && <EmptyState>Add evidence before changing the verification state.</EmptyState>}
+      {experience === "xray" && (
+        <Section data-experience="xray">
+          <DefaultButton
+            $variant={xrayActive ? "outline" : "primary"}
+            aria-pressed={xrayActive}
+            data-testid="toggle-xray"
+            type="button"
+            onClick={() => {
+              const next = !provenance.xrayActive.peek();
+              provenance.xrayActive.value = next;
+              refreshXray(editorState.editorView.value, next, provenance.data.peek().objects);
+            }}
+          >
+            {xrayActive ? "Exit X-Ray" : "Enter X-Ray"}
+          </DefaultButton>
+          {!provenanceStats.objectCount && (
             <ButtonRow>
               <DefaultButton
-                $variant="danger"
-                aria-label={`Remove tracked ${activeObject.kind}`}
+                $variant="outline"
+                data-testid="load-demo-research"
                 type="button"
-                onClick={() => {
-                  provenance.removeObject(activeObject.id);
-                  resetEvidenceForm();
-                }}
+                onClick={() => provenance.replaceData(buildDemoResearchProject(text.text.value))}
               >
-                Remove tracked object
+                Load demo
               </DefaultButton>
             </ButtonRow>
-          </ObjectCard>
-        ) : canTrack ? (
-          <>
-            <EmptyState>This {selectionKind.toLowerCase()} is not yet a durable provenance object.</EmptyState>
-            <ButtonRow>
-              <DefaultButton
-                $variant="primary"
-                data-testid="create-provenance-object"
-                type="button"
-                onClick={() => provenance.createObject(selection, requestedKind)}
-              >
-                {selection.kind === "text" ? "Mark as claim" : `Track ${selectionKind.toLowerCase()}`}
-              </DefaultButton>
-            </ButtonRow>
-          </>
-        ) : (
-          <EmptyState>Select text, a claim, method, figure, or table to create a provenance-aware manuscript object.</EmptyState>
-        )}
-      </Section>
-
-      <Section data-experience="verify">
-        <SectionHeading>Verify This</SectionHeading>
-        {selection.kind !== "claim" && activeObject?.kind !== "claim" ? (
-          <EmptyState>Select a quantitative claim to run an evidence-backed deterministic check.</EmptyState>
-        ) : (
-          <>
-            <DefaultButton $variant="primary" data-testid="verify-this" type="button" onClick={verifySelection}>
-              Verify This
-            </DefaultButton>
-            <Muted>Compares one unambiguous manuscript value with linked evidence. It never reruns experiments or guesses missing metrics.</Muted>
-            {activeVerification && (
-              <VerificationCard $status={activeVerification.verificationState} data-testid="verification-result">
-                <SelectionHeading>
-                  <ObjectTitle>{prettyValue(activeVerification.outcome)}</ObjectTitle>
-                  <Tag $status={activeVerification.verificationState}>{statusLabels[activeVerification.verificationState]}</Tag>
-                </SelectionHeading>
-                <VerificationReason data-testid="verification-reason">{activeVerification.reason}</VerificationReason>
-                <EvidenceMeta>
-                  {activeVerification.evidenceReferences?.length || 0} evidence reference
-                  {(activeVerification.evidenceReferences?.length || 0) === 1 ? "" : "s"} · checked{" "}
-                  {new Date(activeVerification.checkedAt).toLocaleString()}
-                </EvidenceMeta>
-                {activeVerification.suggestedValue && (
-                  <Muted>
-                    Evidence-backed value: <strong>{activeVerification.suggestedValue.raw}</strong>. A manuscript correction must be proposed through
-                    the visible review workflow and accepted by the researcher.
-                  </Muted>
-                )}
-              </VerificationCard>
-            )}
-          </>
-        )}
-      </Section>
-
-      <Section data-experience="diff">
-        <SectionHeading>Research Diff</SectionHeading>
-        <Muted>Live drift between manuscript objects and their linked research evidence, grouped by manuscript section.</Muted>
-        {researchDiffGroups.length ? (
-          <div data-testid="research-diff-list">
-            {researchDiffGroups.map((group) => (
-              <DiffGroup key={group.title}>
-                <DiffGroupTitle>{group.title}</DiffGroupTitle>
-                {group.diffs.map((diff) => (
-                  <DiffCard $status={diff.status} data-testid="research-diff-card" key={diff.id}>
-                    <SelectionHeading>
-                      <ObjectTitle>{diff.changes[0].label}</ObjectTitle>
-                      <Tag $status={diff.status === "rejected" ? "contradicted" : "stale"}>{prettyValue(diff.status)}</Tag>
-                    </SelectionHeading>
-                    {diff.changes.map((change, index) => (
-                      <DiffChange key={`${change.kind}-${index}`}>
-                        <DiffLine>
-                          <strong>Paper</strong>
-                          <span>{change.before || "—"}</span>
-                        </DiffLine>
-                        <DiffLine>
-                          <strong>Research</strong>
-                          <span>{change.after || "—"}</span>
-                        </DiffLine>
-                      </DiffChange>
-                    ))}
-                    <DiffActions>
-                      <DefaultButton $variant="outline" type="button" onClick={() => inspectResearchDiff(diff)}>
-                        Inspect
-                      </DefaultButton>
-                      {diff.proposedText && diff.status !== "in-review" && (
-                        <DefaultButton $variant="primary" data-testid="stage-research-diff" type="button" onClick={() => stageResearchDiff(diff)}>
-                          Accept → review
-                        </DefaultButton>
-                      )}
-                      <DefaultButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "rejected")}>
-                        Reject
-                      </DefaultButton>
-                      <DefaultButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "deferred")}>
-                        Defer
-                      </DefaultButton>
-                    </DiffActions>
-                    {diff.status === "in-review" && (
-                      <Muted>Update staged in the manuscript. Use the visible accept/reject suggestion controls.</Muted>
-                    )}
-                  </DiffCard>
-                ))}
-              </DiffGroup>
+          )}
+          <XraySummaryGrid data-testid="xray-summary">
+            {xrayStatuses.map((status) => (
+              <XraySummaryItem key={status}>
+                <XrayCount $status={status} data-testid={`xray-count-${status}`}>
+                  {stateCounts[status] || 0}
+                </XrayCount>
+                <XrayLabel>{status === "needs-review" ? "Review" : statusLabels[status]}</XrayLabel>
+              </XraySummaryItem>
             ))}
-          </div>
-        ) : (
-          <EmptyState data-testid="research-diff-empty">No evidence-driven manuscript drift is currently detected.</EmptyState>
-        )}
-      </Section>
+          </XraySummaryGrid>
+          {xrayObjects.length ? (
+            <XrayList data-testid="xray-list">
+              {xrayObjects.map((object) => (
+                <XrayItem
+                  aria-label={`Inspect ${objectLabel(object)} ${statusLabels[object.verificationState]}`}
+                  data-testid="xray-item"
+                  key={object.id}
+                  type="button"
+                  onClick={() => inspectXrayObject(object)}
+                >
+                  <XrayItemTop>
+                    <span>{objectLabel(object)}</span>
+                    <Tag $status={object.verificationState}>{statusLabels[object.verificationState]}</Tag>
+                  </XrayItemTop>
+                  <XraySnippet>{object.text}</XraySnippet>
+                </XrayItem>
+              ))}
+            </XrayList>
+          ) : (
+            <EmptyState>No tracked objects.</EmptyState>
+          )}
+        </Section>
+      )}
 
-      <Section>
-        <SectionHeading>Evidence relationship</SectionHeading>
-        {!activeObject ? (
-          <EmptyState>Create or select a tracked manuscript object before linking research evidence.</EmptyState>
-        ) : (
-          <>
-            {activeEvidence.length ? (
-              <EvidenceList data-testid="evidence-list">
-                {activeEvidence.map((entry) => {
-                  const experiment = provenance.data.value.experiments.find((item) => item.id === entry.evidence.experimentId);
-                  return (
-                    <EvidenceCard key={entry.evidence.id} data-testid="evidence-card">
-                      <EvidenceTitle>{entry.evidence.label}</EvidenceTitle>
-                      <EvidenceMeta>
-                        {prettyValue(entry.evidence.type)} · {prettyValue(entry.link.relation)}
-                        {entry.evidence.experimentId ? ` · experiment ${entry.evidence.experimentId}` : ""}
-                        {entry.evidence.metric ? ` · metric ${entry.evidence.metric}` : ""}
-                        {entry.evidence.commit ? ` · commit ${entry.evidence.commit}` : ""}
-                        {entry.evidence.artifactId ? ` · artifact ${entry.evidence.artifactId}` : ""}
-                      </EvidenceMeta>
-                      {entry.evidence.notes && <Muted>{entry.evidence.notes}</Muted>}
-                      {experiment && (
-                        <Muted>
-                          Run → <strong>{experiment.name}</strong> → evidence → {activeObject.kind}
-                        </Muted>
-                      )}
-                      <ButtonRow>
-                        {experiment && (
-                          <DefaultButton
-                            type="button"
-                            onClick={() => {
-                              editorState.activeExperimentId.value = experiment.id;
-                              editorState.workspaceView.value = "experiments";
-                            }}
-                          >
-                            Open run
+      {experience === "github" && (
+        <Section data-experience="github">
+          <CoverageRow>
+            <CoverageValue data-testid="linked-object-count">{provenanceStats.linkedObjectCount} linked</CoverageValue>
+            <Tag $status="tracked">{provenanceStats.objectCount} tracked</Tag>
+          </CoverageRow>
+          <SourceHistory aria-label="Recent revisions">
+            {provenanceData.experiments
+              .filter((run) => run.sourceCommit)
+              .slice(-4)
+              .reverse()
+              .map((run) => (
+                <SourceRun
+                  key={run.id}
+                  type="button"
+                  onClick={() => {
+                    editorState.activeExperimentId.value = run.id;
+                    editorState.workspaceView.value = "experiments";
+                    integrityPanelOpen.value = false;
+                  }}
+                >
+                  <strong>{run.name}</strong>
+                  <code>{run.sourceCommit}</code>
+                  <span>
+                    {run.status} · {run.artifacts.length} artifacts
+                  </span>
+                </SourceRun>
+              ))}
+          </SourceHistory>
+        </Section>
+      )}
+
+      {experience === "verify" && (
+        <>
+          <Section>
+            <SectionHeading>Current selection</SectionHeading>
+            <SelectionHeading>
+              <SelectionKind data-testid="selection-kind">{selectionKind}</SelectionKind>
+              <Tag data-testid="selection-status" $status={selectionState}>
+                {selectionStatus}
+              </Tag>
+            </SelectionHeading>
+            {selection.snippet ? (
+              <>
+                <Snippet data-testid="selection-snippet">{selection.snippet}</Snippet>
+                <Meta>
+                  <dt>Section</dt>
+                  <dd>{selection.section?.title || "Front matter"}</dd>
+                  <dt>Line</dt>
+                  <dd>{selection.line}</dd>
+                  <dt>Range</dt>
+                  <dd>{selection.hasSelection ? "Explicit selection" : "Cursor context"}</dd>
+                </Meta>
+              </>
+            ) : (
+              <EmptyState data-testid="selection-snippet">
+                Select a claim, method statement, table, figure, or section to inspect its manuscript context.
+              </EmptyState>
+            )}
+          </Section>
+
+          <Section>
+            <SectionHeading>Provenance object</SectionHeading>
+            {activeObject ? (
+              <ObjectCard data-testid="provenance-object">
+                <div>
+                  <ObjectTitle data-testid="tracked-object-kind">{objectLabel(activeObject)}</ObjectTitle>
+                  <Muted>{activeObject.text}</Muted>
+                </div>
+                <Field $disabled={!activeEvidence.length}>
+                  Verification state
+                  <Select
+                    aria-label="Verification state"
+                    data-testid="verification-state"
+                    disabled={!activeEvidence.length}
+                    value={activeObject.verificationState}
+                    onChange={(event) => provenance.updateObject(activeObject.id, { verificationState: event.currentTarget.value })}
+                  >
+                    {VERIFICATION_STATES.map((status) => (
+                      <option value={status} key={status}>
+                        {statusLabels[status] || prettyValue(status)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                {!activeEvidence.length && <EmptyState>Add evidence before changing the verification state.</EmptyState>}
+                <ButtonRow>
+                  <DefaultButton
+                    $variant="danger"
+                    aria-label={`Remove tracked ${activeObject.kind}`}
+                    type="button"
+                    onClick={() => {
+                      provenance.removeObject(activeObject.id);
+                      resetEvidenceForm();
+                    }}
+                  >
+                    Remove tracked object
+                  </DefaultButton>
+                </ButtonRow>
+              </ObjectCard>
+            ) : canTrack ? (
+              <>
+                <EmptyState>This {selectionKind.toLowerCase()} is not yet a durable provenance object.</EmptyState>
+                <ButtonRow>
+                  <DefaultButton
+                    $variant="primary"
+                    data-testid="create-provenance-object"
+                    type="button"
+                    onClick={() => provenance.createObject(selection, requestedKind)}
+                  >
+                    {selection.kind === "text" ? "Mark as claim" : `Track ${selectionKind.toLowerCase()}`}
+                  </DefaultButton>
+                </ButtonRow>
+              </>
+            ) : (
+              <EmptyState>Select text, a claim, method, figure, or table to create a provenance-aware manuscript object.</EmptyState>
+            )}
+          </Section>
+
+          <Section data-experience="verify">
+            {selection.kind !== "claim" && activeObject?.kind !== "claim" ? (
+              <EmptyState>Select a quantitative claim to run an evidence-backed deterministic check.</EmptyState>
+            ) : (
+              <>
+                <DefaultButton $variant="primary" data-testid="verify-this" type="button" onClick={verifySelection}>
+                  Verify This
+                </DefaultButton>
+                {activeVerification && (
+                  <VerificationCard $status={activeVerification.verificationState} data-testid="verification-result">
+                    <SelectionHeading>
+                      <ObjectTitle>{prettyValue(activeVerification.outcome)}</ObjectTitle>
+                      <Tag $status={activeVerification.verificationState}>{statusLabels[activeVerification.verificationState]}</Tag>
+                    </SelectionHeading>
+                    <VerificationReason data-testid="verification-reason">{activeVerification.reason}</VerificationReason>
+                    <EvidenceMeta>
+                      {activeVerification.evidenceReferences?.length || 0} evidence reference
+                      {(activeVerification.evidenceReferences?.length || 0) === 1 ? "" : "s"} · checked{" "}
+                      {new Date(activeVerification.checkedAt).toLocaleString()}
+                    </EvidenceMeta>
+                    {activeVerification.suggestedValue && (
+                      <Muted>
+                        Evidence-backed value: <strong>{activeVerification.suggestedValue.raw}</strong>. A manuscript correction must be proposed
+                        through the visible review workflow and accepted by the researcher.
+                      </Muted>
+                    )}
+                  </VerificationCard>
+                )}
+              </>
+            )}
+          </Section>
+        </>
+      )}
+
+      {experience === "diff" && (
+        <Section data-experience="diff">
+          {researchDiffGroups.length ? (
+            <div data-testid="research-diff-list">
+              {researchDiffGroups.map((group) => (
+                <DiffGroup key={group.title}>
+                  <DiffGroupTitle>{group.title}</DiffGroupTitle>
+                  {group.diffs.map((diff) => (
+                    <DiffCard $status={diff.status} data-testid="research-diff-card" key={diff.id}>
+                      <SelectionHeading>
+                        <ObjectTitle>{diff.changes[0].label}</ObjectTitle>
+                        <Tag $status={diff.status === "rejected" ? "contradicted" : "stale"}>{prettyValue(diff.status)}</Tag>
+                      </SelectionHeading>
+                      {diff.changes.map((change, index) => (
+                        <DiffChange key={`${change.kind}-${index}`}>
+                          <DiffLine>
+                            <strong>Paper</strong>
+                            <span>{change.before || "—"}</span>
+                          </DiffLine>
+                          <DiffLine>
+                            <strong>Research</strong>
+                            <span>{change.after || "—"}</span>
+                          </DiffLine>
+                        </DiffChange>
+                      ))}
+                      <DiffActions>
+                        <DefaultButton $variant="outline" type="button" onClick={() => inspectResearchDiff(diff)}>
+                          Inspect
+                        </DefaultButton>
+                        {diff.proposedText && diff.status !== "in-review" && (
+                          <DefaultButton $variant="primary" data-testid="stage-research-diff" type="button" onClick={() => stageResearchDiff(diff)}>
+                            Accept → review
                           </DefaultButton>
                         )}
-                        <DefaultButton type="button" aria-label={`Edit evidence ${entry.evidence.label}`} onClick={() => editEvidence(entry)}>
-                          Edit
+                        <DefaultButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "rejected")}>
+                          Reject
                         </DefaultButton>
-                        <DefaultButton
-                          $variant="danger"
-                          type="button"
-                          aria-label={`Remove evidence ${entry.evidence.label}`}
-                          onClick={() => {
-                            provenance.removeEvidence(entry.evidence.id);
-                            if (editing?.evidenceId === entry.evidence.id) resetEvidenceForm();
-                          }}
-                        >
-                          Remove
+                        <DefaultButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "deferred")}>
+                          Defer
                         </DefaultButton>
-                      </ButtonRow>
-                    </EvidenceCard>
-                  );
-                })}
-              </EvidenceList>
-            ) : (
-              <EmptyState>No research evidence is linked to this tracked object yet.</EmptyState>
-            )}
+                      </DiffActions>
+                      {diff.status === "in-review" && (
+                        <Muted>Update staged in the manuscript. Use the visible accept/reject suggestion controls.</Muted>
+                      )}
+                    </DiffCard>
+                  ))}
+                </DiffGroup>
+              ))}
+            </div>
+          ) : (
+            <EmptyState data-testid="research-diff-empty">No evidence-driven manuscript drift is currently detected.</EmptyState>
+          )}
+        </Section>
+      )}
 
-            <EvidenceForm onSubmit={submitEvidence} data-testid="evidence-form">
-              <Field>
-                Evidence type
-                <Select data-testid="evidence-type" value={evidenceForm.type} onChange={(event) => updateField("type", event.currentTarget.value)}>
-                  {EVIDENCE_TYPES.map((type) => (
-                    <option value={type} key={type}>
-                      {prettyValue(type)}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field>
-                Source / artifact
-                <Input
-                  data-testid="evidence-label"
-                  required
-                  value={evidenceForm.label}
-                  placeholder="results/stress_eval.json"
-                  onInput={(event) => updateField("label", event.currentTarget.value)}
-                />
-              </Field>
-              <Field>
-                Artifact identity
-                <Input
-                  data-testid="evidence-artifact-id"
-                  value={evidenceForm.artifactId}
-                  placeholder="stress-eval-v7"
-                  onInput={(event) => updateField("artifactId", event.currentTarget.value)}
-                />
-              </Field>
-              <Field>
-                Experiment identity
-                <Input
-                  data-testid="evidence-experiment-id"
-                  value={evidenceForm.experimentId}
-                  placeholder="run-2026-09-02"
-                  onInput={(event) => updateField("experimentId", event.currentTarget.value)}
-                />
-              </Field>
-              <Field>
-                Commit
-                <Input
-                  data-testid="evidence-commit"
-                  value={evidenceForm.commit}
-                  placeholder="a1b2c3d"
-                  onInput={(event) => updateField("commit", event.currentTarget.value)}
-                />
-              </Field>
-              <Field>
-                Metric
-                <Input
-                  data-testid="evidence-metric"
-                  value={evidenceForm.metric}
-                  placeholder="stress_accuracy_improvement=18.2%"
-                  onInput={(event) => updateField("metric", event.currentTarget.value)}
-                />
-              </Field>
-              <Field>
-                Relationship
-                <Select
-                  data-testid="evidence-relation"
-                  value={evidenceForm.relation}
-                  onChange={(event) => updateField("relation", event.currentTarget.value)}
-                >
-                  {PROVENANCE_RELATIONS.map((relation) => (
-                    <option value={relation} key={relation}>
-                      {prettyValue(relation)}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-              <Field>
-                URI or repository path
-                <Input
-                  data-testid="evidence-uri"
-                  value={evidenceForm.uri}
-                  placeholder="experiments/stress/results.json"
-                  onInput={(event) => updateField("uri", event.currentTarget.value)}
-                />
-              </Field>
-              <Field>
-                Notes
-                <TextArea
-                  data-testid="evidence-notes"
-                  value={evidenceForm.notes}
-                  placeholder="Optional provenance note"
-                  onInput={(event) => updateField("notes", event.currentTarget.value)}
-                />
-              </Field>
-              <ButtonRow>
-                <DefaultButton $variant="primary" type="submit" data-testid="save-evidence">
-                  {editing ? "Save evidence" : "Add evidence"}
-                </DefaultButton>
-                {editing && (
-                  <DefaultButton type="button" onClick={resetEvidenceForm}>
-                    Cancel
+      {experience === "verify" && (
+        <Section>
+          <SectionHeading>Evidence</SectionHeading>
+          {!activeObject ? (
+            <EmptyState>Create or select a tracked manuscript object before linking research evidence.</EmptyState>
+          ) : (
+            <>
+              {activeEvidence.length ? (
+                <EvidenceList data-testid="evidence-list">
+                  {activeEvidence.map((entry) => {
+                    const experiment = provenance.data.value.experiments.find((item) => item.id === entry.evidence.experimentId);
+                    return (
+                      <EvidenceCard key={entry.evidence.id} data-testid="evidence-card">
+                        <EvidenceTitle>{entry.evidence.label}</EvidenceTitle>
+                        <EvidenceMeta>
+                          {prettyValue(entry.evidence.type)} · {prettyValue(entry.link.relation)}
+                          {entry.evidence.experimentId ? ` · experiment ${entry.evidence.experimentId}` : ""}
+                          {entry.evidence.metric ? ` · metric ${entry.evidence.metric}` : ""}
+                          {entry.evidence.commit ? ` · commit ${entry.evidence.commit}` : ""}
+                          {entry.evidence.artifactId ? ` · artifact ${entry.evidence.artifactId}` : ""}
+                        </EvidenceMeta>
+                        {entry.evidence.notes && <Muted>{entry.evidence.notes}</Muted>}
+                        {experiment && (
+                          <Muted>
+                            Run → <strong>{experiment.name}</strong> → evidence → {activeObject.kind}
+                          </Muted>
+                        )}
+                        <ButtonRow>
+                          {experiment && (
+                            <DefaultButton
+                              type="button"
+                              onClick={() => {
+                                editorState.activeExperimentId.value = experiment.id;
+                                editorState.workspaceView.value = "experiments";
+                              }}
+                            >
+                              Open run
+                            </DefaultButton>
+                          )}
+                          <DefaultButton type="button" aria-label={`Edit evidence ${entry.evidence.label}`} onClick={() => editEvidence(entry)}>
+                            Edit
+                          </DefaultButton>
+                          <DefaultButton
+                            $variant="danger"
+                            type="button"
+                            aria-label={`Remove evidence ${entry.evidence.label}`}
+                            onClick={() => {
+                              provenance.removeEvidence(entry.evidence.id);
+                              if (editing?.evidenceId === entry.evidence.id) resetEvidenceForm();
+                            }}
+                          >
+                            Remove
+                          </DefaultButton>
+                        </ButtonRow>
+                      </EvidenceCard>
+                    );
+                  })}
+                </EvidenceList>
+              ) : (
+                <EmptyState>No research evidence is linked to this tracked object yet.</EmptyState>
+              )}
+
+              <EvidenceForm onSubmit={submitEvidence} data-testid="evidence-form">
+                <Field>
+                  Evidence type
+                  <Select data-testid="evidence-type" value={evidenceForm.type} onChange={(event) => updateField("type", event.currentTarget.value)}>
+                    {EVIDENCE_TYPES.map((type) => (
+                      <option value={type} key={type}>
+                        {prettyValue(type)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  Source / artifact
+                  <Input
+                    data-testid="evidence-label"
+                    required
+                    value={evidenceForm.label}
+                    placeholder="results/stress_eval.json"
+                    onInput={(event) => updateField("label", event.currentTarget.value)}
+                  />
+                </Field>
+                <Field>
+                  Artifact identity
+                  <Input
+                    data-testid="evidence-artifact-id"
+                    value={evidenceForm.artifactId}
+                    placeholder="stress-eval-v7"
+                    onInput={(event) => updateField("artifactId", event.currentTarget.value)}
+                  />
+                </Field>
+                <Field>
+                  Experiment identity
+                  <Input
+                    data-testid="evidence-experiment-id"
+                    value={evidenceForm.experimentId}
+                    placeholder="run-2026-09-02"
+                    onInput={(event) => updateField("experimentId", event.currentTarget.value)}
+                  />
+                </Field>
+                <Field>
+                  Commit
+                  <Input
+                    data-testid="evidence-commit"
+                    value={evidenceForm.commit}
+                    placeholder="a1b2c3d"
+                    onInput={(event) => updateField("commit", event.currentTarget.value)}
+                  />
+                </Field>
+                <Field>
+                  Metric
+                  <Input
+                    data-testid="evidence-metric"
+                    value={evidenceForm.metric}
+                    placeholder="stress_accuracy_improvement=18.2%"
+                    onInput={(event) => updateField("metric", event.currentTarget.value)}
+                  />
+                </Field>
+                <Field>
+                  Relationship
+                  <Select
+                    data-testid="evidence-relation"
+                    value={evidenceForm.relation}
+                    onChange={(event) => updateField("relation", event.currentTarget.value)}
+                  >
+                    {PROVENANCE_RELATIONS.map((relation) => (
+                      <option value={relation} key={relation}>
+                        {prettyValue(relation)}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field>
+                  URI or repository path
+                  <Input
+                    data-testid="evidence-uri"
+                    value={evidenceForm.uri}
+                    placeholder="experiments/stress/results.json"
+                    onInput={(event) => updateField("uri", event.currentTarget.value)}
+                  />
+                </Field>
+                <Field>
+                  Notes
+                  <TextArea
+                    data-testid="evidence-notes"
+                    value={evidenceForm.notes}
+                    placeholder="Optional provenance note"
+                    onInput={(event) => updateField("notes", event.currentTarget.value)}
+                  />
+                </Field>
+                <ButtonRow>
+                  <DefaultButton $variant="primary" type="submit" data-testid="save-evidence">
+                    {editing ? "Save evidence" : "Add evidence"}
                   </DefaultButton>
-                )}
-              </ButtonRow>
-            </EvidenceForm>
-          </>
-        )}
-      </Section>
+                  {editing && (
+                    <DefaultButton type="button" onClick={resetEvidenceForm}>
+                      Cancel
+                    </DefaultButton>
+                  )}
+                </ButtonRow>
+              </EvidenceForm>
+            </>
+          )}
+        </Section>
+      )}
     </Panel>
   );
 }

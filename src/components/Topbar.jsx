@@ -1,13 +1,13 @@
 import { styled } from "styled-components";
-import { useContext, useMemo } from "preact/hooks";
+import { useContext, useMemo, useRef } from "preact/hooks";
 import purify from "dompurify";
 
 import { DefaultButton, IconButton } from "./CommonUI";
 import ButtonGroup from "./ButtonGroup";
-import Avatars from "./Avatars";
 import { MystState } from "../mystState";
 import { useComputed, useSignal } from "@preact/signals";
-import pottersWheelLogo from "../../logo.png?url";
+
+const APP_NAME = "Potter's Wheel";
 
 const renderMdLinks = (title) =>
   [...(title || "").matchAll(/\[(.+)\]\(([^\s]+)\)/g)].reduce(
@@ -19,7 +19,7 @@ const Topbar = styled.div`
   z-index: 10;
   position: sticky;
   top: 0;
-  padding: 0 10px 0 14px;
+  padding: 0 12px;
   width: 100%;
   height: 45px;
   background-color: var(--navbar-bg);
@@ -31,11 +31,14 @@ const Topbar = styled.div`
   gap: 12px;
   box-sizing: border-box;
 
+  /* Both sides stop clear of the centered wordmark's half-width plus a gutter, so a long paper
+     title truncates instead of colliding with the brand. */
   .side {
     display: flex;
     align-items: center;
     gap: 2px;
     min-width: 0;
+    max-width: calc(50% - 68px);
 
     &:first-child {
       flex: 1 1 auto;
@@ -44,6 +47,7 @@ const Topbar = styled.div`
 
     &:last-child {
       flex: 0 0 auto;
+      gap: 6px;
     }
   }
 
@@ -61,8 +65,10 @@ const Topbar = styled.div`
     transition: fill 20ms ease-in;
   }
 
+  /* On hover the button lays a translucent ink wash over the bar, so the mask has to be mixed to
+     match rather than hardcoded — otherwise it stays light against the dark theme. */
   button:hover > svg > path.inner-copy {
-    fill: #f0efed;
+    fill: color-mix(in srgb, var(--navbar-bg), var(--ink) 5.5%);
   }
 
   .btn-dropdown {
@@ -89,31 +95,68 @@ const Topbar = styled.div`
       display: none;
     }
   }
-
-  @media (max-width: 1100px) {
-    #document-subtitle,
-    .crumb-sep {
-      display: none;
-    }
-  }
 `;
 
 /** Breadcrumb rather than a stacked title/subtitle block: one line reads faster and keeps the
  * header at a single row height. */
 const TitleBlock = styled.div`
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 7px;
   min-width: 0;
   overflow: hidden;
 `;
 
-const BrandGlyph = styled.img`
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
+const EditableTitle = styled.input`
+  width: clamp(170px, 27vw, 430px);
+  min-width: 0;
+  height: 29px;
+  padding: 0 4px;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  object-fit: contain;
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+
+  &:hover {
+    background: var(--hover);
+  }
+
+  &:focus {
+    border-color: var(--accent);
+    background: var(--paper);
+    outline: none;
+  }
+`;
+
+/** The product name is the bar's centered anchor and is set in the logotype's serif, so it reads
+ * as branding rather than as another piece of document metadata. Absolute rather than a third
+ * flex child, so it centers on the bar itself instead of on whatever space the sides leave over.
+ *
+ * This is the app's own identity, not document state, which is why it is a constant here rather
+ * than one of the `options` an integrator passes in. */
+const BrandWordmark = styled.div`
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--ink-secondary);
+  font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+
+  /* Under ~1100px the action cluster reaches close enough to the midpoint that a centered element
+     reads as part of it rather than as centered, so it is dropped instead. */
+  @media (max-width: 1100px) {
+    display: none;
+  }
 `;
 
 const Crumb = styled.div`
@@ -152,7 +195,7 @@ const Separator = styled.div`
   flex: 0 0 auto;
   width: 1px;
   height: 18px;
-  margin: 0 6px;
+  margin: 0 9px;
   background: var(--hairline);
 `;
 
@@ -170,9 +213,115 @@ const Alert = styled.span`
   pointer-events: none;
 `;
 
+const Overflow = styled.details`
+  position: relative;
+
+  > summary {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    place-items: center;
+    border-radius: var(--radius);
+    color: var(--ink-secondary);
+    cursor: pointer;
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+
+    &:hover {
+      background: var(--hover);
+      color: var(--ink);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &[open] > summary {
+    background: var(--selected);
+    color: var(--accent-dark);
+  }
+`;
+
+const OverflowPanel = styled.div`
+  position: absolute;
+  z-index: 30;
+  top: 34px;
+  right: 0;
+  width: 230px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--modal-bg);
+  box-shadow: var(--shadow-menu);
+`;
+
+const OverflowItem = styled(DefaultButton)`
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  justify-content: flex-start;
+  color: var(--ink);
+  font-weight: 400;
+
+  svg,
+  img {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    color: var(--ink-tertiary);
+    object-fit: contain;
+  }
+`;
+
+const OverflowSection = styled.div`
+  margin: 5px 8px 3px;
+  color: var(--ink-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+`;
+
+const NestedOverflow = styled.details`
+  > summary {
+    list-style: none;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  .nested-options {
+    max-height: 360px;
+    margin: 4px 0 7px;
+    padding: 8px;
+    overflow-y: auto;
+    border-top: 1px solid var(--hairline);
+    border-bottom: 1px solid var(--hairline);
+  }
+`;
+
 export const TopbarButton = styled(IconButton)`
   &:hover ~ .btn-dropdown {
     display: block;
+  }
+
+  /* Integrator-supplied icons arrive at arbitrary intrinsic sizes; match the inline SVGs so one
+     custom button can't throw off the rhythm of the row. */
+  img {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    object-fit: contain;
   }
 `;
 
@@ -356,6 +505,14 @@ const IntegrityIcon = () => (
   </svg>
 );
 
+const MoreIcon = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <circle cx="5" cy="12" r="1.5" />
+    <circle cx="12" cy="12" r="1.5" />
+    <circle cx="19" cy="12" r="1.5" />
+  </svg>
+);
+
 const icons = {
   "integrity-panel": IntegrityIcon,
   fullscreen: FullscreenIcon,
@@ -368,44 +525,72 @@ const icons = {
 };
 
 export const EditorTopbar = ({ alert, buttons }) => {
-  const { options, editorView, collab, suggestMode, integrityPanelOpen } = useContext(MystState);
-  const titleHtml = useComputed(() => purify.sanitize(renderMdLinks(options.title.value)));
+  const { options, editorView, workspaceView } = useContext(MystState);
   const subtitleHtml = useComputed(() => purify.sanitize(renderMdLinks(options.subtitle.value)));
   const emptyDiff = useSignal(false);
+  const overflowRef = useRef(null);
+  const showEditorMode = (mode) => {
+    workspaceView.value = "paper";
+    options.mode.value = mode;
+  };
   const editorModeButtons = useComputed(() => {
     const modeButtons = [
-      { id: "source", tooltip: "Source", action: () => (options.mode.value = "Source"), icon: SourceIcon },
-      { id: "preview", tooltip: "Preview", action: () => (options.mode.value = "Preview"), icon: PreviewIcon },
-      { id: "both", tooltip: "Dual Pane", action: () => (options.mode.value = "Both"), icon: BothIcon },
-      { id: "inline", tooltip: "Inline Preview", action: () => (options.mode.value = "Inline"), icon: InlinePreviewIcon },
+      { id: "source", tooltip: "Source", action: () => showEditorMode("Source"), icon: SourceIcon },
+      { id: "preview", tooltip: "Preview", action: () => showEditorMode("Preview"), icon: PreviewIcon },
+      { id: "both", tooltip: "Dual Pane", action: () => showEditorMode("Both"), icon: BothIcon },
+      { id: "inline", tooltip: "Inline Preview", action: () => showEditorMode("Inline"), icon: InlinePreviewIcon },
       {
         id: "diff",
         tooltip: emptyDiff.value ? "No changes to show" : null,
         text: "Diff View",
         disabled: emptyDiff.value,
-        action: () => (options.mode.value = "Diff"),
+        action: () => showEditorMode("Diff"),
         hover: () => (emptyDiff.value = options.initialText.value == editorView.value?.state?.doc?.toString?.()),
         icon: DiffIcon,
       },
-      { id: "outline", text: "Table of Contents", action: () => (options.mode.value = "Outline"), icon: TocIcon },
+      { id: "outline", text: "Table of Contents", action: () => showEditorMode("Outline"), icon: TocIcon },
     ];
     if (options.collaboration.value.resolvingCommentsEnabled) {
-      modeButtons.push({ id: "resolved", text: "Resolved", action: () => (options.mode.value = "Resolved"), icon: ResolvedIcon });
+      modeButtons.push({ id: "resolved", text: "Resolved", action: () => showEditorMode("Resolved"), icon: ResolvedIcon });
     }
 
     return modeButtons;
   });
   const clickedId = useComputed(() => editorModeButtons.value.findIndex((b) => b.id[0].toUpperCase() + b.id.slice(1) === options.mode.value));
   const buttonsLeft = useMemo(() => buttons.map((b) => ({ ...b, icon: b.icon || icons[b.id] })).filter((b) => b.icon), [buttons]);
+  const utilityButtons = buttonsLeft.filter((button) => button.id !== "integrity-panel");
   const textButtons = useMemo(() => buttons.filter((b) => b.text), [buttons]);
+  const closeOverflow = () => overflowRef.current?.removeAttribute("open");
+  const commitTitle = (rawTitle) => {
+    const nextTitle = rawTitle.trim() || "Untitled manuscript";
+    options.title.value = nextTitle;
+
+    const view = editorView.value;
+    const documentText = view?.state?.doc?.toString?.();
+    if (!documentText?.startsWith("---\n")) return;
+    const frontmatterEnd = documentText.indexOf("\n---", 4);
+    if (frontmatterEnd < 0) return;
+    const titleMatch = /^title:.*$/m.exec(documentText.slice(0, frontmatterEnd));
+    if (!titleMatch) return;
+    const replacement = `title: ${JSON.stringify(nextTitle)}`;
+    if (titleMatch[0] === replacement) return;
+    view.dispatch({ changes: { from: titleMatch.index, to: titleMatch.index + titleMatch[0].length, insert: replacement } });
+  };
 
   return (
     <Topbar id="topbar">
       <div className="side">
         {options.showTitle.value && (
           <TitleBlock>
-            <BrandGlyph alt="" aria-hidden="true" src={pottersWheelLogo} />
-            <Crumb id="document-title" dangerouslySetInnerHTML={{ __html: titleHtml.value }} />
+            <EditableTitle
+              aria-label="Document title"
+              id="document-title"
+              title="Edit document title"
+              value={options.title.value}
+              onInput={(event) => (options.title.value = event.currentTarget.value)}
+              onBlur={(event) => commitTitle(event.currentTarget.value)}
+              onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
+            />
             {options.subtitle.value && (
               <>
                 <CrumbSep aria-hidden="true" className="crumb-sep">
@@ -423,29 +608,10 @@ export const EditorTopbar = ({ alert, buttons }) => {
         )}
         {alert.value && <Alert className="topbar-alert">{alert}</Alert>}
       </div>
+
+      <BrandWordmark className="brand-wordmark">{APP_NAME}</BrandWordmark>
+
       <div className="side">
-        <div class="icon-btns">
-          {buttonsLeft.map((button) => (
-            <div key={button.id}>
-              <TopbarButton
-                className="icon"
-                $active={button.active?.({ suggestMode, integrityPanelOpen })}
-                type="button"
-                title={button.tooltip}
-                name={button.id}
-                onClick={button.action}
-              >
-                {typeof button.icon == "function" ? <button.icon /> : <img src={button.icon} />}
-              </TopbarButton>
-              {button.dropdown && (
-                <div className="btn-dropdown">
-                  <div className="dropdown-content">{button.dropdown()}</div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        {collab.value && <Avatars />}
         {textButtons.length > 0 && (
           <div className="btns">
             {textButtons.map((b) => (
@@ -458,9 +624,68 @@ export const EditorTopbar = ({ alert, buttons }) => {
         {options.showModeButtons.value && (
           <>
             <Separator aria-hidden="true" />
-            <ButtonGroup buttons={editorModeButtons} clickedId={clickedId.value} mainButtonsNum={4} />
+            <ButtonGroup buttons={editorModeButtons} clickedId={clickedId.value} mainButtonsNum={3} showOverflow={false} />
           </>
         )}
+
+        <Overflow ref={overflowRef}>
+          <summary aria-label="More options" title="More options">
+            <MoreIcon />
+          </summary>
+          <OverflowPanel>
+            <OverflowSection>Document</OverflowSection>
+            {utilityButtons.map((button) =>
+              button.dropdown ? (
+                <NestedOverflow key={button.id}>
+                  <summary aria-label={button.tooltip} title={button.tooltip}>
+                    <OverflowItem as="span">
+                      {typeof button.icon == "function" ? <button.icon /> : <img alt="" src={button.icon} />}
+                      <span>{button.tooltip}</span>
+                    </OverflowItem>
+                  </summary>
+                  <div className="nested-options">{button.dropdown()}</div>
+                </NestedOverflow>
+              ) : (
+                <OverflowItem
+                  aria-label={button.tooltip}
+                  key={button.id}
+                  type="button"
+                  title={button.tooltip}
+                  onClick={() => {
+                    button.action?.();
+                    closeOverflow();
+                  }}
+                >
+                  {typeof button.icon == "function" ? <button.icon /> : <img alt="" src={button.icon} />}
+                  <span>{button.tooltip}</span>
+                </OverflowItem>
+              ),
+            )}
+            {options.showModeButtons.value && editorModeButtons.value.length > 3 && (
+              <>
+                <OverflowSection>More views</OverflowSection>
+                {editorModeButtons.value.slice(3).map((button, index) => (
+                  <OverflowItem
+                    $active={clickedId.value === index + 3}
+                    aria-label={button.text || button.tooltip}
+                    disabled={button.disabled}
+                    key={button.id}
+                    type="button"
+                    title={button.tooltip || button.text}
+                    onMouseOver={() => button.hover?.()}
+                    onClick={() => {
+                      button.action();
+                      closeOverflow();
+                    }}
+                  >
+                    <button.icon />
+                    <span>{button.text || button.tooltip}</span>
+                  </OverflowItem>
+                ))}
+              </>
+            )}
+          </OverflowPanel>
+        </Overflow>
 
         {options.onExit.value && (
           <TopbarButton className="icon" type="button" title={"Quit"} name={"Quit"} onClick={() => options.onExit.value()}>

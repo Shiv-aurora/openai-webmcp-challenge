@@ -52,11 +52,15 @@ export const MystCSSVars = styled.div`
   --ink-tertiary: #87867f;
   --ink-faint: #9b9a97;
 
-  --canvas: #ffffff;
+  /* Surface ladder. Everything used to be #ffffff, which left the manuscript, the source pane and
+     the chrome reading as one continuous sheet. These are deliberately ~1-2% steps of the same
+     warm hue rather than distinct colors: enough to separate the planes, not enough to become
+     decoration. Only the document and things that float above it are pure white. */
+  --canvas: #f7f6f3;
   --paper: #ffffff;
-  --sidebar-bg: #f7f7f5;
-  --panel-bg: #ffffff;
-  --navbar-bg: #ffffff;
+  --sidebar-bg: #f4f3f0;
+  --panel-bg: #faf9f7;
+  --navbar-bg: #fdfcfb;
   --modal-bg: #ffffff;
 
   --border: #e9e9e7;
@@ -92,7 +96,9 @@ export const MystCSSVars = styled.div`
   --deleted-bg: #ffe6e2;
   --inserted-bg: #dbeddb;
 
-  --editor-bg: #ffffff;
+  /* The source pane sits one step below the rendered manuscript, so "what I typed" and "what it
+     becomes" are distinguishable at a glance in dual-pane mode. */
+  --editor-bg: #f7f6f3;
   --editor-gutter-fg: var(--ink-faint);
   --editor-selection-bg: rgba(35, 131, 226, 0.14);
   --editor-active-line-bg: rgba(55, 53, 47, 0.03);
@@ -227,11 +233,13 @@ darkTheme.replaceSync(`
     --ink-tertiary: #8f8c86;
     --ink-faint: #7a776f;
 
-    --canvas: #191918;
-    --paper: #191918;
-    --sidebar-bg: #202020;
-    --panel-bg: #191918;
-    --navbar-bg: #191918;
+    /* Same ladder inverted: the manuscript is the lightest plane and navigation recedes furthest,
+       so depth reads the same way in either theme. */
+    --canvas: #171716;
+    --paper: #201f1e;
+    --sidebar-bg: #131312;
+    --panel-bg: #1b1a19;
+    --navbar-bg: #1d1c1b;
     --modal-bg: #252525;
 
     --border: #2f2e2c;
@@ -255,7 +263,7 @@ darkTheme.replaceSync(`
     --deleted-bg: rgba(224, 140, 134, 0.22);
     --inserted-bg: rgba(127, 191, 154, 0.22);
 
-    --editor-bg: #191918;
+    --editor-bg: #171716;
     --editor-gutter-fg: #7a776f;
     --editor-selection-bg: rgba(82, 156, 202, 0.22);
     --editor-active-line-bg: rgba(255, 255, 255, 0.03);

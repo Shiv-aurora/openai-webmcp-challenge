@@ -28,7 +28,7 @@ test.describe.parallel("With collaboration disabled", () => {
   test("Loads initial document", async ({ page }) => {
     await expect(async () => {
       const editorContent = await page.evaluate((id) => window.myst_editor[id].text, id);
-      expect(editorContent).toMatch(/^---\ntitle: Regime-Aware Volatility Forecasting/);
+      expect(editorContent).toMatch(/^---\ntitle: "Making of GPT-6 Astra"/);
       expect(editorContent.indexOf(editorContent.slice(0, 20))).toBe(editorContent.lastIndexOf(editorContent.slice(0, 20))); // Assert that content isn't duplicated
     }).toPass();
   });
@@ -43,7 +43,8 @@ test.describe.parallel("With collaboration disabled", () => {
     await page.route("**/template.md", (route) => route.fulfill({ contentType: "text/markdown", body: "# Test template" }));
     await applyPageOpts(page, { collab: "false" });
 
-    await page.getByTitle("Templates").hover();
+    await page.getByLabel("More options").click();
+    await page.getByLabel("Templates").click();
     await page.getByRole("button", { name: "Test template" }).click();
 
     const dialog = page.getByRole("dialog");
@@ -95,7 +96,8 @@ test.describe.parallel("With collaboration disabled", () => {
     );
 
     // But if we click the refresh button then the transform will be updated and output will be different
-    await page.getByTitle("Refresh issue links").click();
+    await page.getByLabel("More options").click();
+    await page.getByLabel("Refresh issue links").click();
     await insertChangesAndCheckOutput(page, null, (html) => expect(html).not.toContain(time));
   });
 
@@ -155,7 +157,8 @@ test.describe.parallel("With collaboration disabled", () => {
 
   test("Copy as HTML button copies to clipboard", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-write", "clipboard-read"]);
-    await page.getByTitle("Copy document as HTML").click();
+    await page.getByLabel("More options").click();
+    await page.getByLabel("Copy document as HTML").click();
     await page.waitForSelector(".topbar-alert");
     await expect(async () => {
       const clipboard = await page.evaluate(() => navigator.clipboard.readText());
@@ -253,7 +256,8 @@ graph TD
     test("Can use suggest mode", async ({ page }) => {
       await clearEditor(page);
       await insertToMainEditor(page, { from: 0, insert: `# Heading` });
-      await page.locator('[name="suggest-mode"]').click();
+      await page.getByLabel("More options").click();
+      await page.getByLabel("Toggle suggest mode").click();
       await insertToMainEditor(page, { from: 2, to: 9, insert: `Better heading` });
       await expect(page.locator(".cm-critic-widget")).toBeVisible();
     });
@@ -313,7 +317,7 @@ test.describe.parallel("With collaboration enabled", () => {
 
     await expect(async () => {
       const editorContent = await page.evaluate((id) => window.myst_editor[id].text, id);
-      expect(editorContent).toMatch(/^---\ntitle: Regime-Aware Volatility Forecasting/);
+      expect(editorContent).toMatch(/^---\ntitle: "Making of GPT-6 Astra"/);
       expect(editorContent.indexOf(editorContent.slice(0, 20))).toBe(editorContent.lastIndexOf(editorContent.slice(0, 20))); // Assert that content isn't duplicated
     }).toPass();
   });
@@ -332,7 +336,7 @@ test.describe.parallel("With collaboration enabled", () => {
 
     await expect(async () => {
       const editorContent = await pageB.evaluate((id) => window.myst_editor[id].text, id);
-      expect(editorContent).not.toContain("# Regime-Aware Volatility Forecasting");
+      expect(editorContent).not.toContain("# Making of GPT-6 Astra");
       expect(editorContent).toContain("Some content");
       expect(editorContent.indexOf("Some content")).toBe(editorContent.lastIndexOf("Some content")); // Assert that content isn't duplicated
     }).toPass();
@@ -625,7 +629,7 @@ test.describe.parallel("With collaboration enabled", () => {
         window.myst_editor.demo.state.options.mode.value = "Resolved";
       });
 
-      await expect(page.locator("#document-title")).toContainText("Playwright");
+      await expect(page.locator("#document-title")).toHaveValue("Playwright");
       await page.evaluate(() => {
         window.myst_editor.demo.state.options.subtitle.value = "A subtitle";
       });
@@ -767,7 +771,8 @@ test.describe.parallel("MystEditorGit wrapper", () => {
 
     const pageB = await applyPageOpts(await context.newPage(), collabOpts, true);
 
-    await pageA.getByTitle("Commit").click();
+    await pageA.getByLabel("More options").click();
+    await pageA.getByLabel("Compare changes and commit").click();
     // Check if document is locked for the other user
     await pageB.getByText("A commit is being prepared").waitFor();
 
@@ -868,8 +873,8 @@ const addComment = async (page: Page, lineNumber: number, text?: string) => {
 };
 
 const openResolvedComments = async (page: Page) => {
-  await page.hover(".more");
-  await page.click('[name="resolved"]');
+  await page.getByLabel("More options").click();
+  await page.getByLabel("Resolved").click();
 };
 
 async function changeRoom(page: Page, room: string) {
@@ -889,6 +894,7 @@ async function changeRoom(page: Page, room: string) {
 }
 
 const startInlineMode = async (page: Page) => {
-  await page.getByTitle("Inline Preview").click();
+  await page.getByLabel("More options").click();
+  await page.getByLabel("Inline Preview").click();
   await expect(page.locator("#preview-wrapper")).toHaveCSS("display", "none");
 };

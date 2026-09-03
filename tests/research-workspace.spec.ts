@@ -22,11 +22,11 @@ const installWebMCPHarness = async (page: Page) => {
 
 const loadWorkspace = async (page: Page) => {
   await installWebMCPHarness(page);
-  await page.goto("/?collab=false");
+  await page.goto("/?collab=false&empty=true");
   await page.evaluate(() => localStorage.removeItem("myst/provenance/demo"));
   await page.reload();
   await page.waitForSelector(".cm-content");
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(36);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(37);
 };
 
 const executeTool = async (page: Page, name: string, input: Record<string, unknown> = {}) =>
@@ -44,22 +44,38 @@ const payload = (toolResult: any) => toolResult.structuredContent || JSON.parse(
 test.describe("Experiments → Evidence → Paper workspace", () => {
   test.beforeEach(async ({ page }) => loadWorkspace(page));
 
+  test("opens a populated fictional project on first launch", async ({ page }) => {
+    await page.goto("/?collab=false");
+    await page.evaluate(() => localStorage.removeItem("myst/provenance/demo"));
+    await page.reload();
+    await page.getByTestId("nav-experiments").click();
+
+    await expect(page.getByTestId("experiment-list-item")).toHaveCount(6);
+    await expect(page.getByRole("heading", { name: "Run #254 · locked Astra evaluation" })).toBeVisible();
+    await expect(page.getByTestId("run-performance-chart")).toBeVisible();
+    await expect(page.getByTestId("metric-history-chart")).toContainText("8 logged steps");
+    await expect(page.getByTestId("nav-evidence")).toContainText("10");
+  });
+
   test("loads a bidirectional, demo-ready lifecycle without hiding the paper", async ({ page }) => {
     await page.getByTestId("nav-experiments").click();
     await expect(page.getByTestId("experiments-workspace")).toBeVisible();
     await page.getByTestId("load-lifecycle-demo").click();
 
-    await expect(page.getByTestId("experiment-list-item")).toHaveCount(2);
-    await expect(page.getByRole("heading", { name: "Run #204 · locked final evaluation" })).toBeVisible();
-    await expect(page.getByText("stress_accuracy_improvement", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("experiment-list-item")).toHaveCount(6);
+    await expect(page.getByRole("heading", { name: "Run #254 · locked Astra evaluation" })).toBeVisible();
+    await expect(page.getByText("reasoning_index", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("run-performance-chart")).toBeVisible();
+    await expect(page.getByTestId("metric-history-chart")).toContainText("8 logged steps");
 
     await page.getByTestId("nav-evidence").click();
     await expect(page.getByTestId("evidence-workspace")).toBeVisible();
-    await expect(page.getByTestId("evidence-list-item")).toHaveCount(5);
+    await expect(page.getByTestId("evidence-list-item")).toHaveCount(10);
     await expect(page.getByText("RUN", { exact: true })).toBeVisible();
 
     await page.getByTestId("nav-paper").click();
     await expect(page.locator(".cm-content")).toBeVisible();
+    await page.getByTestId("activity-diff").click();
     await expect(page.getByTestId("research-diff-card")).toHaveCount(4);
   });
 
@@ -71,19 +87,19 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
     await page.getByLabel("Source commit").fill("abc305f");
     await page.getByRole("button", { name: "Create experiment" }).click();
 
-    await page.getByLabel("Metric name").fill("stress_accuracy_improvement");
-    await page.getByLabel("Metric value").fill("17.3%");
+    await page.getByLabel("Metric name").fill("reasoning_index");
+    await page.getByLabel("Metric value").fill("86.4%");
     await page.getByRole("button", { name: "Add metric" }).click();
     await page.getByTestId("publish-metric-evidence").click();
 
     await page.getByTestId("nav-evidence").click();
     await expect(page.getByTestId("evidence-list-item")).toHaveCount(1);
-    await expect(page.getByText("stress_accuracy_improvement=17.3%", { exact: true })).toBeVisible();
+    await expect(page.getByText("reasoning_index=86.4%", { exact: true })).toBeVisible();
     await page.getByTestId("create-linked-claim").click();
 
     await expect
       .poll(() => page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString()))
-      .toContain("Run #305 · ablation produced **stress_accuracy_improvement=17.3%**.");
+      .toContain("Run #305 · ablation produced **reasoning_index=86.4%**.");
     const graph = await page.evaluate(() => (window as any).myst_editor.demo.state.provenance.data.peek());
     expect(graph.experiments).toHaveLength(1);
     expect(graph.evidence).toHaveLength(1);
@@ -101,16 +117,16 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
         sourceCommit: "old191",
       }),
     ).experiment;
-    await executeTool(page, "add_experiment_metric", { experimentId: oldRun.id, key: "stress_accuracy_improvement", value: "18.2%" });
+    await executeTool(page, "add_experiment_metric", { experimentId: oldRun.id, key: "reasoning_index", value: "76.9%" });
     const oldEvidence = payload(
       await executeTool(page, "create_experiment_evidence", {
         experimentId: oldRun.id,
         label: "Stress evaluation #191",
-        metric: "stress_accuracy_improvement=18.2%",
+        metric: "reasoning_index=76.9%",
       }),
     ).evidence;
 
-    const claimText = "18.2% improvement in stress-regime accuracy";
+    const claimText = "76.9% on the Astra Reasoning Index";
     await page.evaluate((text) => {
       const view = (window as any).myst_editor.demo.main_editor;
       const from = view.state.doc.toString().indexOf(text);
@@ -129,29 +145,38 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
         sourceCommit: "new204",
       }),
     ).experiment;
-    await executeTool(page, "add_experiment_metric", { experimentId: newRun.id, key: "stress_accuracy_improvement", value: "17.3%" });
+    await executeTool(page, "add_experiment_metric", { experimentId: newRun.id, key: "reasoning_index", value: "86.4%" });
+    const history = payload(
+      await executeTool(page, "log_experiment_metric_point", {
+        experimentId: newRun.id,
+        key: "validation_loss",
+        value: 0.41,
+        step: 12,
+      }),
+    );
+    expect(history.metricHistory).toMatchObject([{ step: 12, value: 0.41 }]);
     await executeTool(page, "supersede_experiment", { olderExperimentId: oldRun.id, newerExperimentId: newRun.id });
     const newEvidence = payload(
       await executeTool(page, "create_experiment_evidence", {
         experimentId: newRun.id,
         label: "Stress evaluation #204",
-        metric: "stress_accuracy_improvement=17.3%",
+        metric: "reasoning_index=86.4%",
         supersedesEvidenceId: oldEvidence.id,
       }),
     ).evidence;
 
     const diffs = payload(await executeTool(page, "get_research_diffs"));
     expect(diffs.researchDiffs).toHaveLength(1);
-    expect(diffs.researchDiffs[0].changes[0].before).toBe("18.2%");
-    expect(diffs.researchDiffs[0].changes[0].after).toBe("17.3%");
+    expect(diffs.researchDiffs[0].changes[0].before).toBe("76.9%");
+    expect(diffs.researchDiffs[0].changes[0].after).toBe("86.4%");
 
     const catalog = payload(await executeTool(page, "get_evidence_catalog"));
     expect(catalog.evidence.find((item: any) => item.id === newEvidence.id).manuscriptObjects[0].id).toBe(claim.id);
     const comparison = payload(await executeTool(page, "compare_experiments", { baseExperimentId: oldRun.id, candidateExperimentId: newRun.id }));
-    expect(comparison.changes.metrics[0]).toEqual({ key: "stress_accuracy_improvement", before: "18.2%", after: "17.3%" });
+    expect(comparison.changes.metrics[0]).toEqual({ key: "reasoning_index", before: "76.9%", after: "86.4%" });
 
     const source = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
-    expect(source).toContain("18.2% improvement in stress-regime accuracy");
-    expect(source).not.toContain("17.3% improvement in stress-regime accuracy");
+    expect(source).toContain("76.9% on the Astra Reasoning Index");
+    expect(source).not.toContain("86.4% on the Astra Reasoning Index");
   });
 });

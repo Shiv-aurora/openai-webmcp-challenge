@@ -16,12 +16,16 @@ const YCommentWrapper = styled.div`
 
   z-index: 3;
   right: 0px;
-  background-color: var(--gray-100);
+  /* White against the recessed source pane, so a thread reads as something laid on top of the
+     text rather than part of it. */
+  background-color: var(--paper);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-raised);
 
   ${(props) => (props.fade ? "opacity: 0.4;" : "")}
 
   .cm-editor {
-    background-color: var(--gray-100);
+    background-color: var(--paper);
   }
 
   .cm-ySelectionInfo {
@@ -187,7 +191,7 @@ const YCommentPopup = styled.div`
   height: 25px;
   border-radius: var(--radius-md);
   position: absolute;
-  background-color: var(--panel-bg);
+  background-color: var(--paper);
   border: 1px solid var(--hairline);
   z-index: 30000000;
   left: ${(props) => -props.left - 13}px;
