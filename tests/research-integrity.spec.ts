@@ -242,7 +242,9 @@ test.describe("Research integrity workspace", () => {
       .locator('[data-xray-state="verified"]')
       .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute("data-xray-object-id")))].filter(Boolean));
     expect(verifiedObjectIds).toHaveLength(1);
-    await expect.poll(async () => (await page.locator('[data-xray-state="verified"]').allTextContents()).join("")).toContain("76.9% on the Astra Reasoning Index");
+    await expect
+      .poll(async () => (await page.locator('[data-xray-state="verified"]').allTextContents()).join(""))
+      .toContain("76.9% on the Astra Reasoning Index");
 
     await page.getByTestId("activity-xray").click();
     await page.getByTestId("toggle-xray").click();

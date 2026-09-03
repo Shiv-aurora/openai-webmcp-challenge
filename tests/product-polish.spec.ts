@@ -74,7 +74,9 @@ test("maps rendered-paper selections to the manuscript and offers Verify beside 
 
   const selectionRect = await page.evaluate(() => {
     const root = document.querySelector("#myst")!.shadowRoot!;
-    const strong = [...root.querySelectorAll(".myst-preview strong")].find((node) => node.textContent?.includes("76.9% on the Astra Reasoning Index"))!;
+    const strong = [...root.querySelectorAll(".myst-preview strong")].find((node) =>
+      node.textContent?.includes("76.9% on the Astra Reasoning Index"),
+    )!;
     const paragraph = strong.closest("p")!;
     const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
     const textNodes: Text[] = [];

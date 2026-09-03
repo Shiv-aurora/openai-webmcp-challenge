@@ -691,9 +691,7 @@ function ExperimentsWorkspace({ provenance }) {
       <Main>
         <Content>
           <Heading>{creating ? "Record a research run" : active ? active.name : "What did the research produce?"}</Heading>
-          <Intro>
-            Synthetic pretraining, post-training, and evaluation runs—tracked with the same lineage as a real model program.
-          </Intro>
+          <Intro>Synthetic pretraining, post-training, and evaluation runs—tracked with the same lineage as a real model program.</Intro>
 
           {creating && (
             <Form onSubmit={submitRun}>
@@ -1317,8 +1315,14 @@ export function ResearchWorkspace({ children }) {
     const isLegacyCanopySoundManuscript = source.includes("# CanopySound Bird Call Classification");
     const isCanopySoundManuscript = source.includes("# CanopySound: Domain-Robust Bioacoustic Classification");
     const isAstraManuscript = source.includes("# Making of GPT-6 Astra");
-    if (!allowEmpty && (isPreviousDemo || (isEmpty && (isAstraManuscript || isCanopySoundManuscript || isLegacyCanopySoundManuscript || isPreviousManuscript)))) {
-      const manuscript = (isPreviousManuscript || isLegacyCanopySoundManuscript || isCanopySoundManuscript) && window.__demoResearchText ? window.__demoResearchText : source;
+    if (
+      !allowEmpty &&
+      (isPreviousDemo || (isEmpty && (isAstraManuscript || isCanopySoundManuscript || isLegacyCanopySoundManuscript || isPreviousManuscript)))
+    ) {
+      const manuscript =
+        (isPreviousManuscript || isLegacyCanopySoundManuscript || isCanopySoundManuscript) && window.__demoResearchText
+          ? window.__demoResearchText
+          : source;
       if (manuscript !== source && editorState.editorView.value) {
         editorState.editorView.value.dispatch({ changes: { from: 0, to: source.length, insert: manuscript } });
       }
