@@ -318,5 +318,5 @@ export function buildDemoResearchProject(markdown) {
     ["astra-object-router-claim", "astra-evidence-failure", "supports"],
   ];
   const links = linkSpecs.map(([objectId, evidenceId, relation], index) => ({ id: `astra-link-${index + 1}`, objectId, evidenceId, relation, createdAt: DEMO_TIME, updatedAt: DEMO_TIME }));
-  return { version: 2, demoProject: "gpt6-astra-v4", experiments, objects, evidence, links, diffReviews: {} };
+  return { version: 2, demoProject: "gpt6-astra-v5", experiments, objects, evidence, links, diffReviews: {} };
 }

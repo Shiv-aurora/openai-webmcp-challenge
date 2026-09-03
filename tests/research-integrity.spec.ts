@@ -317,7 +317,7 @@ test.describe("Research integrity workspace", () => {
     await page.getByTestId("save-evidence").click();
     await page.getByTestId("verification-state").selectOption("stale");
 
-    await selectText(page, "All names and values in this project are synthetic and are provided solely to demonstrate the workflow.");
+    await selectText(page, "Everything here is synthetic.");
     await page.getByTestId("activity-xray").click();
     await page.getByTestId("toggle-xray").click();
     await page.getByRole("button", { name: "Inspect Method Stale" }).click();

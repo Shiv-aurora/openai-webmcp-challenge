@@ -1,7 +1,7 @@
 const HEADING_PATTERN = /^(#{1,6})\s+(.+?)\s*#*\s*$/;
 const FIGURE_PATTERN = /!\[[^\]]*\]\([^)]+\)|^\s*:::\{(?:figure|image)\}/im;
 const TABLE_SEPARATOR_PATTERN = /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+(?:\s*:?-{3,}:?\s*)?$/;
-const METHOD_SECTION_PATTERN = /\b(method|methods|methodology|approach|implementation|training|experimental setup)\b/i;
+const METHOD_SECTION_PATTERN = /\b(method|methods|methodology|approach|implementation|training|architecture|optimization|experimental setup)\b/i;
 const CLAIM_PATTERN =
   /(?:\d+(?:\.\d+)?\s*%|\b(?:improv|outperform|increase|decrease|reduce|achiev|show|demonstrat|report|find|estimate|support|contain|use)\w*\b)/i;
 

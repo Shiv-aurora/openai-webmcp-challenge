@@ -75,9 +75,15 @@ test("maps rendered-paper selections to the manuscript and offers Verify beside 
   const selectionRect = await page.evaluate(() => {
     const root = document.querySelector("#myst")!.shadowRoot!;
     const strong = [...root.querySelectorAll(".myst-preview strong")].find((node) => node.textContent?.includes("76.9% on the Astra Reasoning Index"))!;
-    const textNode = strong.firstChild!;
+    const paragraph = strong.closest("p")!;
+    const walker = document.createTreeWalker(paragraph, NodeFilter.SHOW_TEXT);
+    const textNodes: Text[] = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode as Text);
+    const startNode = textNodes.find((node) => node.data.includes("manuscript"))!;
+    const endNode = textNodes.find((node) => node.data.includes("locked evaluation"))!;
     const range = document.createRange();
-    range.selectNodeContents(textNode);
+    range.setStart(startNode, startNode.data.indexOf("manuscript"));
+    range.setEnd(endNode, endNode.data.indexOf("locked") + "locked".length);
     const selection = root.getSelection()!;
     selection.removeAllRanges();
     selection.addRange(range);
@@ -89,6 +95,8 @@ test("maps rendered-paper selections to the manuscript and offers Verify beside 
   expect(selectionRect.text).toContain("76.9% on the Astra Reasoning Index");
   const verify = page.getByTestId("preview-verify");
   await expect(verify).toBeVisible();
+  await expect(verify).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(verify).toHaveCSS("color", "rgb(55, 53, 47)");
   const verifyRect = await verify.boundingBox();
   expect(verifyRect!.y).toBeLessThan(selectionRect.top);
 
@@ -96,4 +104,8 @@ test("maps rendered-paper selections to the manuscript and offers Verify beside 
   await expect(page.getByRole("heading", { name: "Verify", exact: true })).toBeVisible();
   await expect(page.getByTestId("selection-kind")).toHaveText("Claim");
   await expect(page.getByTestId("selection-snippet")).toContainText("76.9% on the Astra Reasoning Index");
+  await expect(page.getByTestId("selection-status")).toHaveText("Contradicted");
+  await expect(page.getByTestId("evidence-card")).toHaveCount(2);
+  await page.getByTestId("verify-this").click();
+  await expect(page.getByTestId("verification-result")).toContainText("78.4%");
 });

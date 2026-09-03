@@ -1309,7 +1309,7 @@ export function ResearchWorkspace({ children }) {
     const allowEmpty = new URLSearchParams(window.location.search).get("empty") === "true";
     const isEmpty = !data.experiments.length && !data.objects.length && !data.evidence.length && !data.links.length;
     const isPreviousDemo =
-      (!!data.demoProject && data.demoProject !== "gpt6-astra-v4") ||
+      (!!data.demoProject && data.demoProject !== "gpt6-astra-v5") ||
       data.experiments.some((run) => run.id.startsWith("audio-run-")) ||
       (!data.demoProject && data.experiments.length > 0 && data.experiments.every((run) => run.id.startsWith("stress-run-")));
     const source = editorState.editorView.value?.state.doc.toString() || editorState.text.text.value || "";

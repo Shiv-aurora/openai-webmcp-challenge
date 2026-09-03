@@ -106,14 +106,14 @@ const PreviewVerifyButton = styled.button`
   padding: 0 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--paper);
+  color: var(--ink);
   box-shadow: var(--shadow-menu);
   cursor: pointer;
   font: 500 12px/1 var(--font-sans);
 
   &:hover {
-    background: var(--ink-secondary);
+    background: var(--canvas);
   }
 
   &:focus-visible {

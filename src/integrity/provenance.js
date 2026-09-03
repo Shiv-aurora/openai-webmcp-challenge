@@ -52,6 +52,12 @@ function safeSave(storageKey, value) {
 
 const sectionTitle = (selection) => selection?.section?.title || "Front matter";
 const hasQuantitativeValue = (text) => /(?:\d+(?:\.\d+)?\s*%|\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)/i.test(text || "");
+const comparableText = (text) =>
+  String(text || "")
+    .toLowerCase()
+    .replace(/[*_`~#{}[\]()]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 
 export function createProvenanceStore(editorId) {
   const storageKey = `myst/provenance/${editorId}`;
@@ -62,12 +68,42 @@ export function createProvenanceStore(editorId) {
   const findObjectForSelection = (selection) => {
     if (!selection?.snippet) return null;
     const objects = data.value.objects;
+    const sameSection = objects.filter((object) => object.anchor.sectionTitle === sectionTitle(selection));
     const exactRange = objects.find(
       (object) =>
         object.anchor.from === selection.from && object.anchor.to === selection.to && object.anchor.sectionTitle === sectionTitle(selection),
     );
     if (exactRange) return exactRange;
-    return objects.find((object) => object.anchor.snippet === selection.snippet && object.anchor.sectionTitle === sectionTitle(selection)) || null;
+    const normalizedSnippet = comparableText(selection.snippet);
+    const exactSnippet = sameSection.find((object) => comparableText(object.anchor.snippet) === normalizedSnippet);
+    if (exactSnippet) return exactSnippet;
+
+    // Rendered Markdown selections can include emphasis markers or a few surrounding
+    // words. Resolve them to the durable object whose source anchor they overlap,
+    // rather than creating a second unlinked object for the same claim.
+    if (Number.isFinite(selection.from) && Number.isFinite(selection.to) && selection.to > selection.from) {
+      const overlapping = sameSection
+        .map((object) => {
+          const from = Number(object.anchor.from);
+          const to = Number(object.anchor.to);
+          const overlap = Math.max(0, Math.min(selection.to, to) - Math.max(selection.from, from));
+          const objectLength = Math.max(1, to - from);
+          return { object, overlap, coverage: overlap / objectLength };
+        })
+        .filter((candidate) => candidate.overlap > 0)
+        .sort((a, b) => b.coverage - a.coverage || b.overlap - a.overlap);
+      if (overlapping[0]) return overlapping[0].object;
+    }
+
+    if (normalizedSnippet.length >= 4) {
+      return (
+        sameSection.find((object) => {
+          const objectSnippet = comparableText(object.anchor.snippet);
+          return objectSnippet.includes(normalizedSnippet) || normalizedSnippet.includes(objectSnippet);
+        }) || null
+      );
+    }
+    return null;
   };
 
   const createExperiment = (input) => {
