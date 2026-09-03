@@ -390,13 +390,13 @@ export const MdStyles = css`
 `;
 
 const Preview = styled.div`
-  background-color: var(--panel-bg);
-  padding: 20px;
+  background-color: var(--paper);
+  padding: clamp(28px, 4vw, 64px);
   box-sizing: border-box;
   height: 100%;
   border: 1px solid var(--border);
-  box-shadow: inset 0px 0px 4px var(--box-shadow);
-  border-radius: var(--border-radius);
+  box-shadow: 0 1px 2px var(--box-shadow);
+  border-radius: 10px;
   vertical-align: top;
   word-wrap: break-word;
   position: relative;
@@ -405,6 +405,34 @@ const Preview = styled.div`
   scrollbar-width: thin;
 
   ${MdStyles}
+
+  & > h1,
+  & > h2,
+  & > h3,
+  & > p,
+  & > table,
+  & > figure,
+  & > .math {
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--ink);
+    font-family: Georgia, "Times New Roman", serif;
+    letter-spacing: -0.02em;
+  }
+
+  p,
+  li,
+  table {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 16px;
+    line-height: 1.6;
+  }
 
   @media print {
     & {

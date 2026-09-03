@@ -1,48 +1,51 @@
 import styled from "styled-components";
 
 export const MystCSSVars = styled.div`
-  --gray-900: #333;
-  --gray-800: #5c5c5c;
-  --gray-700: #88818c;
-  --gray-600: #cccccc;
-  --gray-500: #dadada;
-  --gray-400: #e5e5e5;
-  --gray-300: #e8e6e8;
-  --gray-200: #f8f8f8;
-  --gray-100: #f9f9f9;
-  --blue-500: #0083e1;
-  --blue-200: #82cfe6;
-  --blue-100: #c1e4ef;
-  --red-500: #e74a3c;
-  --red-400: #fae6e6;
-  --orange-500: #f59e0b;
-  --green-500: #00af91;
-  --green-400: #00ccaa;
-  --green-300: #ecfce6;
-  --brown-500: #940;
+  --gray-900: #17201e;
+  --gray-800: #4f5a57;
+  --gray-700: #7b8582;
+  --gray-600: #c9cfcc;
+  --gray-500: #d9ddda;
+  --gray-400: #e8ebe8;
+  --gray-300: #eef0ed;
+  --gray-200: #f5f6f3;
+  --gray-100: #fafaf7;
+  --blue-500: #286b60;
+  --blue-200: #a9cec5;
+  --blue-100: #dcece7;
+  --red-500: #b8473d;
+  --red-400: #f5dfdc;
+  --orange-500: #b7791f;
+  --green-500: #2e7568;
+  --green-400: #4e9487;
+  --green-300: #e1efe9;
+  --brown-500: #8a5a35;
 
-  --accent: var(--blue-200);
-  --accent-light: var(--blue-100);
-  --accent-dark: var(--blue-500);
+  --accent: #8bbcaf;
+  --accent-light: #dcece7;
+  --accent-dark: #24695d;
+  --ink: #17201e;
+  --canvas: #efefeb;
+  --paper: #fffefa;
 
   --border-2: 3px;
-  --border-radius: 5px;
-  --border: var(--gray-600);
+  --border-radius: 8px;
+  --border: #d7dbd7;
 
-  --navbar-bg: var(--gray-200);
-  --button-bg: white;
-  --button-bg-hover: var(--gray-400);
-  --modal-bg: white;
+  --navbar-bg: #fbfbf8;
+  --button-bg: #fffefa;
+  --button-bg-hover: #e9efeb;
+  --modal-bg: #fffefa;
   --switch-bg: var(--gray-500);
   --switch-active-bg: var(--blue-500);
-  --panel-bg: white;
-  --box-shadow: var(--gray-600);
+  --panel-bg: #fffefa;
+  --box-shadow: rgba(35, 49, 45, 0.14);
   --icon-invert: 0;
   --string-fg: var(--brown-500);
   --deleted-bg: var(--red-400);
   --inserted-bg: var(--green-300);
 
-  --editor-bg: var(--gray-200);
+  --editor-bg: #f8f8f5;
   --editor-gutter-fg: var(--gray-800);
   --editor-selection-bg: rgb(215, 212, 240);
   --editor-active-line-bg: #cceeff44;
@@ -51,7 +54,14 @@ export const MystCSSVars = styled.div`
 
 export const MystContainer = styled(MystCSSVars)`
   all: initial;
-  font-family: "Lato", sans-serif;
+  color: var(--ink);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   height: 100%;
 
   @media print {
@@ -73,11 +83,25 @@ export const MystContainer = styled(MystCSSVars)`
     }
   }
 
-  button,
   input,
+  select,
   dialog,
   textarea {
     color: inherit;
+    font-family: inherit;
+  }
+
+  * {
+    scrollbar-color: var(--gray-600) transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 
   ins {
@@ -92,21 +116,24 @@ export const MystContainer = styled(MystCSSVars)`
 export const darkTheme = new CSSStyleSheet();
 darkTheme.replaceSync(`
   #myst-css-namespace {
-    color: white;
-    --navbar-bg: #1a1a1a;
-    --border: #878787;
-    --button-bg: #333;
-    --button-bg-hover: #5c5c5c;
-    --switch-bg: #5c5c5c;
-    --modal-bg: #1a1a1a;
-    --panel-bg: #1a1a1a;
-    --box-shadow: #333;
+    color: #eef3f0;
+    --ink: #eef3f0;
+    --canvas: #131a18;
+    --navbar-bg: #18201e;
+    --border: #34423e;
+    --button-bg: #202a27;
+    --button-bg-hover: #2b3935;
+    --switch-bg: #394743;
+    --modal-bg: #18201e;
+    --panel-bg: #18201e;
+    --paper: #1d2724;
+    --box-shadow: rgba(0, 0, 0, 0.4);
     --icon-invert: 1;
     --string-fg: #ffa657;
 
-    --accent: #0083e1;
-    --accent-light: #82cfe6;
-    --accent-dark: rgb(121, 192, 255);
+    --accent: #69a99a;
+    --accent-light: #274a42;
+    --accent-dark: #85c7b7;
 
     --editor-bg: #2a2a2a;
     --editor-gutter-fg: #ddd;

@@ -9,14 +9,13 @@ import { verifyQuantitativeClaim } from "./verification";
 import { refreshXray, resolveXrayRange } from "./xray";
 
 const Panel = styled.aside`
-  flex: 0 0 350px;
-  width: 350px;
+  flex: 0 0 380px;
+  width: 380px;
   min-width: 0;
-  margin-left: 16px;
   border: 1px solid var(--border);
-  border-radius: calc(var(--border-radius) + 2px);
+  border-radius: 10px;
   background: var(--panel-bg);
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--box-shadow) 45%, transparent);
+  box-shadow: 0 1px 2px var(--box-shadow);
   overflow: auto;
   scrollbar-width: thin;
   z-index: 8;
@@ -40,70 +39,79 @@ const Panel = styled.aside`
   }
 `;
 
-const Header = styled.header`
+const PanelTop = styled.div`
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: 4;
+  background: var(--ink);
+`;
+
+const Header = styled.header`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 20px 16px;
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
-  backdrop-filter: blur(12px);
+  padding: 22px 22px 18px;
+  color: var(--paper);
 `;
 
 const Kicker = styled.div`
   margin-bottom: 5px;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  opacity: 0.62;
+  color: #89bdb0;
 `;
 
 const Title = styled.h2`
   margin: 0;
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.25;
-  font-weight: 700;
+  font-weight: 720;
+  letter-spacing: -0.02em;
 `;
 
 const PromiseLine = styled.p`
-  max-width: 250px;
-  margin: 7px 0 0;
-  font-size: 11px;
-  line-height: 1.4;
-  opacity: 0.72;
+  max-width: 285px;
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--paper) 72%, transparent);
 `;
 
 const ExperienceNav = styled.nav`
-  position: sticky;
-  top: 99px;
-  z-index: 2;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  padding: 8px;
-  border-bottom: 1px solid var(--border);
-  background: var(--panel-bg);
+  gap: 0;
+  padding: 0 10px 10px;
+  background: var(--ink);
 `;
 
 const ExperienceButton = styled.button`
   min-width: 0;
-  min-height: 31px;
+  min-height: 36px;
   border: 0;
-  border-radius: var(--border-radius);
+  border-top: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
+  border-radius: 0;
   background: transparent;
-  color: inherit;
+  color: color-mix(in srgb, var(--paper) 68%, transparent);
   cursor: pointer;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 680;
+  letter-spacing: 0.02em;
+  transition:
+    color 140ms ease,
+    background 140ms ease;
+
+  & + & {
+    border-left: 1px solid color-mix(in srgb, var(--paper) 12%, transparent);
+  }
 
   &:hover,
   &:focus-visible {
-    background: var(--button-bg-hover);
+    background: color-mix(in srgb, var(--paper) 8%, transparent);
+    color: var(--paper);
   }
 `;
 
@@ -114,22 +122,23 @@ const CloseButton = styled.button`
   height: 30px;
   flex: 0 0 30px;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  background: var(--button-bg);
-  color: inherit;
+  border: 1px solid color-mix(in srgb, var(--paper) 18%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--paper) 6%, transparent);
+  color: var(--paper);
   cursor: pointer;
   font-size: 19px;
   line-height: 1;
 
   &:hover {
-    background: var(--button-bg-hover);
+    background: color-mix(in srgb, var(--paper) 12%, transparent);
   }
 `;
 
 const Section = styled.section`
-  padding: 18px 20px;
+  padding: 21px 22px;
   border-bottom: 1px solid var(--border);
+  scroll-margin-top: 158px;
 
   &:last-child {
     border-bottom: 0;
@@ -137,12 +146,12 @@ const Section = styled.section`
 `;
 
 const SectionHeading = styled.div`
-  margin-bottom: 12px;
-  font-size: 11px;
+  margin-bottom: 13px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
-  opacity: 0.62;
+  color: var(--gray-700);
 `;
 
 const CoverageRow = styled.div`
@@ -153,8 +162,9 @@ const CoverageRow = styled.div`
 `;
 
 const CoverageValue = styled.strong`
-  font-size: 23px;
+  font-size: 26px;
   line-height: 1;
+  letter-spacing: -0.035em;
 `;
 
 const Muted = styled.p`
@@ -166,26 +176,33 @@ const Muted = styled.p`
 
 const MetricGrid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
   margin-top: 16px;
+  padding-top: 15px;
+  border-top: 1px solid var(--border);
 `;
 
 const Metric = styled.div`
-  padding: 11px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  background: color-mix(in srgb, var(--editor-bg) 70%, transparent);
+  min-width: 0;
+  padding: 0 8px;
+  border-left: 1px solid var(--border);
+
+  &:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
 `;
 
 const MetricValue = styled.div`
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
 `;
 
 const MetricLabel = styled.div`
   margin-top: 3px;
-  font-size: 11px;
+  font-size: 9px;
+  line-height: 1.25;
   opacity: 0.62;
 `;
 
@@ -212,12 +229,13 @@ const statusTone = (status) => {
 const Status = styled.span`
   display: inline-flex;
   align-items: center;
-  min-height: 24px;
-  padding: 0 9px;
-  border: 1px solid ${(props) => statusTone(props.$status)};
-  border-radius: 999px;
-  background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 10%, transparent);
-  font-size: 11px;
+  min-height: 23px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 12%, transparent);
+  color: ${(props) => statusTone(props.$status)};
+  font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
 `;
@@ -225,9 +243,9 @@ const Status = styled.span`
 const Snippet = styled.blockquote`
   margin: 0;
   padding: 12px 13px;
-  border-left: 3px solid var(--accent-dark);
-  border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  background: var(--editor-bg);
+  border-left: 2px solid var(--accent-dark);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--accent-light) 35%, transparent);
   font-size: 12px;
   line-height: 1.55;
   overflow-wrap: anywhere;
@@ -255,18 +273,19 @@ const Meta = styled.dl`
 `;
 
 const EmptyState = styled.div`
-  padding: 13px;
-  border: 1px dashed var(--border);
-  border-radius: var(--border-radius);
-  background: color-mix(in srgb, var(--editor-bg) 55%, transparent);
+  padding: 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--editor-bg);
+  color: var(--gray-800);
   font-size: 12px;
   line-height: 1.55;
 `;
 
 const ObjectCard = styled.div`
-  padding: 13px;
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
+  padding: 14px;
+  border: 0;
+  border-radius: 8px;
   background: var(--editor-bg);
 `;
 
@@ -277,21 +296,21 @@ const ObjectTitle = styled.div`
 
 const EvidenceList = styled.div`
   display: grid;
-  gap: 10px;
+  gap: 0;
   margin-top: 12px;
 `;
 
 const EvidenceCard = styled.div`
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  background: color-mix(in srgb, var(--editor-bg) 72%, transparent);
+  padding: 13px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
 `;
 
 const VerificationCard = styled.div`
   padding: 14px;
   border: 1px solid ${(props) => statusTone(props.$status)};
-  border-radius: var(--border-radius);
+  border-radius: 8px;
   background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 8%, var(--editor-bg));
 `;
 
@@ -313,17 +332,27 @@ const DiffGroupTitle = styled.div`
 `;
 
 const DiffCard = styled.div`
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-left: 4px solid ${(props) => statusTone(props.$status === "rejected" ? "contradicted" : "stale")};
-  border-radius: var(--border-radius);
+  padding: 14px 14px 14px 16px;
+  border: 0;
+  border-left: 3px solid ${(props) => statusTone(props.$status === "rejected" ? "contradicted" : "stale")};
+  border-radius: 0 8px 8px 0;
   background: var(--editor-bg);
+`;
+
+const DiffChange = styled.div`
+  padding-top: 9px;
+  border-top: 1px solid var(--border);
+
+  &:first-of-type {
+    padding-top: 0;
+    border-top: 0;
+  }
 `;
 
 const DiffLine = styled.div`
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  gap: 7px;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 8px;
   margin-top: 7px;
   font:
     10px/1.4 ui-monospace,
@@ -332,10 +361,16 @@ const DiffLine = styled.div`
     Monaco,
     Consolas,
     monospace;
-  overflow-wrap: anywhere;
 
   strong {
     opacity: 0.62;
+    white-space: nowrap;
+  }
+
+  span {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 `;
 
@@ -360,19 +395,45 @@ const ButtonRow = styled.div`
   margin-top: 12px;
 `;
 
+const DiffActions = styled.div`
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 6px;
+  margin-top: 12px;
+
+  button {
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 10px;
+  }
+`;
+
 const ActionButton = styled.button`
-  min-height: 32px;
-  padding: 0 11px;
+  min-height: 34px;
+  padding: 0 12px;
   border: 1px solid ${(props) => (props.$primary ? "var(--accent-dark)" : "var(--border)")};
-  border-radius: var(--border-radius);
-  background: ${(props) => (props.$primary ? "var(--accent-dark)" : "var(--button-bg)")};
+  border-radius: 7px;
+  background: ${(props) => (props.$primary ? "var(--ink)" : "transparent")};
   color: ${(props) => (props.$primary ? "white" : "inherit")};
   cursor: pointer;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 680;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
 
   &:hover {
-    filter: brightness(0.97);
+    background: ${(props) => (props.$primary ? "var(--accent-dark)" : "var(--button-bg-hover)")};
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent-dark);
+    outline-offset: 2px;
   }
 `;
 
@@ -439,9 +500,10 @@ const XraySummaryGrid = styled.div`
 const XraySummaryItem = styled.div`
   min-width: 0;
   padding: 9px 5px;
-  border: 1px solid ${(props) => statusTone(props.$status)};
-  border-radius: var(--border-radius);
-  background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 9%, transparent);
+  border: 0;
+  border-top: 2px solid ${(props) => statusTone(props.$status)};
+  border-radius: 0;
+  background: transparent;
   text-align: center;
 `;
 
@@ -468,9 +530,9 @@ const XrayList = styled.div`
 const XrayItem = styled.button`
   width: 100%;
   padding: 10px 11px;
-  border: 1px solid var(--border);
-  border-left: 4px solid ${(props) => statusTone(props.$status)};
-  border-radius: var(--border-radius);
+  border: 0;
+  border-left: 3px solid ${(props) => statusTone(props.$status)};
+  border-radius: 0 7px 7px 0;
   background: var(--editor-bg);
   color: inherit;
   cursor: pointer;
@@ -675,28 +737,30 @@ export default function ResearchIntegrityPanel() {
 
   return (
     <Panel aria-label="Research integrity" data-testid="integrity-panel">
-      <Header>
-        <div>
-          <Kicker>{xrayActive ? "Global integrity map" : "Manuscript state"}</Kicker>
-          <Title>{xrayActive ? "Research X-Ray" : "Research integrity"}</Title>
-          <PromiseLine>Every claim in your paper stays connected to the research that produced it.</PromiseLine>
-        </div>
-        <CloseButton aria-label="Close research integrity panel" type="button" onClick={() => (integrityPanelOpen.value = false)}>
-          ×
-        </CloseButton>
-      </Header>
+      <PanelTop>
+        <Header>
+          <div>
+            <Kicker>{xrayActive ? "Global integrity map" : "Live provenance"}</Kicker>
+            <Title>{xrayActive ? "Research X-Ray" : "Research integrity"}</Title>
+            <PromiseLine>Every claim in your paper stays connected to the research that produced it.</PromiseLine>
+          </div>
+          <CloseButton aria-label="Close research integrity panel" type="button" onClick={() => (integrityPanelOpen.value = false)}>
+            ×
+          </CloseButton>
+        </Header>
 
-      <ExperienceNav aria-label="Integrity workflows">
-        <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "xray")}>
-          Research X-Ray
-        </ExperienceButton>
-        <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "verify")}>
-          Verify This
-        </ExperienceButton>
-        <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "diff")}>
-          Research Diff
-        </ExperienceButton>
-      </ExperienceNav>
+        <ExperienceNav aria-label="Integrity workflows">
+          <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "xray")}>
+            Research X-Ray
+          </ExperienceButton>
+          <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "verify")}>
+            Verify This
+          </ExperienceButton>
+          <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "diff")}>
+            Research Diff
+          </ExperienceButton>
+        </ExperienceNav>
+      </PanelTop>
 
       <Section data-experience="xray">
         <SectionHeading>Research X-Ray</SectionHeading>
@@ -924,7 +988,7 @@ export default function ResearchIntegrityPanel() {
                       <Status $status={diff.status === "rejected" ? "contradicted" : "stale"}>{prettyValue(diff.status)}</Status>
                     </SelectionHeading>
                     {diff.changes.map((change, index) => (
-                      <div key={`${change.kind}-${index}`}>
+                      <DiffChange key={`${change.kind}-${index}`}>
                         <DiffLine>
                           <strong>Paper</strong>
                           <span>{change.before || "—"}</span>
@@ -933,9 +997,9 @@ export default function ResearchIntegrityPanel() {
                           <strong>Research</strong>
                           <span>{change.after || "—"}</span>
                         </DiffLine>
-                      </div>
+                      </DiffChange>
                     ))}
-                    <ButtonRow>
+                    <DiffActions>
                       <ActionButton type="button" onClick={() => inspectResearchDiff(diff)}>
                         Inspect
                       </ActionButton>
@@ -950,7 +1014,7 @@ export default function ResearchIntegrityPanel() {
                       <ActionButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "deferred")}>
                         Defer
                       </ActionButton>
-                    </ButtonRow>
+                    </DiffActions>
                     {diff.status === "in-review" && (
                       <Muted>Update staged in the manuscript. Use the visible accept/reject suggestion controls.</Muted>
                     )}

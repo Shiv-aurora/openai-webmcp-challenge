@@ -2,22 +2,25 @@ import styled from "styled-components";
 
 export const DefaultButton = styled.button`
   cursor: pointer;
-  text-transform: uppercase;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: 650;
   font-family: inherit;
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   background-color: var(--button-bg);
-  height: 40px;
+  height: 36px;
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 0;
-  transition: 0.4s ease;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease;
   border-radius: var(--border-radius);
 
-  &:focus {
-    outline: 0 !important;
+  &:focus-visible {
+    outline: 2px solid var(--accent-dark);
+    outline-offset: 2px;
   }
 
   &:disabled {

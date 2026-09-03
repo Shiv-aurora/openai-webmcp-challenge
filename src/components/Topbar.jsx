@@ -18,21 +18,22 @@ const Topbar = styled.div`
   z-index: 10;
   position: sticky;
   top: 0;
-  padding: 0 20px;
+  padding: 0 16px;
   width: 100%;
-  height: 60px;
+  height: 64px;
   background-color: var(--navbar-bg);
+  border-bottom: 1px solid var(--border);
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   box-sizing: border-box;
 
   .side {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
 
     &:last-child {
@@ -42,7 +43,11 @@ const Topbar = styled.div`
 
   .btns {
     display: flex;
-    gap: 10px;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--editor-bg) 74%, transparent);
   }
 
   svg > path.inner-copy {
@@ -51,7 +56,7 @@ const Topbar = styled.div`
 
   button:not(:disabled):not(view-menu):not(.radio-icon):hover {
     background-color: var(--button-bg-hover);
-    border: 1px solid var(--button-bg-hover);
+    border-color: transparent;
     .inner-copy {
       fill: var(--button-bg-hover);
     }
@@ -80,17 +85,69 @@ const Topbar = styled.div`
       display: none;
     }
   }
+
+  @media (max-width: 1100px) {
+    #document-subtitle {
+      display: none;
+    }
+
+    .side {
+      gap: 8px;
+    }
+  }
 `;
 
 const TitleBlock = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   overflow: hidden;
-  font-family: "Lato";
   line-height: 1.2;
 `;
 
+const BrandGlyph = styled.div`
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 9px;
+  background: var(--ink);
+  color: var(--paper);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+  }
+
+  &::before {
+    width: 13px;
+    height: 13px;
+  }
+
+  &::after {
+    width: 3px;
+    height: 3px;
+    background: currentColor;
+    box-shadow:
+      7px -5px 0 -1px currentColor,
+      -6px 6px 0 -1px currentColor;
+  }
+`;
+
+const TitleCopy = styled.div`
+  min-width: 0;
+`;
+
 const Title = styled.div`
-  font-size: large;
+  font-size: 14px;
+  font-weight: 720;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -100,8 +157,8 @@ const Title = styled.div`
 `;
 
 const Subtitle = styled.div`
-  margin-top: 2px;
-  font-size: 0.8rem;
+  margin-top: 3px;
+  font-size: 11px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -132,9 +189,15 @@ const Alert = styled(DefaultButton)`
 `;
 
 export const TopbarButton = styled(DefaultButton)`
-  border: ${(props) => (props.active ? "1px solid var(--accent)" : "1px solid var(--border)")};
-  background-color: ${(props) => (props.active ? "var(--accent)" : "var(--button-bg)")};
-  width: 40px;
+  border: 1px solid transparent;
+  background-color: ${(props) => (props.active ? "var(--ink)" : "transparent")};
+  color: ${(props) => (props.active ? "var(--paper)" : "var(--gray-800)")};
+  width: 34px;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 
   &:hover ~ .btn-dropdown {
     display: block;
@@ -367,6 +430,21 @@ export const EditorTopbar = ({ alert, buttons }) => {
   return (
     <Topbar id="topbar">
       <div className="side">
+        {options.showTitle.value && (
+          <TitleBlock>
+            <BrandGlyph aria-hidden="true" />
+            <TitleCopy>
+              <Title id="document-title" dangerouslySetInnerHTML={{ __html: titleHtml.value }} />
+              {options.subtitle.value && (
+                <Subtitle
+                  id="document-subtitle"
+                  dangerouslySetInnerHTML={{ __html: subtitleHtml.value }}
+                  onClick={(ev) => options.onSubtitleClick.value?.(ev)}
+                />
+              )}
+            </TitleCopy>
+          </TitleBlock>
+        )}
         <div class="btns">
           {buttonsLeft.map((button) => (
             <div key={button.id}>
@@ -389,18 +467,6 @@ export const EditorTopbar = ({ alert, buttons }) => {
           ))}
         </div>
         {alert.value && <Alert className="topbar-alert"> {alert} </Alert>}
-        {options.showTitle.value && (
-          <TitleBlock>
-            <Title id="document-title" dangerouslySetInnerHTML={{ __html: titleHtml.value }} />
-            {options.subtitle.value && (
-              <Subtitle
-                id="document-subtitle"
-                dangerouslySetInnerHTML={{ __html: subtitleHtml.value }}
-                onClick={(ev) => options.onSubtitleClick.value?.(ev)}
-              />
-            )}
-          </TitleBlock>
-        )}
       </div>
       <div className="side">
         {collab.value && <Avatars />}

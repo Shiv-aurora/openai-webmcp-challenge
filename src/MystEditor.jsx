@@ -19,7 +19,13 @@ import ResearchIntegrityPanel from "./integrity/ResearchIntegrityPanel";
 import { registerResearchWebMCPTools } from "./webmcp/register";
 
 const EditorParent = styled.div`
-  font-family: "Lato";
+  font-family:
+    Inter,
+    ui-sans-serif,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   display: flex;
   flex-flow: row wrap;
   width: 100%;
@@ -48,13 +54,14 @@ const EditorParent = styled.div`
 `;
 
 const MystWrapper = styled.div`
-  padding: 20px;
+  padding: 14px;
+  gap: 12px;
   display: flex;
   box-sizing: border-box;
   height: calc(100% - 60px);
   width: 100%;
   position: relative;
-  background-color: var(--panel-bg);
+  background-color: var(--canvas);
   ${(props) => props.fullscreen && "box-sizing:border-box; height: calc(100vh - 60px);"}
 `;
 
