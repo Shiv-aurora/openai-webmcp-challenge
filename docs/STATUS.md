@@ -1,8 +1,8 @@
 # Status
 
-Current phase: Phase 12 — Experiments → Evidence → Paper complete; release deployment validation in progress.
+Current phase: Phase 12 — Experiments → Evidence → Paper complete and publicly verified.
 
-Current objective: publish and verify the integrated lifecycle workspace on the canonical `main` deployment.
+Current objective: preserve the verified release while completing the external hackathon submission and demo video.
 
 ## Completed phases
 
@@ -26,8 +26,8 @@ Current objective: publish and verify the integrated lifecycle workspace on the 
 - Focused lifecycle suite — **4/4 passed** for experiment creation, evidence publication, paper linkage, supersession, and laptop layout
 - Real in-app browser — all **36 tools** registered; the run/evidence/paper trace and four Research Diffs are visible against shared live state
 - Visual review — loaded Experiments and Evidence workspaces verified at 1440×900 and the two-column experiment layout verified at 768×900
-- GitHub Actions — CI and Pages deployment succeeded on the prior release commit; the Phase 12 deployment is the remaining release check
-- Public deployment — `https://shiv-aurora.github.io/openai-webmcp-challenge/` is the canonical target; Phase 12 live smoke testing remains pending until the new commit deploys
+- GitHub Actions — CI and Pages deployment both succeeded for Phase 12 commit `a86fe85`
+- Public deployment — `https://shiv-aurora.github.io/openai-webmcp-challenge/` passed a live Phase 12 smoke test: 2 experiments, 5 evidence records, 5 paper objects, 4 Research Diffs, 36 WebMCP tools, and navigable run → evidence → manuscript usage
 - `npm audit --omit=dev` — critical findings reduced from 2 to 0; 14 inherited production-tree advisories remain documented in `docs/SECURITY.md`
 
 ## Known limitations
@@ -40,12 +40,12 @@ Current objective: publish and verify the integrated lifecycle workspace on the 
 
 ## Blockers
 
-- None in the implementation. Phase 12 only needs the normal GitHub Actions and public Pages verification after push.
+- None in the repository, product, CI, or public deployment.
 
 ## Next
 
-- Push the verified Phase 12 commit, wait for CI and Pages, and smoke-test the public Experiments → Evidence → Paper flow.
+- Complete the external hackathon form and final product video; no additional product implementation is required for the current scope.
 
 ## Submission readiness
 
-Source, license, attribution, deterministic lifecycle demo, automated tests, judge instructions, and accurate limitation disclosures are present. The local repository is submission-ready; the public Phase 12 deployment is the remaining release operation before the external hackathon form and final video upload.
+Source, license, attribution, deterministic lifecycle demo, automated tests, green CI, verified public deployment, judge instructions, and accurate limitation disclosures are present. The repository and product are submission-ready; only the external hackathon form and final video upload remain.
