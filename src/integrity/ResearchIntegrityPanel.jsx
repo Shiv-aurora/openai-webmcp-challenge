@@ -86,6 +86,21 @@ const SectionHeading = styled.div`
   letter-spacing: -0.01em;
 `;
 
+const XrayToggleButton = styled(DefaultButton)`
+  width: 100%;
+  height: 36px;
+  background: ${(props) => (props.$active ? "var(--ink)" : "var(--accent)")};
+  border-color: ${(props) => (props.$active ? "var(--ink)" : "var(--accent)")};
+  color: #ffffff !important;
+  font-weight: 600;
+
+  &:hover:not(:disabled) {
+    background: ${(props) => (props.$active ? "var(--ink-secondary)" : "var(--accent-dark)")};
+    border-color: ${(props) => (props.$active ? "var(--ink-secondary)" : "var(--accent-dark)")};
+    color: #ffffff !important;
+  }
+`;
+
 const CoverageRow = styled.div`
   display: flex;
   align-items: center;
@@ -615,8 +630,8 @@ export default function ResearchIntegrityPanel() {
 
       {experience === "xray" && (
         <Section data-experience="xray">
-          <DefaultButton
-            $variant={xrayActive ? "outline" : "primary"}
+          <XrayToggleButton
+            $active={xrayActive}
             aria-pressed={xrayActive}
             data-testid="toggle-xray"
             type="button"
@@ -626,8 +641,8 @@ export default function ResearchIntegrityPanel() {
               refreshXray(editorState.editorView.value, next, provenance.data.peek());
             }}
           >
-            {xrayActive ? "Exit X-Ray" : "Enter X-Ray"}
-          </DefaultButton>
+            {xrayActive ? "Disable X-Ray" : "Enable X-Ray"}
+          </XrayToggleButton>
           {!provenanceStats.objectCount && (
             <ButtonRow>
               <DefaultButton

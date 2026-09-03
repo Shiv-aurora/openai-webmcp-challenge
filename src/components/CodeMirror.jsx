@@ -1,7 +1,7 @@
 import { useContext, useRef } from "preact/hooks";
 import { EditorView } from "codemirror";
 import { EditorState } from "@codemirror/state";
-import styled, { css } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { ExtensionBuilder, skipAndFoldAll, foldMarkedHeadings } from "../extensions";
 import { YCommentsParent } from "./Comment";
 import commentIcon from "../icons/comment.svg?raw";
@@ -13,6 +13,40 @@ import { Logger } from "../logger";
 import { deriveManuscriptSelection } from "../integrity/selection";
 import { ensureProvenanceStore } from "../integrity/provenance";
 import { refreshXray, xrayCompartment, xrayField } from "../integrity/xray";
+
+const xrayScan = keyframes`
+  0% {
+    top: 18px;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  84% {
+    opacity: 1;
+  }
+  100% {
+    top: calc(100% - 18px);
+    opacity: 0;
+  }
+`;
+
+const xrayReveal = keyframes`
+  0% {
+    opacity: 0.2;
+    filter: saturate(0.2);
+  }
+  55% {
+    opacity: 1;
+    filter: saturate(1.8) brightness(1.08);
+    text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    text-shadow: none;
+  }
+`;
 
 const CodeEditor = styled.div`
   background: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--paper)")};
@@ -30,6 +64,23 @@ const CodeEditor = styled.div`
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;
+
+  &[data-xray-active="true"]::after {
+    content: "";
+    position: absolute;
+    z-index: 20;
+    top: 18px;
+    right: 12px;
+    left: 12px;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, var(--accent) 14%, #8dccff 50%, var(--accent) 86%, transparent);
+    box-shadow:
+      0 0 10px color-mix(in srgb, var(--accent) 65%, transparent),
+      0 10px 28px color-mix(in srgb, var(--accent) 22%, transparent);
+    pointer-events: none;
+    animation: ${xrayScan} 900ms cubic-bezier(0.22, 0.8, 0.3, 1) both;
+  }
 
   .cm-editor .cm-gutters {
     background-color: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--paper)")};
@@ -117,6 +168,7 @@ const CodeEditor = styled.div`
     -webkit-box-decoration-break: clone;
     position: relative;
     cursor: help;
+    animation: ${xrayReveal} 520ms ease-out both;
   }
 
   .cm-xray-object:hover::after {
@@ -170,6 +222,13 @@ const CodeEditor = styled.div`
     background: color-mix(in srgb, var(--border) 30%, transparent);
     text-decoration: underline dotted var(--editor-gutter-fg) 2px;
     text-underline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-xray-active="true"]::after,
+    .cm-xray-object {
+      animation: none;
+    }
   }
 
   .cm-link {
@@ -364,6 +423,7 @@ const CodeMirror = () => {
   const editorState = useContext(MystState);
   const { editorView, options, collab, userSettings, linter, text, headings, error, suggestMode, manuscriptSelection } = editorState;
   const provenance = ensureProvenanceStore(editorState);
+  const xrayActive = provenance.xrayActive.value;
   const logger = useContext(Logger);
   const editorMountpoint = useRef(null);
   const focusScroll = useRef(null);
@@ -497,7 +557,13 @@ const CodeMirror = () => {
   });
 
   return (
-    <CodeEditor className="myst-main-editor" ref={editorMountpoint} $mode={options.mode.value} id={`${options.id.value}-editor`}>
+    <CodeEditor
+      className="myst-main-editor"
+      ref={editorMountpoint}
+      $mode={options.mode.value}
+      data-xray-active={xrayActive}
+      id={`${options.id.value}-editor`}
+    >
       {options.collaboration.value.commentsEnabled && collab.value.ready.value && collab.value.ycomments?.mainCodeMirror && <YCommentsParent />}
     </CodeEditor>
   );
