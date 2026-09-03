@@ -14,7 +14,7 @@
       }
     </style>
     <script type="module">
-      let exampleText = `---
+      let exampleText = String.raw`---
 title: Regime-Aware Volatility Forecasting
 authors:
   - name: Research Integrity Demo Team
@@ -52,6 +52,8 @@ $$
 | --- | ---: | ---: | ---: |
 | Normal | 71.4% | 75.1% | 5.2% |
 | Stress | 59.3% | 70.1% | 18.2% |
+
+![Stress-regime accuracy comparison](demo/stress-regime-accuracy-v1.svg)
 
 The stress-regime result is the primary quantitative claim. Later project phases will connect this sentence and table row to the exact experiment output, evaluation script, metric, and commit that produced them.
 

@@ -104,6 +104,8 @@ export function deriveManuscriptSelection(state) {
   const selectedText = selection.empty ? "" : state.sliceDoc(selection.from, selection.to);
   const lineText = anchorLine.text;
 
+  if (selection.empty && lineText.trim() === "---") return createEmptyManuscriptSelection();
+
   const table = tableAround(state.doc, anchorLine.number);
   if (table) return objectSelection("table", table, section, selectedText, !selection.empty);
 

@@ -31,7 +31,7 @@ const loadWorkspace = async (page: Page, collaboration = false) => {
   await page.reload();
   await page.waitForSelector(".cm-content");
   if (collaboration) await page.waitForFunction(() => (window as any).myst_editor?.demo?.state?.collab?.value?.ready?.value === true);
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(21);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(23);
 };
 
 const selectText = async (page: Page, needle: string) => {
@@ -70,7 +70,7 @@ test.describe("review-safe WebMCP actions", () => {
 
   test("registers the Phase 5 surface with current WebMCP annotations", async ({ page }) => {
     const tools = await page.evaluate(async () => (document as any).modelContext.getTools());
-    expect(tools).toHaveLength(21);
+    expect(tools).toHaveLength(23);
 
     const byName = new Map(tools.map((tool: any) => [tool.name, tool]));
     for (const name of [
@@ -79,6 +79,8 @@ test.describe("review-safe WebMCP actions", () => {
       "update_evidence",
       "verify_claim",
       "record_verification_result",
+      "stage_research_diff",
+      "review_research_diff",
       "set_verification_state",
       "propose_claim_change",
       "insert_comment",
@@ -155,6 +157,30 @@ test.describe("review-safe WebMCP actions", () => {
     expect(result.isError).toBe(true);
     expect(payload(result).error.code).toBe("EVIDENCE_REQUIRED");
     await expect(page.getByTestId("selection-status")).toHaveText("Unlinked");
+  });
+
+  test("rejects invalid external verification evidence without mutating the claim", async ({ page }) => {
+    const { claim } = await createStressClaim(page);
+    const before = await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()));
+    const result = await executeTool(page, "record_verification_result", {
+      claimId: claim.id,
+      outcome: "verified",
+      reason: "An agent asserted this without linking a source.",
+      evidenceIds: ["not-linked"],
+    });
+    expect(result.isError).toBe(true);
+    expect(payload(result).error.code).toBe("EVIDENCE_NOT_LINKED");
+    expect(await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()))).toBe(before);
+  });
+
+  test("returns structured errors for missing research diffs and invalid navigation input", async ({ page }) => {
+    const staged = await executeTool(page, "stage_research_diff", { diffId: "missing-diff" });
+    expect(staged.isError).toBe(true);
+    expect(payload(staged).error.code).toBe("RESEARCH_DIFF_NOT_FOUND");
+
+    const navigated = await executeTool(page, "navigate_to_research_diff", {});
+    expect(navigated.isError).toBe(true);
+    expect(payload(navigated).error.code).toBe("RESEARCH_DIFF_NOT_FOUND");
   });
 
   test("stages a tracked claim rewrite for human accept or reject instead of silently applying it", async ({ page }) => {
@@ -314,4 +340,40 @@ test("records an external agent conclusion without changing manuscript text", as
   expect(sourceAfter).toBe(sourceBefore);
   expect(sourceAfter).toContain(text);
   await expect(page.getByTestId("verification-result")).toContainText("Partially Supported");
+});
+
+test("detects, navigates, defers, and stages an evidence-driven Research Diff", async ({ page }) => {
+  await loadWorkspace(page);
+  const { claim } = await createStressClaim(page);
+  const attached = payload(
+    await executeTool(page, "attach_evidence", {
+      objectId: claim.id,
+      label: "results/stress_eval.json",
+      metric: "stress_accuracy_improvement=16.8%",
+      relation: "supports",
+    }),
+  );
+  expect(attached.ok).toBe(true);
+
+  const listed = payload(await executeTool(page, "get_research_diffs"));
+  expect(listed.researchDiffs).toHaveLength(1);
+  const diff = listed.researchDiffs[0];
+  expect(diff.changes[0]).toMatchObject({ before: "18.2%", after: "16.8%" });
+
+  const navigated = payload(await executeTool(page, "navigate_to_research_diff", { diffId: diff.id }));
+  expect(navigated.ok).toBe(true);
+  expect(navigated.selection.trackedObjectId).toBeUndefined();
+  expect(navigated.selection.snippet).toContain("18.2%");
+
+  const deferred = payload(
+    await executeTool(page, "review_research_diff", { diffId: diff.id, decision: "deferred", reason: "Wait for the locked run." }),
+  );
+  expect(deferred.manuscriptChanged).toBe(false);
+  expect(deferred.diff.status).toBe("deferred");
+
+  const staged = payload(await executeTool(page, "stage_research_diff", { diffId: diff.id }));
+  expect(staged.reviewRequired).toBe(true);
+  expect(staged.applied).toBe(false);
+  const source = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
+  expect(source).toContain("{~~18.2% improvement in stress-regime accuracy~>16.8% improvement in stress-regime accuracy~~}");
 });

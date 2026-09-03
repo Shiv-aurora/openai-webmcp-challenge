@@ -1,0 +1,8 @@
+{
+  "artifact_id": "stress-accuracy-figure-v2",
+  "experiment_id": "stress-run-08",
+  "commit": "7b39d24",
+  "source": "../results/stress-eval-v2.json",
+  "current_output": "../../src/public/demo/stress-regime-accuracy-v2.svg",
+  "supersedes": "../../src/public/demo/stress-regime-accuracy-v1.svg"
+}

@@ -366,3 +366,46 @@ test.describe("Verify This", () => {
     await expect(page.getByTestId("verification-result")).toContainText("1 evidence reference");
   });
 });
+
+test.describe("Research Diff", () => {
+  test.beforeEach(async ({ page }) => loadWorkspace(page));
+
+  test("shows live manuscript versus research drift and persists defer", async ({ page }) => {
+    await trackStressClaim(page);
+    await addStressEvidence(page);
+    await page.getByTestId("verify-this").click();
+    await page.getByRole("button", { name: "Edit evidence results/stress_eval.json" }).click();
+    await page.getByTestId("evidence-metric").fill("stress_accuracy_improvement=16.8%");
+    await page.getByTestId("save-evidence").click();
+
+    const diff = page.getByTestId("research-diff-card");
+    await expect(diff).toContainText("Result value changed");
+    await expect(diff).toContainText("Paper18.2%");
+    await expect(diff).toContainText("Research16.8%");
+    await diff.getByRole("button", { name: "Defer" }).click();
+    await expect(diff).toContainText("Deferred");
+
+    await page.reload();
+    await page.waitForSelector(".cm-content");
+    await expect(page.getByTestId("research-diff-card")).toContainText("Deferred");
+  });
+
+  test("stages accepted research text for the existing visible review UI", async ({ page }) => {
+    await trackStressClaim(page);
+    await addStressEvidence(page);
+    await page.getByRole("button", { name: "Edit evidence results/stress_eval.json" }).click();
+    await page.getByTestId("evidence-metric").fill("stress_accuracy_improvement=16.8%");
+    await page.getByTestId("save-evidence").click();
+    await page.getByTestId("stage-research-diff").click();
+
+    const source = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
+    expect(source).toContain("{~~18.2% improvement in stress-regime accuracy~>16.8% improvement in stress-regime accuracy~~}");
+    await expect(page.getByTestId("research-diff-card")).toContainText("In Review");
+    await expect(page.getByTestId("research-diff-card")).toContainText("visible accept/reject suggestion controls");
+
+    await page.getByTitle("Accept suggestion").click();
+    await expect(page.getByTestId("research-diff-empty")).toBeVisible();
+    await selectText(page, "16.8% improvement in stress-regime accuracy");
+    await expect(page.getByTestId("selection-status")).toHaveText("Verified");
+  });
+});

@@ -1,7 +1,9 @@
-import { useContext, useState } from "preact/hooks";
+import { useContext, useEffect, useState } from "preact/hooks";
 import styled from "styled-components";
+import { buildDemoResearchProject } from "../demo/researchProject";
 import { MystState } from "../mystState";
-import { manuscriptStats } from "./selection";
+import { detectResearchDiffs, groupResearchDiffs } from "./researchDiff";
+import { deriveManuscriptSelection, manuscriptStats } from "./selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "./provenance";
 import { verifyQuantitativeClaim } from "./verification";
 import { refreshXray, resolveXrayRange } from "./xray";
@@ -39,12 +41,17 @@ const Panel = styled.aside`
 `;
 
 const Header = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 3;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   padding: 20px 20px 16px;
   border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel-bg) 94%, transparent);
+  backdrop-filter: blur(12px);
 `;
 
 const Kicker = styled.div`
@@ -61,6 +68,43 @@ const Title = styled.h2`
   font-size: 18px;
   line-height: 1.25;
   font-weight: 700;
+`;
+
+const PromiseLine = styled.p`
+  max-width: 250px;
+  margin: 7px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  opacity: 0.72;
+`;
+
+const ExperienceNav = styled.nav`
+  position: sticky;
+  top: 99px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel-bg);
+`;
+
+const ExperienceButton = styled.button`
+  min-width: 0;
+  min-height: 31px;
+  border: 0;
+  border-radius: var(--border-radius);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--button-bg-hover);
+  }
 `;
 
 const CloseButton = styled.button`
@@ -255,6 +299,44 @@ const VerificationReason = styled.p`
   margin: 9px 0 0;
   font-size: 12px;
   line-height: 1.5;
+`;
+
+const DiffGroup = styled.div`
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+`;
+
+const DiffGroupTitle = styled.div`
+  font-size: 11px;
+  font-weight: 700;
+`;
+
+const DiffCard = styled.div`
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid ${(props) => statusTone(props.$status === "rejected" ? "contradicted" : "stale")};
+  border-radius: var(--border-radius);
+  background: var(--editor-bg);
+`;
+
+const DiffLine = styled.div`
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 7px;
+  margin-top: 7px;
+  font:
+    10px/1.4 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
+  overflow-wrap: anywhere;
+
+  strong {
+    opacity: 0.62;
+  }
 `;
 
 const EvidenceTitle = styled.div`
@@ -480,6 +562,30 @@ export default function ResearchIntegrityPanel() {
   const xrayActive = provenance.xrayActive.value;
   const xrayObjects = provenance.data.value.objects;
   const stateCounts = provenanceStats.stateCounts;
+  const provenanceData = provenance.data.value;
+  const researchDiffGroups = groupResearchDiffs(detectResearchDiffs(provenanceData));
+
+  useEffect(() => {
+    const markdown = text.text.value;
+    const reviewDiffs = detectResearchDiffs(provenanceData).filter((item) => item.status === "in-review" && item.proposedText);
+    for (const diff of reviewDiffs) {
+      const object = provenance.data.peek().objects.find((item) => item.id === diff.objectId);
+      const from = markdown.indexOf(diff.proposedText, Math.max(0, (object?.anchor?.from || 0) - 100));
+      if (from < 0 || Math.abs(from - (object?.anchor?.from || 0)) > 300) continue;
+      if (markdown.lastIndexOf("{~~", from) > markdown.lastIndexOf("~~}", from)) continue;
+      provenance.reconcileResearchDiff(
+        diff.id,
+        diff.objectId,
+        diff.proposedText,
+        {
+          from,
+          to: from + diff.proposedText.length,
+          line: markdown.slice(0, from).split("\n").length,
+        },
+        diff.evidenceReferences,
+      );
+    }
+  }, [provenance, provenanceData, text.text.value]);
 
   const resetEvidenceForm = () => {
     setEvidenceForm(emptyEvidenceForm());
@@ -542,19 +648,57 @@ export default function ResearchIntegrityPanel() {
     provenance.recordVerification(object.id, verification);
   };
 
+  const inspectResearchDiff = (diff) => {
+    const object = provenance.data.peek().objects.find((item) => item.id === diff.objectId);
+    if (object) inspectXrayObject(object);
+  };
+
+  const stageResearchDiff = (diff) => {
+    if (!diff.proposedText) return;
+    const view = editorState.editorView.value;
+    const object = provenance.data.peek().objects.find((item) => item.id === diff.objectId);
+    const range = resolveXrayRange(view?.state.doc, object);
+    if (!view || !range || view.state.sliceDoc(range.from, range.to) !== object.text || /\{(?:~~|\+\+|--)/.test(diff.proposedText)) return;
+    const markup = `{~~${object.text}~>${diff.proposedText}~~}`;
+    view.dispatch({
+      changes: { from: range.from, to: range.to, insert: markup },
+      selection: { anchor: range.from, head: range.from + markup.length },
+      scrollIntoView: true,
+    });
+    editorState.manuscriptSelection.value = deriveManuscriptSelection(view.state);
+    provenance.reviewResearchDiff(diff.id, "in-review", { reviewRequired: true });
+  };
+
+  const navigateExperience = (event, experience) => {
+    event.currentTarget.closest("aside")?.querySelector(`[data-experience="${experience}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <Panel aria-label="Research integrity" data-testid="integrity-panel">
       <Header>
         <div>
           <Kicker>{xrayActive ? "Global integrity map" : "Manuscript state"}</Kicker>
           <Title>{xrayActive ? "Research X-Ray" : "Research integrity"}</Title>
+          <PromiseLine>Every claim in your paper stays connected to the research that produced it.</PromiseLine>
         </div>
         <CloseButton aria-label="Close research integrity panel" type="button" onClick={() => (integrityPanelOpen.value = false)}>
           ×
         </CloseButton>
       </Header>
 
-      <Section>
+      <ExperienceNav aria-label="Integrity workflows">
+        <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "xray")}>
+          Research X-Ray
+        </ExperienceButton>
+        <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "verify")}>
+          Verify This
+        </ExperienceButton>
+        <ExperienceButton type="button" onClick={(event) => navigateExperience(event, "diff")}>
+          Research Diff
+        </ExperienceButton>
+      </ExperienceNav>
+
+      <Section data-experience="xray">
         <SectionHeading>Research X-Ray</SectionHeading>
         <ActionButton
           $primary={!xrayActive}
@@ -574,6 +718,18 @@ export default function ResearchIntegrityPanel() {
             ? "The manuscript is showing provenance health directly on every tracked research object."
             : "Turn the manuscript into a visual integrity map without changing its content."}
         </Muted>
+        {!provenanceStats.objectCount && (
+          <ButtonRow>
+            <ActionButton
+              $primary
+              data-testid="load-demo-research"
+              type="button"
+              onClick={() => provenance.replaceData(buildDemoResearchProject(text.text.value))}
+            >
+              Start the deterministic demo
+            </ActionButton>
+          </ButtonRow>
+        )}
         {xrayActive && (
           <>
             <XraySummaryGrid data-testid="xray-summary">
@@ -719,7 +875,7 @@ export default function ResearchIntegrityPanel() {
         )}
       </Section>
 
-      <Section>
+      <Section data-experience="verify">
         <SectionHeading>Verify This</SectionHeading>
         {selection.kind !== "claim" && activeObject?.kind !== "claim" ? (
           <EmptyState>Select a quantitative claim to run an evidence-backed deterministic check.</EmptyState>
@@ -750,6 +906,61 @@ export default function ResearchIntegrityPanel() {
               </VerificationCard>
             )}
           </>
+        )}
+      </Section>
+
+      <Section data-experience="diff">
+        <SectionHeading>Research Diff</SectionHeading>
+        <Muted>Live drift between manuscript objects and their linked research evidence, grouped by manuscript section.</Muted>
+        {researchDiffGroups.length ? (
+          <div data-testid="research-diff-list">
+            {researchDiffGroups.map((group) => (
+              <DiffGroup key={group.title}>
+                <DiffGroupTitle>{group.title}</DiffGroupTitle>
+                {group.diffs.map((diff) => (
+                  <DiffCard $status={diff.status} data-testid="research-diff-card" key={diff.id}>
+                    <SelectionHeading>
+                      <ObjectTitle>{diff.changes[0].label}</ObjectTitle>
+                      <Status $status={diff.status === "rejected" ? "contradicted" : "stale"}>{prettyValue(diff.status)}</Status>
+                    </SelectionHeading>
+                    {diff.changes.map((change, index) => (
+                      <div key={`${change.kind}-${index}`}>
+                        <DiffLine>
+                          <strong>Paper</strong>
+                          <span>{change.before || "—"}</span>
+                        </DiffLine>
+                        <DiffLine>
+                          <strong>Research</strong>
+                          <span>{change.after || "—"}</span>
+                        </DiffLine>
+                      </div>
+                    ))}
+                    <ButtonRow>
+                      <ActionButton type="button" onClick={() => inspectResearchDiff(diff)}>
+                        Inspect
+                      </ActionButton>
+                      {diff.proposedText && diff.status !== "in-review" && (
+                        <ActionButton $primary data-testid="stage-research-diff" type="button" onClick={() => stageResearchDiff(diff)}>
+                          Accept → review
+                        </ActionButton>
+                      )}
+                      <ActionButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "rejected")}>
+                        Reject
+                      </ActionButton>
+                      <ActionButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "deferred")}>
+                        Defer
+                      </ActionButton>
+                    </ButtonRow>
+                    {diff.status === "in-review" && (
+                      <Muted>Update staged in the manuscript. Use the visible accept/reject suggestion controls.</Muted>
+                    )}
+                  </DiffCard>
+                ))}
+              </DiffGroup>
+            ))}
+          </div>
+        ) : (
+          <EmptyState data-testid="research-diff-empty">No evidence-driven manuscript drift is currently detected.</EmptyState>
         )}
       </Section>
 

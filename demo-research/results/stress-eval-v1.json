@@ -1,0 +1,9 @@
+{
+  "artifact_id": "stress-eval-v1",
+  "experiment_id": "stress-run-07",
+  "commit": "28e6a11",
+  "baseline_accuracy": 0.593,
+  "proposed_accuracy": 0.701,
+  "relative_improvement_percent": 18.2,
+  "status": "superseded"
+}

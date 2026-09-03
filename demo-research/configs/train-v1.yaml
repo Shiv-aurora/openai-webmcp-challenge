@@ -1,0 +1,6 @@
+artifact_id: training-config-v1
+experiment_id: stress-run-07
+commit: 28e6a11
+optimizer: AdamW
+learning_rate: 3e-4
+status: superseded

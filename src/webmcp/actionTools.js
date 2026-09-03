@@ -1,5 +1,6 @@
 import { deriveManuscriptSelection } from "../integrity/selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "../integrity/provenance";
+import { detectResearchDiffs } from "../integrity/researchDiff";
 import { VERIFICATION_OUTCOMES, normalizeAgentVerification, verifyQuantitativeClaim } from "../integrity/verification";
 import { resolveXrayRange } from "../integrity/xray";
 
@@ -15,6 +16,8 @@ export const ACTION_WEBMCP_TOOL_NAMES = [
   "replace_selected_content",
   "navigate_to_object",
   "get_research_diffs",
+  "stage_research_diff",
+  "review_research_diff",
   "navigate_to_research_diff",
 ];
 
@@ -462,27 +465,95 @@ export function buildResearchWebMCPActionTools(editorState) {
     {
       name: "get_research_diffs",
       title: "Get reviewable manuscript changes",
-      description:
-        "Return currently pending CriticMarkup manuscript changes. In Phase 4 these are reviewable agent or human proposals; evidence-driven Research Diff detection is added in the dedicated Research Diff phase.",
+      description: "Return evidence-driven Research Diff entries from live provenance alongside currently pending CriticMarkup manuscript proposals.",
       inputSchema: { type: "object", properties: {}, additionalProperties: false },
       annotations: readOnlyAnnotations,
-      execute: async () => toolResult({ ok: true, diffs: pendingResearchDiffs(editorState) }),
+      execute: async () => {
+        const researchDiffs = detectResearchDiffs(readSignal(provenance.data));
+        const proposalDiffs = pendingResearchDiffs(editorState);
+        return toolResult({ ok: true, diffs: proposalDiffs, researchDiffs, total: researchDiffs.length + proposalDiffs.length });
+      },
+    },
+    {
+      name: "stage_research_diff",
+      title: "Stage research diff for researcher review",
+      description:
+        "Stage the proposed manuscript text for one evidence-driven Research Diff as CriticMarkup. The update remains unapplied until the researcher uses the visible accept/reject controls.",
+      inputSchema: {
+        type: "object",
+        properties: { diffId: { type: "string" } },
+        required: ["diffId"],
+        additionalProperties: false,
+      },
+      annotations: mutatingAnnotations,
+      execute: async (input = {}) => {
+        const diff = detectResearchDiffs(readSignal(provenance.data)).find((item) => item.id === input.diffId);
+        if (!diff) return toolError("RESEARCH_DIFF_NOT_FOUND", "No evidence-driven Research Diff exists with that id.");
+        if (!diff.proposedText)
+          return toolError("REVIEW_REQUIRED", "This diff cannot be converted into deterministic manuscript text and requires researcher review.");
+        const view = getView(editorState);
+        const object = resolveObject(editorState, provenance, diff.objectId);
+        const range = resolveXrayRange(view?.state.doc, object);
+        if (!view || !range) return toolError("OBJECT_ANCHOR_NOT_FOUND", "The affected manuscript object can no longer be located.");
+        const staged = stageReplacement(editorState, range, object.text, diff.proposedText);
+        if (staged.isError) return staged;
+        const review = provenance.reviewResearchDiff(diff.id, "in-review", { reviewRequired: true, source: "webmcp" });
+        return toolResult({ ...staged.structuredContent, diff: { ...diff, status: "in-review", review }, diffId: diff.id });
+      },
+    },
+    {
+      name: "review_research_diff",
+      title: "Defer or reject research diff",
+      description:
+        "Record a defer or reject decision for an evidence-driven Research Diff without changing manuscript text. Agents cannot accept manuscript rewrites.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          diffId: { type: "string" },
+          decision: { type: "string", enum: ["deferred", "rejected"] },
+          reason: { type: "string", maxLength: 1000 },
+        },
+        required: ["diffId", "decision"],
+        additionalProperties: false,
+      },
+      annotations: mutatingAnnotations,
+      execute: async (input = {}) => {
+        const diff = detectResearchDiffs(readSignal(provenance.data)).find((item) => item.id === input.diffId);
+        if (!diff) return toolError("RESEARCH_DIFF_NOT_FOUND", "No evidence-driven Research Diff exists with that id.");
+        if (!["deferred", "rejected"].includes(input.decision))
+          return toolError("INVALID_RESEARCH_DIFF_DECISION", "Agents may only defer or reject a Research Diff.");
+        const review = provenance.reviewResearchDiff(diff.id, input.decision, { reason: input.reason?.trim() || "", source: "webmcp" });
+        return toolResult({ ok: true, diff: { ...diff, status: input.decision, review }, manuscriptChanged: false });
+      },
     },
     {
       name: "navigate_to_research_diff",
       title: "Navigate to reviewable manuscript change",
       description:
-        "Move the visible editor selection to a pending CriticMarkup change so the researcher can inspect and accept or reject it with the normal editor controls.",
+        "Move the visible editor selection to an evidence-driven Research Diff or pending CriticMarkup proposal so the researcher can inspect it without changing manuscript content.",
       inputSchema: {
         type: "object",
-        properties: { from: { type: "integer", minimum: 0, description: "The pending diff's `from` value returned by get_research_diffs." } },
-        required: ["from"],
+        properties: {
+          from: { type: "integer", minimum: 0, description: "A pending CriticMarkup diff's `from` value." },
+          diffId: { type: "string", description: "An evidence-driven Research Diff id." },
+        },
+        anyOf: [{ required: ["from"] }, { required: ["diffId"] }],
         additionalProperties: false,
       },
       annotations: mutatingAnnotations,
       execute: async (input = {}) => {
         const view = getView(editorState);
         if (!view) return toolError("EDITOR_UNAVAILABLE", "The manuscript editor is not ready.");
+        const researchDiff = input.diffId ? detectResearchDiffs(readSignal(provenance.data)).find((item) => item.id === input.diffId) : null;
+        if (researchDiff) {
+          const object = resolveObject(editorState, provenance, researchDiff.objectId);
+          const range = resolveXrayRange(view.state.doc, object);
+          if (!range) return toolError("OBJECT_ANCHOR_NOT_FOUND", "The affected manuscript object can no longer be located.");
+          view.dispatch({ selection: { anchor: range.from, head: range.to }, scrollIntoView: true });
+          view.focus();
+          const selection = refreshSelection(editorState, view);
+          return toolResult({ ok: true, diff: researchDiff, selection, reviewRequired: true });
+        }
         const diff = pendingResearchDiffs(editorState).find((item) => item.from === input.from);
         if (!diff)
           return toolError("RESEARCH_DIFF_NOT_FOUND", "No pending reviewable manuscript change exists at that position.", { from: input.from });

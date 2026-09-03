@@ -1,0 +1,6 @@
+artifact_id: training-config-v2
+experiment_id: stress-run-08
+commit: 7b39d24
+optimizer: AdamW
+learning_rate: 2e-4
+status: locked

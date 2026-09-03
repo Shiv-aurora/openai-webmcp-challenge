@@ -21,7 +21,7 @@ const TRACKABLE_KINDS = new Set(["claim", "method", "figure", "table"]);
 
 const now = () => new Date().toISOString();
 const makeId = (prefix) => `${prefix}-${crypto.randomUUID()}`;
-const cloneEmptyData = () => ({ version: 1, objects: [], evidence: [], links: [] });
+const cloneEmptyData = () => ({ version: 1, objects: [], evidence: [], links: [], diffReviews: {} });
 
 function safeLoad(storageKey) {
   try {
@@ -32,6 +32,7 @@ function safeLoad(storageKey) {
       objects: Array.isArray(parsed.objects) ? parsed.objects : [],
       evidence: Array.isArray(parsed.evidence) ? parsed.evidence : [],
       links: Array.isArray(parsed.links) ? parsed.links : [],
+      diffReviews: parsed.diffReviews && typeof parsed.diffReviews === "object" ? parsed.diffReviews : {},
     };
   } catch (_) {
     return cloneEmptyData();
@@ -208,6 +209,46 @@ export function createProvenanceStore(editorId) {
     return updated;
   };
 
+  const reviewResearchDiff = (diffId, status, details = {}) => {
+    if (!diffId || !["pending", "in-review", "rejected", "deferred", "reconciled"].includes(status)) return null;
+    const current = data.peek();
+    const review = { ...(current.diffReviews?.[diffId] || {}), ...details, status, updatedAt: now() };
+    data.value = { ...current, diffReviews: { ...(current.diffReviews || {}), [diffId]: review } };
+    return review;
+  };
+
+  const reconcileResearchDiff = (diffId, objectId, text, anchor, evidenceReferences = []) => {
+    const current = data.peek();
+    const object = current.objects.find((item) => item.id === objectId);
+    if (!object || !text || !anchor) return null;
+    const timestamp = now();
+    const record = {
+      outcome: "verified",
+      verificationState: "verified",
+      reason: "The researcher accepted the evidence-backed manuscript update through the visible review controls.",
+      reasons: ["The researcher accepted the evidence-backed manuscript update through the visible review controls."],
+      checkedAt: timestamp,
+      source: "research-diff-reconciliation",
+      evidenceReferences,
+    };
+    const updatedObject = {
+      ...object,
+      text,
+      anchor: { ...object.anchor, ...anchor, snippet: text },
+      verificationState: "verified",
+      verification: record,
+      verificationHistory: [...(object.verificationHistory || []), record].slice(-20),
+      updatedAt: timestamp,
+    };
+    const review = { ...(current.diffReviews?.[diffId] || {}), status: "reconciled", updatedAt: timestamp };
+    data.value = {
+      ...current,
+      objects: current.objects.map((item) => (item.id === objectId ? updatedObject : item)),
+      diffReviews: { ...(current.diffReviews || {}), [diffId]: review },
+    };
+    return updatedObject;
+  };
+
   const updateLink = (linkId, patch) => {
     const current = data.peek();
     const timestamp = now();
@@ -274,6 +315,18 @@ export function createProvenanceStore(editorId) {
     };
   };
 
+  const replaceData = (nextData) => {
+    if (!nextData || !Array.isArray(nextData.objects) || !Array.isArray(nextData.evidence) || !Array.isArray(nextData.links)) return false;
+    data.value = {
+      version: 1,
+      objects: nextData.objects,
+      evidence: nextData.evidence,
+      links: nextData.links,
+      diffReviews: nextData.diffReviews || {},
+    };
+    return true;
+  };
+
   return {
     data,
     xrayActive,
@@ -289,6 +342,9 @@ export function createProvenanceStore(editorId) {
     updateLink,
     removeEvidence,
     recordVerification,
+    reviewResearchDiff,
+    reconcileResearchDiff,
+    replaceData,
     stats,
   };
 }
