@@ -84,7 +84,19 @@ const Badge = styled.span`
 
 const XrayIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+    <rect x="2.75" y="4.25" width="18.5" height="15.5" rx="3" stroke="currentColor" stroke-width="1.5" />
+    <text
+      x="12"
+      y="14.9"
+      fill="currentColor"
+      font-family="ui-sans-serif, system-ui, sans-serif"
+      font-size="8.4"
+      font-weight="750"
+      letter-spacing="0.35"
+      text-anchor="middle"
+    >
+      XR
+    </text>
   </svg>
 );
 
