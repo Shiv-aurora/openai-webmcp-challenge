@@ -61,28 +61,29 @@ export const folded = (update) => update.transactions.some((t) => t.effects.some
 export const programmaticFold = Annotation.define();
 export const collabClientFacet = Facet.define();
 
+/** Syntax colors are drawn from the same six tag hues as the rest of the interface, so source view
+ * and provenance state never disagree about what, say, orange means. */
 const syntaxHighlight = HighlightStyle.define([
-  { tag: [tags.heading, tags.strong], fontWeight: "bold" },
+  { tag: [tags.heading, tags.strong], fontWeight: "600" },
   { tag: [tags.link, tags.url], textDecoration: "underline", color: "var(--accent-dark)" },
-  { tag: tags.macroName, color: "var(--accent-dark)" },
+  { tag: tags.macroName, color: "var(--tag-purple-fg)" },
   { tag: tags.emphasis, fontStyle: "italic" },
-  { tag: tags.meta, color: "darkgrey" },
-  { tag: tags.emphasis, fontStyle: "italic" },
+  { tag: tags.meta, color: "var(--ink-faint)" },
   { tag: tags.strikethrough, textDecoration: "line-through" },
-  { tag: tags.keyword, color: "#708" },
-  { tag: tags.literal, color: "#164" },
+  { tag: tags.keyword, color: "var(--tag-purple-fg)" },
+  { tag: tags.literal, color: "var(--tag-orange-fg)" },
   { tag: tags.string, color: "var(--string-fg)" },
   { tag: tags.deleted, background: "var(--deleted-bg)", textDecoration: "line-through" },
   { tag: tags.inserted, background: "var(--inserted-bg)", textDecoration: "underline" },
-  { tag: [tags.regexp, tags.escape, tags.special(tags.string)], color: "#e40" },
-  { tag: tags.definition(tags.variableName), color: "#00f" },
-  { tag: tags.local(tags.variableName), color: "#30a" },
-  { tag: [tags.typeName, tags.namespace], color: "#085" },
-  { tag: tags.className, color: "#167" },
-  { tag: tags.special(tags.variableName), color: "#256" },
-  { tag: tags.definition(tags.propertyName), color: "var(--accent-dark)" },
-  { tag: tags.comment, color: "var(--string-fg)" },
-  { tag: tags.invalid, color: "#f00" },
+  { tag: [tags.regexp, tags.escape, tags.special(tags.string)], color: "var(--tag-orange-fg)" },
+  { tag: tags.definition(tags.variableName), color: "var(--tag-blue-fg)" },
+  { tag: tags.local(tags.variableName), color: "var(--tag-purple-fg)" },
+  { tag: [tags.typeName, tags.namespace], color: "var(--tag-green-fg)" },
+  { tag: tags.className, color: "var(--tag-green-fg)" },
+  { tag: tags.special(tags.variableName), color: "var(--tag-blue-fg)" },
+  { tag: tags.definition(tags.propertyName), color: "var(--tag-blue-fg)" },
+  { tag: tags.comment, color: "var(--ink-faint)", fontStyle: "italic" },
+  { tag: tags.invalid, color: "var(--error-bg)" },
 ]);
 
 export const lineNumbersCompartment = new Compartment();

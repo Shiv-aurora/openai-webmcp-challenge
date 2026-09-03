@@ -2,7 +2,7 @@ import { styled } from "styled-components";
 import { useContext, useMemo } from "preact/hooks";
 import purify from "dompurify";
 
-import { DefaultButton } from "./CommonUI";
+import { DefaultButton, IconButton } from "./CommonUI";
 import ButtonGroup from "./ButtonGroup";
 import Avatars from "./Avatars";
 import { MystState } from "../mystState";
@@ -19,65 +19,68 @@ const Topbar = styled.div`
   z-index: 10;
   position: sticky;
   top: 0;
-  padding: 0 20px;
+  padding: 0 10px 0 14px;
   width: 100%;
-  height: 56px;
+  height: 45px;
   background-color: var(--navbar-bg);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hairline);
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   box-sizing: border-box;
 
   .side {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 2px;
     min-width: 0;
 
+    &:first-child {
+      flex: 1 1 auto;
+      gap: 8px;
+    }
+
     &:last-child {
-      flex-shrink: 0;
+      flex: 0 0 auto;
     }
   }
 
-  .btns {
+  .btns,
+  .icon-btns {
     display: flex;
-    gap: 4px;
-    padding: 2px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--paper);
+    align-items: center;
+    gap: 1px;
   }
 
+  /* The copy glyph is two overlapping sheets; the front one needs an opaque fill to mask the
+     back one, so it tracks whatever surface sits behind the button. */
   svg > path.inner-copy {
-    transition: fill 0.4s ease;
+    fill: var(--navbar-bg);
+    transition: fill 20ms ease-in;
   }
 
-  button:not(:disabled):not(view-menu):not(.radio-icon):hover {
-    background-color: var(--button-bg-hover);
-    border-color: transparent;
-    .inner-copy {
-      fill: var(--button-bg-hover);
-    }
+  button:hover > svg > path.inner-copy {
+    fill: #f0efed;
   }
 
   .btn-dropdown {
     position: absolute;
-    top: 50px;
-    padding-top: 10px;
+    top: 40px;
+    padding-top: 6px;
     display: none;
+    z-index: 20;
 
     &:hover {
       display: block;
     }
 
     .dropdown-content {
-      padding: 20px;
-      border-radius: var(--border-radius);
-      box-shadow: 4px 4px 10px var(--box-shadow);
-      background: var(--navbar-bg);
+      padding: 8px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-menu);
+      background: var(--modal-bg);
     }
   }
 
@@ -88,59 +91,44 @@ const Topbar = styled.div`
   }
 
   @media (max-width: 1100px) {
-    #document-subtitle {
+    #document-subtitle,
+    .crumb-sep {
       display: none;
-    }
-
-    .side {
-      gap: 8px;
     }
   }
 `;
 
+/** Breadcrumb rather than a stacked title/subtitle block: one line reads faster and keeps the
+ * header at a single row height. */
 const TitleBlock = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   min-width: 0;
   overflow: hidden;
-  line-height: 1.2;
 `;
 
 const BrandGlyph = styled.img`
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  border-radius: var(--radius-sm);
   object-fit: contain;
 `;
 
-const TitleCopy = styled.div`
+const Crumb = styled.div`
   min-width: 0;
-`;
-
-const Title = styled.div`
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--ink);
-  a {
-    color: var(--accent-dark);
-  }
-`;
-
-const Subtitle = styled.div`
-  margin-top: 2px;
-  font-size: 12px;
+  color: ${(props) => (props.$muted ? "var(--ink-tertiary)" : "var(--ink)")};
+  font-size: 14px;
+  font-weight: ${(props) => (props.$muted ? 400 : 500)};
   white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--gray-600);
 
   a {
-    color: var(--accent-dark);
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--gray-400);
   }
 
   .git-branch-link,
@@ -154,28 +142,35 @@ const Subtitle = styled.div`
   }
 `;
 
-const Alert = styled(DefaultButton)`
-  padding: 0px 15px;
-  margin-left: 10px;
-  pointer-events: none;
-  background-color: var(--accent-light);
-  border: none;
-  width: fit-content;
+const CrumbSep = styled.span`
+  flex: 0 0 auto;
+  color: var(--gray-400);
+  font-size: 14px;
 `;
 
-export const TopbarButton = styled(DefaultButton)`
-  border: 1px solid transparent;
-  background-color: ${(props) => (props.active ? "var(--accent)" : "transparent")};
-  color: ${(props) => (props.active ? "white" : "var(--gray-600)")};
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+const Separator = styled.div`
+  flex: 0 0 auto;
+  width: 1px;
+  height: 18px;
+  margin: 0 6px;
+  background: var(--hairline);
+`;
 
-  svg {
-    width: 16px;
-    height: 16px;
-  }
+const Alert = styled.span`
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--tag-green-bg);
+  color: var(--tag-green-fg);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+`;
 
+export const TopbarButton = styled(IconButton)`
   &:hover ~ .btn-dropdown {
     display: block;
   }
@@ -218,7 +213,7 @@ const SettingsIcon = () => (
 const CopyIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="22" viewBox="0 0 20 22" fill="none">
     <path d="M13.99 1.04004H1.37V16.64H13.99V1.04004Z" stroke-width="1.75" stroke="currentColor" />
-    <path class="inner-copy" d="M18.63 5.51001H6.01001V21.11H18.63V5.51001Z" stroke-width="1.75" stroke="currentColor" fill="var(--button-bg)" />
+    <path class="inner-copy" d="M18.63 5.51001H6.01001V21.11H18.63V5.51001Z" stroke-width="1.75" stroke="currentColor" fill="var(--navbar-bg)" />
   </svg>
 );
 
@@ -410,24 +405,31 @@ export const EditorTopbar = ({ alert, buttons }) => {
         {options.showTitle.value && (
           <TitleBlock>
             <BrandGlyph alt="" aria-hidden="true" src={pottersWheelLogo} />
-            <TitleCopy>
-              <Title id="document-title" dangerouslySetInnerHTML={{ __html: titleHtml.value }} />
-              {options.subtitle.value && (
-                <Subtitle
+            <Crumb id="document-title" dangerouslySetInnerHTML={{ __html: titleHtml.value }} />
+            {options.subtitle.value && (
+              <>
+                <CrumbSep aria-hidden="true" className="crumb-sep">
+                  /
+                </CrumbSep>
+                <Crumb
+                  $muted
                   id="document-subtitle"
                   dangerouslySetInnerHTML={{ __html: subtitleHtml.value }}
                   onClick={(ev) => options.onSubtitleClick.value?.(ev)}
                 />
-              )}
-            </TitleCopy>
+              </>
+            )}
           </TitleBlock>
         )}
-        <div class="btns">
+        {alert.value && <Alert className="topbar-alert">{alert}</Alert>}
+      </div>
+      <div className="side">
+        <div class="icon-btns">
           {buttonsLeft.map((button) => (
             <div key={button.id}>
               <TopbarButton
                 className="icon"
-                active={button.active?.({ suggestMode, integrityPanelOpen })}
+                $active={button.active?.({ suggestMode, integrityPanelOpen })}
                 type="button"
                 title={button.tooltip}
                 name={button.id}
@@ -443,9 +445,6 @@ export const EditorTopbar = ({ alert, buttons }) => {
             </div>
           ))}
         </div>
-        {alert.value && <Alert className="topbar-alert"> {alert} </Alert>}
-      </div>
-      <div className="side">
         {collab.value && <Avatars />}
         {textButtons.length > 0 && (
           <div className="btns">
@@ -456,10 +455,15 @@ export const EditorTopbar = ({ alert, buttons }) => {
             ))}
           </div>
         )}
-        {options.showModeButtons.value && <ButtonGroup buttons={editorModeButtons} clickedId={clickedId.value} mainButtonsNum={4} />}
+        {options.showModeButtons.value && (
+          <>
+            <Separator aria-hidden="true" />
+            <ButtonGroup buttons={editorModeButtons} clickedId={clickedId.value} mainButtonsNum={4} />
+          </>
+        )}
 
         {options.onExit.value && (
-          <TopbarButton className="icon" active={false} type="button" title={"Quit"} name={"Quit"} onClick={() => options.onExit.value()}>
+          <TopbarButton className="icon" type="button" title={"Quit"} name={"Quit"} onClick={() => options.onExit.value()}>
             <ExitIcon />
           </TopbarButton>
         )}

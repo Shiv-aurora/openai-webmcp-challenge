@@ -7,23 +7,24 @@ import { useComputed } from "@preact/signals";
 import ResolvedSuggestion from "./ResolvedSuggestion";
 
 const ResolvedWrapper = styled.div`
-  background-color: var(--panel-bg);
-  padding: 20px 0;
+  background-color: var(--sidebar-bg);
+  padding: 28px 24px 40px;
   box-sizing: border-box;
   height: 100%;
-  border: 1px solid var(--border);
-  box-shadow: inset 0px 0px 4px var(--box-shadow);
-  border-radius: var(--border-radius);
   overflow-y: auto;
   overscroll-behavior: contain;
+  color: var(--ink);
 
   & h1 {
-    font-size: 20px;
-    padding-left: 100px;
-    margin-bottom: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--ink-tertiary);
 
     &.suggestions-heading {
-      margin-top: 20px;
+      margin-top: 32px;
     }
   }
 `;
@@ -31,14 +32,12 @@ const ResolvedWrapper = styled.div`
 const VerticalSparator = styled.hr`
   border: none;
   height: 1px;
-  background-color: var(--gray-600);
-  margin-top: 20px;
-  margin-bottom: 0;
+  background-color: var(--hairline);
+  margin: 12px 0 0;
 `;
 
 const Container = styled.div`
-  margin-left: 100px;
-  border-left: 1px solid var(--gray-600);
+  margin: 12px 0 0;
 
   & ul,
   p {
@@ -47,20 +46,23 @@ const Container = styled.div`
 `;
 
 const NoCommentsText = styled.p`
-  padding: 10px 6px;
+  padding: 0;
   margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-tertiary);
 
   img {
-    margin: 0 5px;
-    transform: translateY(20%);
+    margin: 0 3px;
+    height: 14px;
+    transform: translateY(15%);
     filter: invert(var(--icon-invert));
   }
 
   span {
-    color: #e7473c;
-    line-height: 25px;
-    font-size: 10px;
-    margin: 0 5px;
+    color: var(--ink-secondary);
+    font-size: 13px;
+    margin: 0 2px;
   }
 `;
 
@@ -88,7 +90,7 @@ const ResolvedComments = () => {
       <Container>
         {resolvedComments.value.length === 0 ? (
           <NoCommentsText>
-            No resolved comments yet, to resolve a comment hover over it's icon <img src={CommentIcon} /> and click <span>RESOLVE</span>
+            No resolved comments yet, to resolve a comment hover over it's icon <img src={CommentIcon} /> and click <span>Resolve</span>
           </NoCommentsText>
         ) : (
           resolvedComments.value.map((c, idx) => (
@@ -102,7 +104,6 @@ const ResolvedComments = () => {
           ))
         )}
       </Container>
-      <VerticalSparator style="margin-top: 0;" />
       <h1 className="suggestions-heading">Resolved suggestions</h1>
       <VerticalSparator />
       <Container>

@@ -6,29 +6,35 @@ import { DefaultButton, Modal } from "./CommonUI.js";
 import { useSignal, useSignalEffect } from "@preact/signals";
 
 const TemplatesList = styled.div`
+  min-width: 220px;
+
   h1 {
-    font-size: 20px;
-    margin: 0;
-    margin-bottom: 16px;
+    margin: 0 0 4px;
+    padding: 0 8px;
+    color: var(--ink-tertiary);
+    font-size: 13px;
+    font-weight: 500;
   }
 
   .list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 1px;
   }
 `;
 
 const TemplateButton = styled(DefaultButton)`
-  color: ${(props) => (props.error ? "var(--error-bg)" : "inherit")};
-  border: 1px solid ${(props) => (props.error ? "var(--error-bg)" : "var(--border)")};
+  width: 100%;
+  justify-content: flex-start;
+  color: ${(props) => (props.error ? "var(--tag-red-fg)" : "var(--ink)")};
+  font-weight: 400;
 
   ${(props) =>
     props.error &&
     css`
-      &:hover {
-        border: 1px solid var(--error-bg) !important;
-        background-color: var(--button-bg) !important;
+      &:hover:not(:disabled) {
+        background-color: var(--tag-red-bg);
+        color: var(--tag-red-fg);
       }
     `}
 `;
@@ -107,7 +113,9 @@ const Templates = () => {
               Are you sure you want to apply the {selectedTemplate.value?.id} template? It will replace the current document and remove all comments.
             </h3>
             <div className="buttons">
+              <DefaultButton onClick={() => (selectedTemplate.value = null)}>No, cancel</DefaultButton>
               <DefaultButton
+                $variant="primary"
                 onClick={() => {
                   editorView.value.dispatch({
                     changes: { from: 0, to: editorView.value.state.doc.length, insert: selectedTemplate.value.templatetext },
@@ -117,7 +125,6 @@ const Templates = () => {
               >
                 Yes, apply
               </DefaultButton>
-              <DefaultButton onClick={() => (selectedTemplate.value = null)}>No, cancel</DefaultButton>
             </div>
           </Modal>,
           modalHost,

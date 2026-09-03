@@ -5,37 +5,40 @@ import { useSignalEffect } from "@preact/signals";
 import { scrollToPos } from "../utils";
 
 const Wrapper = styled.div`
-  background-color: var(--panel-bg);
-  padding: 20px 0;
+  background-color: var(--sidebar-bg);
+  padding: 28px 24px 40px;
   box-sizing: border-box;
   height: 100%;
-  border: 1px solid var(--border);
-  box-shadow: inset 0px 0px 4px var(--box-shadow);
-  border-radius: var(--border-radius);
   overflow-y: auto;
   overscroll-behavior: contain;
+  color: var(--ink);
 
   & > h1 {
-    font-size: 20px;
-    padding-left: 100px;
-    margin-bottom: 0;
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--ink-tertiary);
   }
 `;
 
 const VerticalSparator = styled.hr`
   border: none;
   height: 1px;
-  background-color: var(--border);
-  margin-top: 20px;
-  margin-bottom: 0;
+  background-color: var(--hairline);
+  margin: 12px 0 0;
 `;
 
+/** Depth is expressed by indent and text size only — no bullets, rules, or numbering, so the
+ * outline reads as a quiet index rather than a second document. */
 const HeadingList = styled.div`
-  margin-left: 100px;
-  margin-top: 20px;
+  margin: 8px 0 0;
 
   ul {
     list-style: none;
+    margin: 0;
+    padding-left: 14px;
   }
 
   & > ul {
@@ -43,15 +46,27 @@ const HeadingList = styled.div`
   }
 
   li > span {
-    font-weight: bold;
-    font-size: 18px;
-    line-height: 150%;
+    display: block;
+    padding: 3px 6px;
+    margin-left: -6px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--ink-secondary);
     user-select: none;
+    cursor: pointer;
 
     &:hover {
-      text-decoration: underline;
-      cursor: pointer;
+      background: var(--hover);
+      color: var(--ink);
     }
+  }
+
+  & > ul > li > span {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
   }
 `;
 

@@ -1,53 +1,91 @@
 import { useEffect } from "preact/hooks";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { DefaultButton } from "./CommonUI";
 import { useComputed } from "@preact/signals";
 
+/** A segmented control: one soft track, with the selected segment lifted out of it as a raised
+ * chip. Reads as a single control rather than five adjacent buttons. */
 const GroupContainer = styled.div`
-  display: flex;
-
-  & > button:first-child {
-    border-left: 1px solid var(--border) !important;
-    border-radius: var(--border-radius) 0 0 var(--border-radius);
-  }
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--radius-md);
+  background: var(--gray-100);
 
   .btn-dropdown {
-    right: 20px;
+    right: 10px;
   }
 
   .dropdown-btns {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 1px;
+    min-width: 190px;
   }
 `;
 
 const RadioButton = styled(DefaultButton)`
-  background-color: ${(props) => (props.active ? "var(--accent)" : "var(--button-bg)")};
-  width: 40px;
-  border: "1px solid var(--border)";
-  border-left: none;
-  border-radius: 0;
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  color: var(--ink-tertiary);
 
-  &:hover:not(&:disabled) {
-    background-color: var(--accent-light);
+  svg {
+    width: 15px;
+    height: 15px;
   }
+
+  ${(props) =>
+    props.$active &&
+    css`
+      background: var(--paper);
+      box-shadow: var(--shadow-raised);
+      color: var(--ink);
+
+      &:hover:not(:disabled) {
+        background: var(--paper);
+        color: var(--ink);
+      }
+    `}
 
   &:hover ~ .btn-dropdown {
     display: block;
   }
-
-  &.more {
-    border-radius: 0 var(--border-radius) var(--border-radius) 0;
-  }
 `;
 
 const DropdownButton = styled(DefaultButton)`
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 0 16px;
-  justify-content: start;
-  background-color: ${(props) => (props.active ? "var(--accent) !important" : "var(--button-bg)")};
+  height: 30px;
+  padding: 0 8px;
+  justify-content: flex-start;
+  color: var(--ink);
+  font-weight: 400;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    color: var(--ink-tertiary);
+  }
+
+  ${(props) =>
+    props.$active &&
+    css`
+      background: var(--selected);
+      color: var(--accent-dark);
+
+      svg {
+        color: var(--accent-dark);
+      }
+
+      &:hover:not(:disabled) {
+        background: var(--selected);
+        color: var(--accent-dark);
+      }
+    `}
 `;
 
 const MoreIcon = () => (
@@ -76,13 +114,13 @@ const ButtonGroup = ({ buttons, clickedId, mainButtonsNum = buttons.value.length
           onClick={() => button.action()}
           onMouseOver={() => button.hover?.()}
           title={button.tooltip}
-          active={i === clickedId}
+          $active={i === clickedId}
         >
           {typeof button.icon == "function" ? <button.icon /> : <img src={button.icon} />}
         </RadioButton>
       ))}
       <div>
-        <RadioButton className="icon radio-icon more" active={clickedId >= mainButtonsNum}>
+        <RadioButton className="icon radio-icon more" title="More views" type="button" $active={clickedId >= mainButtonsNum}>
           <MoreIcon />
         </RadioButton>
         <div className="btn-dropdown">
@@ -97,7 +135,7 @@ const ButtonGroup = ({ buttons, clickedId, mainButtonsNum = buttons.value.length
                   onClick={() => button.action()}
                   onMouseOver={() => button.hover?.()}
                   title={button.tooltip}
-                  active={i + mainButtonsNum === clickedId}
+                  $active={i + mainButtonsNum === clickedId}
                 >
                   {typeof button.icon == "function" ? <button.icon /> : <img src={button.icon} />}
                   <span>{button.text}</span>

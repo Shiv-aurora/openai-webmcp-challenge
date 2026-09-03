@@ -14,50 +14,66 @@ const PickerForm = styled(Modal)`
     margin: 0 0 12px;
     font-size: 14px;
     font-weight: 600;
+    color: var(--ink);
   }
   input {
     width: 100%;
-    height: 40px;
-    padding: 0 15px;
+    height: 32px;
+    padding: 0 10px;
     box-sizing: border-box;
-    background-color: var(--button-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
-    font-family: Lato, sans-serif;
+    background-color: var(--paper);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--ink);
+
+    &::placeholder {
+      color: var(--ink-faint);
+    }
+
+    &:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
   }
   ul {
     list-style: none;
     padding: 0;
-    margin: 12px 0 0;
+    margin: 8px 0 0;
     max-height: 320px;
     overflow-y: auto;
     scrollbar-width: thin;
   }
   li {
     cursor: pointer;
-    border-radius: var(--border-radius);
-    min-height: 40px;
-    padding: 8px 5px;
+    border-radius: var(--radius);
+    min-height: 30px;
+    padding: 5px 8px;
     display: flex;
     align-items: center;
-    font-size: 12px;
-    font-family: Lato, sans-serif;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    color: var(--ink-secondary);
     &:hover {
-      background-color: var(--button-bg-hover);
+      background-color: var(--hover);
+      color: var(--ink);
     }
     &.active {
-      color: var(--accent-dark);
-      font-weight: bold;
+      background-color: var(--active);
+      color: var(--ink);
+      font-weight: 500;
     }
   }
   .marked::after {
     content: "";
     display: inline-block;
-    margin-left: 8px;
-    width: 8px;
-    height: 8px;
+    margin-left: 6px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
-    background-color: currentColor;
+    background-color: var(--accent);
   }
 `;
 

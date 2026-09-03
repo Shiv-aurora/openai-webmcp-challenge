@@ -4,27 +4,41 @@ import { MystState } from "../mystState";
 import { useComputed } from "@preact/signals";
 import { scrollToPos } from "../utils";
 
+/** Rows highlight on hover instead of underlining, and nesting is shown by indent alone, so the
+ * page index reads like a Notion sidebar rather than a list of links. */
 const List = styled.div`
-  font-size: 12px;
+  font-size: 13px;
   width: 100%;
+  color: var(--ink);
 
   .active {
-    color: var(--accent-dark);
+    color: var(--ink);
+    font-weight: 500;
   }
 
-  .file {
+  .file,
+  .heading {
+    display: block;
+    padding: 4px 6px;
+    margin-left: -6px;
+    border-radius: var(--radius);
+    color: var(--ink-secondary);
     cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     &:hover {
-      text-decoration: underline;
+      background-color: var(--hover);
+      color: var(--ink);
     }
   }
 
   p {
-    margin-top: 24px;
-    margin-bottom: 12px;
-    font-weight: 600;
-    font-size: 14px;
+    margin: 0 0 8px;
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    color: var(--ink-tertiary);
   }
 
   ul {
@@ -33,38 +47,28 @@ const List = styled.div`
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 1px;
 
     li {
-      font-size: 16px;
+      font-size: 13px;
 
       .marked::after {
         content: "";
         display: inline-block;
-        margin-left: 8px;
-        width: 8px;
-        height: 8px;
+        margin-left: 6px;
+        width: 5px;
+        height: 5px;
         border-radius: 100%;
-        background-color: currentColor;
+        background-color: var(--accent);
       }
     }
   }
 
   #headings {
-    border-left: 1px solid var(--accent-dark);
-
     &,
     & ul {
-      padding-left: 16px;
-      margin-top: 8px;
-    }
-
-    .heading {
-      cursor: pointer;
-
-      &:hover {
-        text-decoration: underline;
-      }
+      padding-left: 14px;
+      margin-top: 1px;
     }
   }
 `;
@@ -105,7 +109,7 @@ export const TableOfContents = ({ pageIndex, markedFiles, currentFile, onFileCli
 
   return (
     <List>
-      <p>Page index:</p>
+      <p>Page index</p>
       <ul>
         {fileList.value.map((f) => {
           let fileLabel = f.title;

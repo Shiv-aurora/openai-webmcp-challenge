@@ -5,11 +5,14 @@ import { Compartment } from "@codemirror/state";
 import { useSignalEffect } from "@preact/signals";
 
 const SettingsList = styled.div`
-  width: 240px;
+  width: 264px;
 
   h1 {
-    font-size: 20px;
-    margin: 0;
+    margin: 0 0 4px;
+    padding: 0 8px;
+    color: var(--ink-tertiary);
+    font-size: 13px;
+    font-weight: 500;
   }
 
   ul {
@@ -17,37 +20,47 @@ const SettingsList = styled.div`
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0;
     max-height: 400px;
     overflow-y: auto;
-    scrollbar-width: thin;
     margin: 0;
-    margin-top: 16px;
   }
 
   li {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px;
+    min-height: 32px;
+    padding: 2px 8px;
+    border-radius: var(--radius);
+
+    &:hover {
+      background: var(--hover);
+    }
   }
 
   p {
     margin: 0;
+    font-size: 14px;
   }
 `;
 
+/** Compact switch sized to a menu row: a 32×18 track reads as a setting toggle rather than a
+ * standalone control. */
 const ToggleContainer = styled.span`
+  flex: 0 0 auto;
+
   input {
     display: none;
   }
 
   label {
     display: block;
-    width: 48px;
-    height: 24px;
-    border-radius: 12px;
-    transition: 0.4s;
+    width: 32px;
+    height: 18px;
+    border-radius: 9px;
+    transition: background-color 160ms ease;
     cursor: pointer;
     position: relative;
     background-color: var(--switch-bg);
@@ -55,13 +68,14 @@ const ToggleContainer = styled.span`
     &::before {
       content: "";
       position: absolute;
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       border-radius: 50%;
       background-color: white;
-      left: 4px;
-      top: 4px;
-      transition: 0.4s;
+      box-shadow: 0 1px 2px rgba(15, 15, 15, 0.2);
+      left: 2px;
+      top: 2px;
+      transition: transform 160ms ease;
     }
   }
 
@@ -69,8 +83,13 @@ const ToggleContainer = styled.span`
     background-color: var(--switch-active-bg);
 
     &::before {
-      transform: translateX(24px);
+      transform: translateX(14px);
     }
+  }
+
+  input:focus-visible + label {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 `;
 

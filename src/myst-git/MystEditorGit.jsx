@@ -38,7 +38,7 @@ const MystContainer = styled(MystCSSVars)`
   grid-template-columns: ${(props) => (props.$noSidebar ? "1fr" : "300px 1fr")};
   grid-template-rows: 100%;
   height: 100%;
-  font-family: "Lato";
+  font-family: var(--font-sans);
   position: relative;
 
   button,
@@ -50,25 +50,33 @@ const MystContainer = styled(MystCSSVars)`
 `;
 
 const Toast = styled.div`
-  background-color: var(--button-bg);
+  background-color: var(--paper);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-menu);
+  color: var(--ink);
+  font-size: 13px;
   position: absolute;
   top: 10px;
   left: 50%;
   z-index: 11;
   display: flex;
   align-items: center;
-  height: 40px;
-  padding: 0 15px;
-  gap: 15px;
-  border-radius: var(--border-radius);
+  height: 34px;
+  padding: 0 12px;
+  gap: 12px;
+  border-radius: var(--radius-md);
 
   button {
-    color: var(--border);
+    color: var(--ink-tertiary);
     background: transparent;
     border: none;
     cursor: pointer;
     font-family: inherit;
     font-size: inherit;
+
+    &:hover {
+      color: var(--ink);
+    }
   }
 
   a {

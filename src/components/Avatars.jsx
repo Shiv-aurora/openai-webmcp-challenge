@@ -5,31 +5,34 @@ import { MystState } from "../mystState";
 const MAX_AVATARS = 4;
 
 const AvatarsWrapper = styled.div`
-  min-width: ${(props) => props.n * 35}px;
+  min-width: ${(props) => props.n * 22}px;
+  display: flex;
+  align-items: center;
 
   .avatar {
     border-radius: 50%;
-    margin-top: 5px;
+    border: 2px solid;
+    height: 24px;
+    width: 24px;
+    margin: 0 0 0 -6px;
+    box-sizing: border-box;
+    transition: margin-left 0.15s ease;
     float: right;
-    border: 3px solid;
-    height: 35px;
-    width: 35px;
-    margin: 5px 0px 5px -7px;
-    transition: 0.5s;
 
     &:hover {
       margin-left: 0;
     }
 
     &.placeholder {
-      margin-left: -7px;
-      line-height: 33px;
-      border-color: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-color: var(--gray-300);
+      background-color: var(--gray-100);
+      color: var(--ink-secondary);
       font-style: normal;
-      font-size: small;
-      font-weight: 700;
-      text-align: center;
-      background-color: var(--button-bg);
+      font-size: 10px;
+      font-weight: 600;
     }
   }
 `;

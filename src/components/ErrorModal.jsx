@@ -47,11 +47,14 @@ const formatError = (error, src, options, getLogString, editorView, collabClient
 };
 
 const ErrorContainer = styled(Modal)`
-  box-shadow: inset 0 8px var(--error-bg);
+  box-shadow:
+    inset 0 3px var(--error-bg),
+    var(--shadow-menu);
 
-  button:hover {
-    background-color: var(--button-bg-hover);
-    border: 1px solid var(--button-bg-hover);
+  p {
+    margin: 0 0 16px;
+    color: var(--ink-tertiary);
+    font-size: 14px;
   }
 `;
 
@@ -77,7 +80,9 @@ const ErrorModal = () => {
     <ErrorContainer ref={modalRef} onCancel={(ev) => ev.preventDefault()}>
       <h3>The editor ran into an error</h3>
       <p>Please try reloading the page and clearing your browser cache</p>
-      <DefaultButton onClick={handleCopy}>{btnText}</DefaultButton>
+      <DefaultButton $variant="outline" onClick={handleCopy}>
+        {btnText}
+      </DefaultButton>
     </ErrorContainer>
   );
 };

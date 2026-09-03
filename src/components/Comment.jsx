@@ -16,12 +16,12 @@ const YCommentWrapper = styled.div`
 
   z-index: 3;
   right: 0px;
-  background-color: var(--gray-500);
+  background-color: var(--gray-100);
 
   ${(props) => (props.fade ? "opacity: 0.4;" : "")}
 
   .cm-editor {
-    background-color: var(--gray-500);
+    background-color: var(--gray-100);
   }
 
   .cm-ySelectionInfo {
@@ -160,15 +160,15 @@ const YComment = ({ commentId }) => {
             />
 
             <svg width="3" height="22" viewBox="0 10 2 19" fill="none">
-              <path d="M1 1V25" stroke="var(--border)" stroke-width="0.75" stroke-linecap="round" />
+              <path d="M1 1V25" stroke="var(--gray-300)" stroke-width="0.75" stroke-linecap="round" />
             </svg>
 
-            <PopupButton icon={trashcanIcon} bgOnHover={"#e7473c15"} text="DELETE" onClick={() => collab.value.ycomments.deleteComment(commentId)} />
+            <PopupButton icon={trashcanIcon} bgOnHover={"#e7473c15"} text="Delete" onClick={() => collab.value.ycomments.deleteComment(commentId)} />
             {options.collaboration.value.resolvingCommentsEnabled && (
               <PopupButton
                 icon={resolveIcon}
                 bgOnHover={"#AAE17320"}
-                text="RESOLVE"
+                text="Resolve"
                 onClick={() => collab.value.ycomments.resolveComment(commentId)}
                 invert
               />
@@ -185,14 +185,14 @@ const YComment = ({ commentId }) => {
 const YCommentPopup = styled.div`
   width: fit-content;
   height: 25px;
-  border-radius: 2px;
+  border-radius: var(--radius-md);
   position: absolute;
   background-color: var(--panel-bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--hairline);
   z-index: 30000000;
   left: ${(props) => -props.left - 13}px;
   top: ${(props) => -props.shift}px;
-  box-shadow: 0 0 3px var(--box-shadow);
+  box-shadow: var(--shadow-menu);
   box-sizing: content-box;
 
   .comment-icon {
@@ -215,6 +215,7 @@ const YCommentPopup = styled.div`
 
 const PopupButtonWrapper = styled.div`
   display: inline-flex;
+  align-items: center;
   cursor: pointer;
   padding-left: 5px;
   padding-right: 5px;
@@ -225,14 +226,14 @@ const PopupButtonWrapper = styled.div`
 
   img {
     height: 20px;
-    filter: ${(props) => (props.invert ? "invert(var(--icon-invert))" : "none")}};
+    filter: ${(props) => (props.invert ? "invert(var(--icon-invert))" : "none")};
   }
 
   .resolve-btn {
-    color: var(--error-bg);
+    color: var(--ink-secondary);
     line-height: 25px;
-    font-size: 10px;
-    margin-left: 5px;
+    font-size: 11px;
+    margin-left: 3px;
     margin-right: 5px;
     box-sizing: content-box;
   }

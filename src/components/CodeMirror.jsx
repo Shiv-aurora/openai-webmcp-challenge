@@ -15,24 +15,25 @@ import { ensureProvenanceStore } from "../integrity/provenance";
 import { refreshXray, xrayCompartment, xrayField } from "../integrity/xray";
 
 const CodeEditor = styled.div`
-  border-radius: var(--border-radius);
   background: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--panel-bg)")};
-  font-family: monospace;
-  font-size: 14px;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.65;
   resize: none;
   border: 0;
-  padding: 20px;
+  /* The comment overlay positions itself against these exact insets (see YCommentWrapper), so the
+     top and side padding have to stay at 20px. The tall bottom padding only extends the scroll
+     range, letting the last line settle mid-viewport. */
+  padding: 20px 20px 25vh;
   box-sizing: border-box;
   height: 100%;
-  scrollbar-width: thin;
   overflow-y: auto;
   overscroll-behavior: contain;
   position: relative;
-  box-shadow: inset 0px 0px 4px var(--box-shadow);
 
   .cm-editor .cm-gutters {
     background-color: ${(props) => (props.$mode != "Inline" ? "var(--editor-bg)" : "var(--panel-bg)")};
-    border-right: 1px solid var(--border);
+    border-right: 0;
   }
 
   .comment-gutter-icon {
@@ -74,8 +75,8 @@ const CodeEditor = styled.div`
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
-    font-family: "Lato";
-    font-weight: 600;
+    font-family: var(--font-sans);
+    font-weight: 500;
     transition: none;
 
     &.active {
@@ -218,12 +219,13 @@ const CodeEditor = styled.div`
     &::before {
       content: "";
       display: block;
-      width: 5px;
+      width: 2px;
       height: 100%;
       position: absolute;
       z-index: 200;
+      border-radius: 1px;
       background-color: var(--accent);
-      transform: translateX(-11px);
+      transform: translateX(-9px);
     }
   }
 
@@ -246,7 +248,7 @@ const CodeEditor = styled.div`
 
   .cm-inline-ordered-list-marker::after {
     display: inline-block;
-    font-family: "Lato";
+    font-family: var(--font-sans);
     content: attr(data-item-num);
   }
 
@@ -254,7 +256,7 @@ const CodeEditor = styled.div`
     &:not(&.inline-custom-styles) {
       all: initial;
       color: inherit;
-      font-family: "Lato";
+      font-family: var(--font-sans);
       font-size: 16px;
       /* Takes back the mid-word breaking of the line, without which content too long to fit widens the editor instead of wrapping. */
       word-break: inherit;
@@ -274,9 +276,9 @@ const CodeEditor = styled.div`
   .cm-inline-mono,
   .cm-inline-mono *,
   .cm-line > *:has(> .cm-inline-mono) {
-    font-family: monospace !important;
-    line-height: 1.3em !important;
-    font-size: 14px !important;
+    font-family: var(--font-mono) !important;
+    line-height: 1.5 !important;
+    font-size: 13.5px !important;
     /* An inline-block would be sized against the whole line instead of the space left in the row, so it would move down as a whole and break the text early. */
     display: inline !important;
   }
@@ -319,7 +321,7 @@ const CodeEditor = styled.div`
   }
 
   .cm-critic-meta {
-    color: darkgray;
+    color: var(--ink-faint);
   }
 
   .cm-critic-ins {

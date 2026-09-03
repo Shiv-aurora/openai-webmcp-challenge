@@ -4,46 +4,64 @@ import { TableOfContents } from "./TableOfContents";
 const GitSidebar = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 0 25px;
+  align-items: stretch;
+  padding: 24px 16px 32px;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: 24px;
   overscroll-behavior: contain;
   gap: 24px;
-  background-color: var(--navbar-bg);
+  background-color: var(--sidebar-bg);
+  color: var(--ink);
 `;
 
 const UnindexedFiles = styled.details`
   width: 100%;
 
   summary {
-    margin-bottom: 12px;
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--ink-tertiary);
     user-select: none;
+    cursor: pointer;
   }
 
   ul {
     list-style: none;
-    padding-left: 12px;
+    padding-left: 0;
+    margin: 8px 0 0;
 
     li {
+      display: flex;
+      align-items: center;
+      padding: 4px 6px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      color: var(--ink-secondary);
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
       &.active {
-        color: var(--accent-dark);
+        background-color: var(--active);
+        color: var(--ink);
+        font-weight: 500;
       }
+
       &.marked::after {
         content: "";
         display: inline-block;
-        margin-left: 8px;
-        width: 8px;
-        height: 8px;
+        flex: none;
+        margin-left: 6px;
+        width: 5px;
+        height: 5px;
         border-radius: 100%;
-        background-color: currentColor;
+        background-color: var(--accent);
       }
+
       &:hover {
-        text-decoration: underline;
-        cursor: pointer;
+        background-color: var(--hover);
+        color: var(--ink);
       }
     }
   }
@@ -58,7 +76,7 @@ const Sidebar = ({ file, indexFile, pageIndex, unIndexedFiles, markedFiles, swit
       )}
       {unIndexedFiles.value.length > 0 && (
         <UnindexedFiles>
-          <summary>Unindexed files:</summary>
+          <summary>Unindexed files</summary>
           <ul id="unindexed-files-list">
             {unIndexedFiles.value.map((f) => (
               <li

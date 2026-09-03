@@ -24,43 +24,61 @@ const CommitForm = styled(Modal)`
   }
 
   label {
-    margin-bottom: 10px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-secondary);
   }
 
   textarea,
   input {
-    padding: 5px 10px;
+    padding: 6px 8px;
     font-family: inherit;
+    font-size: 14px;
+    color: var(--ink);
     width: 100%;
     box-sizing: border-box;
-    background-color: var(--button-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
+    background-color: var(--paper);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius);
+    transition:
+      border-color 0.12s ease,
+      box-shadow 0.12s ease;
+
+    &:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
   }
 
   input {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
 
   button {
     cursor: pointer;
-    text-transform: uppercase;
-    font-size: 12px;
-    font-weight: bold;
+    font-size: 13px;
+    font-weight: 500;
     font-family: inherit;
-    border: 1px solid var(--border);
-    background-color: var(--button-bg);
-    height: 40px;
+    color: var(--ink);
+    border: 1px solid var(--gray-300);
+    background-color: var(--paper);
+    height: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0px 15px;
-    transition: 0.4s ease;
-    border-radius: var(--border-radius);
+    padding: 0 10px;
+    transition: background-color 0.12s ease;
+    border-radius: var(--radius);
 
-    &:hover {
-      background-color: var(--button-bg-hover);
-      border: 1px solid var(--button-bg-hover);
+    &:hover:not(:disabled) {
+      background-color: var(--hover);
+    }
+
+    &:disabled {
+      color: var(--ink-faint);
+      cursor: not-allowed;
     }
   }
 
@@ -73,13 +91,14 @@ const CommitForm = styled(Modal)`
   .diff-parent {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
 
   .file-controls {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 12px;
   }
 
   .file-name {
@@ -94,9 +113,15 @@ const CommitForm = styled(Modal)`
       margin: 0;
     }
 
+    label {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--ink);
+    }
+
     label.unstaged {
       text-decoration: line-through;
-      color: var(--gray-700);
+      color: var(--ink-faint);
     }
   }
 `;

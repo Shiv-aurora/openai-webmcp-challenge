@@ -9,7 +9,7 @@ import { getLineById } from "../markdown/markdownSourceMap";
 import { criticMarkup } from "./criticMarkup";
 
 export const inlinePreview = (/** @type {TextManager} */ text, options, editorView) => {
-  const previewFont = "Lato";
+  const previewFont = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
   const baseFont = { fontFamily: previewFont, lineHeight: "1.3em" };
   const baseHeading = { fontWeight: "bold", lineHeight: 1.5, fontFamily: previewFont };
   const markdownHighlightStyle = HighlightStyle.define([

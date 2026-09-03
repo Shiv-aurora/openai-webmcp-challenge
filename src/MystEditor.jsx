@@ -20,7 +20,7 @@ import { registerResearchWebMCPTools } from "./webmcp/register";
 import { ResearchWorkspace } from "./workspace/ResearchWorkspace";
 
 const EditorParent = styled.div`
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: var(--font-sans);
   display: flex;
   flex-flow: row wrap;
   width: 100%;
@@ -48,31 +48,35 @@ const EditorParent = styled.div`
   }}
 `;
 
+/** Panes sit flush against each other. The 1px gap over a hairline-colored track draws the
+ * divider between them, and because `display: none` panes leave flex layout entirely, the gaps
+ * collapse on their own whenever a pane is hidden by the mode switch. */
 const MystWrapper = styled.div`
-  padding: 16px;
-  gap: 16px;
+  padding: 0;
+  gap: 1px;
   display: flex;
   box-sizing: border-box;
   height: 100%;
   width: 100%;
   position: relative;
-  background-color: var(--canvas);
+  background-color: var(--hairline);
   ${(props) => props.fullscreen && "box-sizing:border-box; height: 100%;"}
 `;
 
 const StatusBanner = styled.div`
-  height: 36px;
+  height: 32px;
   position: sticky;
   z-index: 10;
   width: 100%;
-  top: 56px;
+  top: 45px;
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 8px;
   background-color: var(--accent-light);
-  font-weight: 500;
+  color: var(--accent-dark);
   font-size: 13px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--hairline);
 `;
 
 /** CSS flexbox takes the content size of elements to determine the layout and ignores padding.
@@ -82,10 +86,8 @@ const FlexWrapper = styled.div`
   flex: 1;
   min-width: 0;
   height: 100%;
-  border-radius: 8px;
   overflow: hidden;
   background: var(--paper);
-  border: 1px solid var(--border);
 
   & > * {
     min-height: 500px;

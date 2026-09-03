@@ -3,95 +3,62 @@ import { styled } from "styled-components";
 import { MystState } from "../mystState";
 import { ensureProvenanceStore, EXPERIMENT_STATUSES } from "../integrity/provenance";
 import { buildDemoResearchProject } from "../demo/researchProject";
+import { DefaultButton, Field, Hint, Input, Mono, PropertyList, PropertyRow, Select, Tag, TextArea } from "../components/CommonUI";
 
 const Shell = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100% - 56px);
+  height: calc(100% - 45px);
   min-height: 0;
-  background: var(--canvas);
+  background: var(--paper);
 `;
 
+/** Tab strip rather than a stepper: the three stages are places you move between freely, and an
+ * underline marks the current one without adding another filled control to the chrome. */
 const Lifecycle = styled.nav`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 52px;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--border);
+  align-items: stretch;
+  gap: 20px;
+  height: 40px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--hairline);
   background: var(--paper);
   box-sizing: border-box;
-`;
-
-const Promise = styled.div`
-  min-width: 0;
-
-  strong {
-    display: block;
-    font-size: 12px;
-    font-weight: 650;
-    color: var(--ink);
-  }
-
-  span {
-    display: block;
-    margin-top: 1px;
-    color: var(--gray-600);
-    font-size: 10px;
-  }
-
-  @media (max-width: 900px) {
-    display: none;
-  }
-`;
-
-const LifecycleSteps = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 5px;
 `;
 
 const Step = styled.button`
   display: flex;
   align-items: center;
   gap: 7px;
-  min-height: 34px;
-  padding: 0 10px;
+  padding: 0 2px;
   border: 0;
-  border-radius: 5px;
-  background: ${(props) => (props.$active ? "var(--accent-light)" : "transparent")};
-  color: ${(props) => (props.$active ? "var(--accent-dark)" : "var(--gray-700)")};
+  border-bottom: 2px solid ${(props) => (props.$active ? "var(--ink)" : "transparent")};
+  background: transparent;
+  color: ${(props) => (props.$active ? "var(--ink)" : "var(--ink-tertiary)")};
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
-  font-weight: ${(props) => (props.$active ? 650 : 500)};
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    color 20ms ease-in,
+    border-color 20ms ease-in;
 
   &:hover {
-    background: var(--button-bg-hover);
+    color: var(--ink);
   }
 
   &:focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 2px;
+    outline-offset: -2px;
   }
 `;
 
 const Count = styled.span`
-  display: grid;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-  border-radius: 4px;
-  box-sizing: border-box;
-  font-size: 9px;
-`;
-
-const Arrow = styled.span`
-  color: var(--gray-500);
-  font-size: 12px;
+  color: var(--ink-faint);
+  font-size: 13px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
 `;
 
 const Viewport = styled.main`
@@ -110,12 +77,12 @@ const ViewLayer = styled.div`
 
 const Workspace = styled.div`
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr) 330px;
+  grid-template-columns: 264px minmax(0, 1fr) 300px;
   height: 100%;
   min-height: 0;
 
-  @media (max-width: 1050px) {
-    grid-template-columns: 260px minmax(0, 1fr);
+  @media (max-width: 1100px) {
+    grid-template-columns: 240px minmax(0, 1fr);
 
     > :last-child {
       grid-column: 1 / -1;
@@ -123,7 +90,7 @@ const Workspace = styled.div`
     }
   }
 
-  @media (max-width: 720px) {
+  @media (max-width: 760px) {
     grid-template-columns: 1fr;
 
     > :first-child {
@@ -133,336 +100,293 @@ const Workspace = styled.div`
 `;
 
 const Rail = styled.aside`
+  display: flex;
+  flex-direction: column;
   min-width: 0;
   overflow-y: auto;
-  border-right: 1px solid var(--border);
-  background: var(--paper);
+  border-right: 1px solid var(--hairline);
+  background: var(--sidebar-bg);
 
   &:last-child {
     border-right: 0;
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--hairline);
   }
 `;
 
 const Main = styled.section`
   min-width: 0;
   overflow-y: auto;
-  padding: 28px clamp(24px, 4vw, 52px) 60px;
-  background: var(--canvas);
+  background: var(--paper);
+`;
+
+/** A measured reading column. Research detail is long-form, so it gets a max width rather than
+ * stretching metric labels halfway across a wide display. */
+const Content = styled.div`
+  max-width: 820px;
+  padding: 40px clamp(24px, 5vw, 60px) 96px;
 `;
 
 const RailHeader = styled.div`
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 20px 18px 14px;
-  border-bottom: 1px solid var(--border);
-  background: var(--paper);
-`;
-
-const Eyebrow = styled.div`
-  color: var(--gray-600);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-`;
-
-const Heading = styled.h1`
-  margin: 5px 0 0;
-  color: var(--ink);
-  font-size: 23px;
-  font-weight: 650;
-  letter-spacing: -0.025em;
-`;
-
-const Intro = styled.p`
-  max-width: 690px;
-  margin: 8px 0 22px;
-  color: var(--gray-700);
-  font-size: 12px;
-  line-height: 1.55;
-`;
-
-const List = styled.div`
-  padding: 8px;
-`;
-
-const ListItem = styled.button`
-  width: 100%;
-  padding: 11px 10px;
-  border: 0;
-  border-left: 2px solid ${(props) => (props.$active ? "var(--accent)" : "transparent")};
-  border-radius: 0 5px 5px 0;
-  background: ${(props) => (props.$active ? "var(--accent-light)" : "transparent")};
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-
-  &:hover {
-    background: var(--button-bg-hover);
-  }
-`;
-
-const ListTop = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-height: 40px;
+  padding: 8px 10px 8px 12px;
+  background: var(--sidebar-bg);
+`;
+
+const RailTitle = styled.div`
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+`;
+
+const Heading = styled.h1`
+  margin: 0;
+  color: var(--ink);
+  font-size: 30px;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+`;
+
+const Intro = styled.p`
+  margin: 10px 0 0;
+  color: var(--ink-tertiary);
+  font-size: 15px;
+  line-height: 1.55;
+`;
+
+const List = styled.div`
+  display: grid;
+  gap: 1px;
+  padding: 0 6px 12px;
+`;
+
+/** Sidebar row: no card, no left accent bar. Selection is a tinted background, the same signal
+ * the rest of the app uses for "current". */
+const ListItem = styled.button`
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--radius);
+  background: ${(props) => (props.$active ? "var(--active)" : "transparent")};
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+
+  &:hover {
+    background: ${(props) => (props.$active ? "var(--active)" : "var(--hover)")};
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
 `;
 
 const ListTitle = styled.strong`
+  display: block;
   min-width: 0;
   overflow: hidden;
-  font-size: 12px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
 
+/** The status tag sits on the metadata row rather than beside the title, which would otherwise
+ * cost the title ~90px of a 264px rail and truncate most run names mid-word. */
 const ListMeta = styled.div`
-  margin-top: 5px;
-  color: var(--gray-600);
-  font-size: 10px;
-  line-height: 1.35;
-`;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  line-height: 1.4;
 
-const tone = (status) =>
-  ({ completed: "var(--green-500)", running: "var(--blue-500)", failed: "var(--red-500)", superseded: "var(--gray-600)" })[status] ||
-  "var(--orange-500)";
-
-const Status = styled.span`
-  flex: 0 0 auto;
-  color: ${(props) => tone(props.$status)};
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
+  > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 `;
 
 const Section = styled.section`
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
+  margin-top: 36px;
 `;
 
 const SectionTitle = styled.h2`
-  margin: 0 0 12px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 `;
 
 const Form = styled.form`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--paper);
-`;
+  gap: 12px;
+  align-items: end;
+  margin-top: 16px;
 
-const Field = styled.label`
-  display: grid;
-  gap: 5px;
-  color: var(--gray-700);
-  font-size: 10px;
-  font-weight: 650;
-
-  &[data-wide="true"] {
-    grid-column: 1 / -1;
-  }
-`;
-
-const Input = styled.input`
-  width: 100%;
-  min-height: 34px;
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--paper);
-  color: inherit;
-  box-sizing: border-box;
-  font: inherit;
-
-  &:focus-visible {
-    border-color: var(--accent);
-    outline: 2px solid var(--accent-light);
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  min-height: 34px;
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--paper);
-  color: inherit;
-  box-sizing: border-box;
-  font: inherit;
-
-  &:focus-visible {
-    border-color: var(--accent);
-    outline: 2px solid var(--accent-light);
-  }
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  min-height: 68px;
-  padding: 7px 9px;
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  background: var(--paper);
-  color: inherit;
-  box-sizing: border-box;
-  resize: vertical;
-  font: inherit;
-
-  &:focus-visible {
-    border-color: var(--accent);
-    outline: 2px solid var(--accent-light);
-  }
-`;
-
-const Button = styled.button`
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid ${(props) => (props.$primary ? "var(--accent)" : "var(--border)")};
-  border-radius: 5px;
-  background: ${(props) => (props.$primary ? "var(--accent)" : "var(--paper)")};
-  color: ${(props) => (props.$primary ? "white" : "inherit")};
-  cursor: pointer;
-  font: inherit;
-  font-size: 11px;
-  font-weight: 650;
-
-  &:hover:not(:disabled) {
-    filter: brightness(0.97);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-
-  &:disabled {
-    cursor: default;
-    opacity: 0.45;
+  &[data-standalone="true"] {
+    margin-top: 0;
   }
 `;
 
 const ButtonRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
-  margin-top: 12px;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
 `;
 
-const DataGrid = styled.dl`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1px;
-  overflow: hidden;
-  margin: 18px 0 0;
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  background: var(--border);
-
-  div {
-    min-width: 0;
-    padding: 13px;
-    background: var(--paper);
-  }
-
-  dt {
-    color: var(--gray-600);
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  dd {
-    margin: 5px 0 0;
-    overflow-wrap: anywhere;
-    font-size: 12px;
-    font-weight: 600;
-  }
+const Summary = styled(PropertyList)`
+  margin-top: 24px;
 `;
 
+/** Key/value rows separated by hairlines instead of a bordered grid of boxes. */
 const KeyValues = styled.div`
   display: grid;
-  gap: 1px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--border);
+  border-top: 1px solid var(--hairline);
 `;
 
 const KeyValue = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(70px, 0.6fr) auto;
+  grid-template-columns: minmax(0, 1.5fr) minmax(80px, 0.7fr) auto;
   gap: 12px;
-  padding: 9px 11px;
-  background: var(--paper);
-  font-size: 11px;
+  align-items: center;
+  min-height: 40px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--hairline);
+  font-size: 14px;
+
+  &:hover {
+    background: var(--hover);
+  }
 
   strong {
     min-width: 0;
-    color: var(--gray-700);
-    font-weight: 550;
+    color: var(--ink);
+    font-weight: 400;
     overflow-wrap: anywhere;
   }
 
-  span {
+  > span {
+    min-width: 0;
+    color: var(--ink-secondary);
+    font-family: var(--font-mono);
+    font-size: 13px;
     overflow-wrap: anywhere;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  }
-
-  button {
-    min-height: 26px;
   }
 `;
 
-const Empty = styled.div`
-  margin: 20px;
-  padding: 18px;
-  border-left: 2px solid var(--accent);
-  background: var(--gray-100);
-  color: var(--gray-700);
-  font-size: 11px;
+const RailBody = styled.div`
+  display: grid;
+  gap: 1px;
+  padding: 0 6px 12px;
+`;
+
+const RailNote = styled.p`
+  margin: 0;
+  padding: 2px 8px 10px;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  line-height: 1.5;
+`;
+
+const RailEmpty = styled.div`
+  padding: 4px 14px 16px;
+  color: var(--ink-tertiary);
+  font-size: 13px;
   line-height: 1.55;
 `;
 
+/** The run → evidence → paper chain, drawn as a trace with a connector rather than typed arrows. */
 const Path = styled.div`
-  margin-top: 14px;
-  padding: 13px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--paper);
-  color: var(--gray-700);
-  font-size: 10px;
-  line-height: 1.7;
+  display: grid;
+  gap: 0;
+  margin-top: 24px;
+`;
+
+/** Flex rather than grid so the step's value can stay a bare text node: it becomes an anonymous
+ * flex item and still lines up in its own column, which keeps each value a single addressable
+ * piece of text instead of nesting another element around it. */
+const PathStep = styled.div`
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding: 10px 0;
+  position: relative;
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+
+  & + &::before {
+    content: "";
+    position: absolute;
+    left: 26px;
+    top: -10px;
+    width: 1px;
+    height: 20px;
+    background: var(--gray-300);
+  }
 
   strong {
-    color: var(--ink);
+    flex: 0 0 74px;
+    color: var(--ink-faint);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
   }
 `;
 
+/** A single constrained column, so long artifact paths and manuscript excerpts truncate inside the
+ * rail instead of widening it. `justify-items: start` keeps the status tag at its natural size. */
 const ImpactItem = styled.button`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+  justify-items: start;
   width: 100%;
-  padding: 12px 18px;
+  padding: 7px 8px;
   border: 0;
-  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius);
   background: transparent;
   color: inherit;
   cursor: pointer;
+  font: inherit;
   text-align: left;
 
+  > * {
+    max-width: 100%;
+  }
+
   &:hover {
-    background: var(--button-bg-hover);
+    background: var(--hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
 `;
 
@@ -566,15 +490,10 @@ function ExperimentsWorkspace({ provenance }) {
     <Workspace data-testid="experiments-workspace">
       <Rail>
         <RailHeader>
-          <ListTop>
-            <div>
-              <Eyebrow>Research runs</Eyebrow>
-              <ListTitle>{data.experiments.length} experiments</ListTitle>
-            </div>
-            <Button type="button" onClick={() => setCreating((value) => !value)}>
-              {creating ? "Cancel" : "+ New run"}
-            </Button>
-          </ListTop>
+          <RailTitle>{data.experiments.length} experiments</RailTitle>
+          <DefaultButton type="button" onClick={() => setCreating((value) => !value)}>
+            {creating ? "Cancel" : "+ New run"}
+          </DefaultButton>
         </RailHeader>
         {data.experiments.length ? (
           <List>
@@ -586,308 +505,113 @@ function ExperimentsWorkspace({ provenance }) {
                 type="button"
                 onClick={() => (editorState.activeExperimentId.value = run.id)}
               >
-                <ListTop>
-                  <ListTitle>{run.name}</ListTitle>
-                  <Status $status={run.status}>{run.status}</Status>
-                </ListTop>
+                <ListTitle>{run.name}</ListTitle>
                 <ListMeta>
-                  {run.id} · {run.method || "Method not recorded"}
+                  <Tag $status={run.status}>{run.status}</Tag>
+                  <span>
+                    {run.id} · {run.method || "Method not recorded"}
+                  </span>
                 </ListMeta>
               </ListItem>
             ))}
           </List>
         ) : (
-          <Empty>
+          <RailEmpty>
             No runs yet. Record an experiment manually, or load the deterministic lifecycle demo.
             <ButtonRow>
-              <Button $primary data-testid="load-lifecycle-demo" type="button" onClick={loadDemo}>
+              <DefaultButton $variant="outline" data-testid="load-lifecycle-demo" type="button" onClick={loadDemo}>
                 Load demo lifecycle
-              </Button>
+              </DefaultButton>
             </ButtonRow>
-          </Empty>
+          </RailEmpty>
         )}
       </Rail>
 
       <Main>
-        <Eyebrow>Experiments</Eyebrow>
-        <Heading>{creating ? "Record a research run" : active ? active.name : "What did the research produce?"}</Heading>
-        <Intro>Runs are useful here because they create traceable evidence—not because Potter’s Wheel is trying to orchestrate infrastructure.</Intro>
+        <Content>
+          <Heading>{creating ? "Record a research run" : active ? active.name : "What did the research produce?"}</Heading>
+          <Intro>
+            Runs are useful here because they create traceable evidence—not because Potter’s Wheel is trying to orchestrate infrastructure.
+          </Intro>
 
-        {creating && (
-          <Form onSubmit={submitRun}>
-            <Field>
-              Run name
-              <Input required value={newRun.name} onInput={(e) => setNewRun({ ...newRun, name: e.currentTarget.value })} />
-            </Field>
-            <Field>
-              Method / model
-              <Input value={newRun.method} onInput={(e) => setNewRun({ ...newRun, method: e.currentTarget.value })} />
-            </Field>
-            <Field>
-              Source commit
-              <Input value={newRun.sourceCommit} onInput={(e) => setNewRun({ ...newRun, sourceCommit: e.currentTarget.value })} />
-            </Field>
-            <Field data-wide="true">
-              Notes
-              <TextArea value={newRun.notes} onInput={(e) => setNewRun({ ...newRun, notes: e.currentTarget.value })} />
-            </Field>
-            <Button $primary type="submit">
-              Create experiment
-            </Button>
-          </Form>
-        )}
+          {creating && (
+            <Form onSubmit={submitRun}>
+              <Field>
+                Run name
+                <Input required value={newRun.name} onInput={(e) => setNewRun({ ...newRun, name: e.currentTarget.value })} />
+              </Field>
+              <Field>
+                Method / model
+                <Input value={newRun.method} onInput={(e) => setNewRun({ ...newRun, method: e.currentTarget.value })} />
+              </Field>
+              <Field>
+                Source commit
+                <Input value={newRun.sourceCommit} onInput={(e) => setNewRun({ ...newRun, sourceCommit: e.currentTarget.value })} />
+              </Field>
+              <Field data-wide="true">
+                Notes
+                <TextArea value={newRun.notes} onInput={(e) => setNewRun({ ...newRun, notes: e.currentTarget.value })} />
+              </Field>
+              <div>
+                <DefaultButton $variant="primary" type="submit">
+                  Create experiment
+                </DefaultButton>
+              </div>
+            </Form>
+          )}
 
-        {active && !creating && (
-          <>
-            <DataGrid>
-              <div>
-                <dt>Status</dt>
-                <dd>
-                  <Status $status={active.status}>{active.status}</Status>
-                </dd>
-              </div>
-              <div>
-                <dt>Run ID</dt>
-                <dd>{active.id}</dd>
-              </div>
-              <div>
-                <dt>Source commit</dt>
-                <dd>{active.sourceCommit || "—"}</dd>
-              </div>
-              <div>
-                <dt>Method</dt>
-                <dd>{active.method || "—"}</dd>
-              </div>
-              <div>
-                <dt>Evidence produced</dt>
-                <dd>{evidence.length}</dd>
-              </div>
-              <div>
-                <dt>Paper dependencies</dt>
-                <dd>{affectedObjects.length}</dd>
-              </div>
-            </DataGrid>
-            <ButtonRow>
-              {EXPERIMENT_STATUSES.filter((status) => ![active.status, "superseded"].includes(status)).map((status) => (
-                <Button
-                  key={status}
-                  type="button"
-                  onClick={() =>
-                    provenance.updateExperiment(active.id, { status, ...(status === "completed" ? { completedAt: new Date().toISOString() } : {}) })
-                  }
+          {active && !creating && (
+            <>
+              <Summary>
+                <PropertyRow>
+                  <dt>Status</dt>
+                  <dd>
+                    <Tag $status={active.status}>{active.status}</Tag>
+                  </dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Run ID</dt>
+                  <dd>
+                    <Mono>{active.id}</Mono>
+                  </dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Source commit</dt>
+                  <dd>{active.sourceCommit ? <Mono>{active.sourceCommit}</Mono> : "—"}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Method</dt>
+                  <dd>{active.method || "—"}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Evidence produced</dt>
+                  <dd>{evidence.length}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Paper dependencies</dt>
+                  <dd>{affectedObjects.length}</dd>
+                </PropertyRow>
+              </Summary>
+              <ButtonRow>
+                {EXPERIMENT_STATUSES.filter((status) => ![active.status, "superseded"].includes(status)).map((status) => (
+                  <DefaultButton
+                    key={status}
+                    $variant="outline"
+                    type="button"
+                    onClick={() =>
+                      provenance.updateExperiment(active.id, { status, ...(status === "completed" ? { completedAt: new Date().toISOString() } : {}) })
+                    }
+                  >
+                    Mark {status}
+                  </DefaultButton>
+                ))}
+                <Select
+                  aria-label="Supersedes experiment"
+                  value={active.supersedesRunId || ""}
+                  style={{ width: "auto", minWidth: "200px" }}
+                  onChange={(event) => event.currentTarget.value && provenance.supersedeExperiment(event.currentTarget.value, active.id)}
                 >
-                  Mark {status}
-                </Button>
-              ))}
-              <Select
-                aria-label="Supersedes experiment"
-                value={active.supersedesRunId || ""}
-                onChange={(event) => event.currentTarget.value && provenance.supersedeExperiment(event.currentTarget.value, active.id)}
-              >
-                <option value="">Supersedes…</option>
-                {data.experiments
-                  .filter((item) => item.id !== active.id)
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.name}
-                    </option>
-                  ))}
-              </Select>
-            </ButtonRow>
-
-            <Section>
-              <SectionTitle>Metrics</SectionTitle>
-              {Object.entries(active.metrics).length ? (
-                <KeyValues>
-                  {Object.entries(active.metrics).map(([key, value]) => {
-                    const published = evidence.some((item) => item.metric === `${key}=${String(value)}`);
-                    return (
-                      <KeyValue key={key}>
-                        <strong>{key}</strong>
-                        <span>{String(value)}</span>
-                        <Button data-testid="publish-metric-evidence" disabled={published} type="button" onClick={() => publishMetric(key, value)}>
-                          {published ? "Published" : "Publish evidence"}
-                        </Button>
-                      </KeyValue>
-                    );
-                  })}
-                </KeyValues>
-              ) : (
-                <Intro>No metrics recorded yet.</Intro>
-              )}
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (provenance.addExperimentMetric(active.id, metric.key, metric.value)) setMetric({ key: "", value: "" });
-                }}
-              >
-                <Field>
-                  Metric
-                  <Input aria-label="Metric name" value={metric.key} onInput={(e) => setMetric({ ...metric, key: e.currentTarget.value })} />
-                </Field>
-                <Field>
-                  Value
-                  <Input aria-label="Metric value" value={metric.value} onInput={(e) => setMetric({ ...metric, value: e.currentTarget.value })} />
-                </Field>
-                <Button type="submit">Add metric</Button>
-              </Form>
-            </Section>
-
-            <Section>
-              <SectionTitle>Configuration</SectionTitle>
-              {Object.entries(active.parameters).length ? (
-                <KeyValues>
-                  {Object.entries(active.parameters).map(([key, value]) => (
-                    <KeyValue key={key}>
-                      <strong>{key}</strong>
-                      <span>{String(value)}</span>
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          const created = provenance.addStandaloneEvidence({
-                            type: "configuration",
-                            evidenceKind: "methodological-configuration",
-                            label: `${active.name} · ${key}`,
-                            experimentId: active.id,
-                            commit: active.sourceCommit,
-                            metric: `${key}=${String(value)}`,
-                            value: String(value),
-                            notes: `Configuration published from ${active.id}.`,
-                          });
-                          if (created) editorState.activeEvidenceId.value = created.id;
-                        }}
-                      >
-                        Publish evidence
-                      </Button>
-                    </KeyValue>
-                  ))}
-                </KeyValues>
-              ) : (
-                <Intro>No parameters recorded yet.</Intro>
-              )}
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (provenance.addExperimentParameter(active.id, parameter.key, parameter.value)) setParameter({ key: "", value: "" });
-                }}
-              >
-                <Field>
-                  Parameter
-                  <Input
-                    aria-label="Parameter name"
-                    value={parameter.key}
-                    onInput={(e) => setParameter({ ...parameter, key: e.currentTarget.value })}
-                  />
-                </Field>
-                <Field>
-                  Value
-                  <Input
-                    aria-label="Parameter value"
-                    value={parameter.value}
-                    onInput={(e) => setParameter({ ...parameter, value: e.currentTarget.value })}
-                  />
-                </Field>
-                <Button type="submit">Add parameter</Button>
-              </Form>
-            </Section>
-
-            <Section>
-              <SectionTitle>Datasets</SectionTitle>
-              {active.datasets.length ? (
-                <KeyValues>
-                  {active.datasets.map((item) => (
-                    <KeyValue key={item}>
-                      <strong>dataset</strong>
-                      <span>{item}</span>
-                      <span />
-                    </KeyValue>
-                  ))}
-                </KeyValues>
-              ) : (
-                <Intro>No datasets recorded yet.</Intro>
-              )}
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!dataset.trim()) return;
-                  provenance.updateExperiment(active.id, { datasets: [...active.datasets, dataset.trim()] });
-                  setDataset("");
-                }}
-              >
-                <Field data-wide="true">
-                  Dataset or manifest
-                  <Input aria-label="Dataset or manifest" value={dataset} onInput={(event) => setDataset(event.currentTarget.value)} />
-                </Field>
-                <Button type="submit">Add dataset</Button>
-              </Form>
-            </Section>
-
-            <Section>
-              <SectionTitle>Artifacts</SectionTitle>
-              {active.artifacts.length ? (
-                <KeyValues>
-                  {active.artifacts.map((item) => (
-                    <KeyValue key={item.id}>
-                      <strong>{item.type}</strong>
-                      <span>{item.uri || item.label}</span>
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          const created = provenance.addStandaloneEvidence({
-                            type: item.type === "figure" ? "figure-source" : "result-file",
-                            evidenceKind: item.type === "figure" ? "figure-generating-result" : "quantitative-result",
-                            label: item.label,
-                            experimentId: active.id,
-                            commit: active.sourceCommit,
-                            artifactId: item.id,
-                            uri: item.uri,
-                          });
-                          if (created) editorState.activeEvidenceId.value = created.id;
-                        }}
-                      >
-                        Publish evidence
-                      </Button>
-                    </KeyValue>
-                  ))}
-                </KeyValues>
-              ) : (
-                <Intro>No result artifacts attached yet.</Intro>
-              )}
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (provenance.attachExperimentArtifact(active.id, artifact)) setArtifact({ label: "", type: "result", uri: "" });
-                }}
-              >
-                <Field>
-                  Label
-                  <Input
-                    aria-label="Artifact label"
-                    value={artifact.label}
-                    onInput={(e) => setArtifact({ ...artifact, label: e.currentTarget.value })}
-                  />
-                </Field>
-                <Field>
-                  Type
-                  <Input
-                    aria-label="Artifact type"
-                    value={artifact.type}
-                    onInput={(e) => setArtifact({ ...artifact, type: e.currentTarget.value })}
-                  />
-                </Field>
-                <Field data-wide="true">
-                  URI
-                  <Input aria-label="Artifact URI" value={artifact.uri} onInput={(e) => setArtifact({ ...artifact, uri: e.currentTarget.value })} />
-                </Field>
-                <Button type="submit">Attach artifact</Button>
-              </Form>
-            </Section>
-
-            {data.experiments.length > 1 && (
-              <Section>
-                <SectionTitle>Compare runs</SectionTitle>
-                <Select aria-label="Compare experiment" value={compareId} onChange={(event) => setCompareId(event.currentTarget.value)}>
-                  <option value="">Choose another run…</option>
+                  <option value="">Supersedes…</option>
                   {data.experiments
                     .filter((item) => item.id !== active.id)
                     .map((item) => (
@@ -896,78 +620,309 @@ function ExperimentsWorkspace({ provenance }) {
                       </option>
                     ))}
                 </Select>
-                {comparison && (
+              </ButtonRow>
+
+              <Section>
+                <SectionTitle>Metrics</SectionTitle>
+                {Object.entries(active.metrics).length ? (
                   <KeyValues>
-                    {[...new Set([...Object.keys(comparison.metrics), ...Object.keys(active.metrics)])]
-                      .filter((key) => String(comparison.metrics[key] ?? "") !== String(active.metrics[key] ?? ""))
-                      .map((key) => (
-                        <KeyValue key={`metric-${key}`}>
+                    {Object.entries(active.metrics).map(([key, value]) => {
+                      const published = evidence.some((item) => item.metric === `${key}=${String(value)}`);
+                      return (
+                        <KeyValue key={key}>
                           <strong>{key}</strong>
-                          <span>
-                            {String(comparison.metrics[key] ?? "—")} → {String(active.metrics[key] ?? "—")}
-                          </span>
-                          <span />
+                          <span>{String(value)}</span>
+                          <DefaultButton
+                            $variant={published ? undefined : "outline"}
+                            data-testid="publish-metric-evidence"
+                            disabled={published}
+                            type="button"
+                            onClick={() => publishMetric(key, value)}
+                          >
+                            {published ? "Published" : "Publish evidence"}
+                          </DefaultButton>
                         </KeyValue>
-                      ))}
-                    {[...new Set([...Object.keys(comparison.parameters), ...Object.keys(active.parameters)])]
-                      .filter((key) => String(comparison.parameters[key] ?? "") !== String(active.parameters[key] ?? ""))
-                      .map((key) => (
-                        <KeyValue key={`parameter-${key}`}>
-                          <strong>{key}</strong>
-                          <span>
-                            {String(comparison.parameters[key] ?? "—")} → {String(active.parameters[key] ?? "—")}
-                          </span>
-                          <span />
-                        </KeyValue>
-                      ))}
+                      );
+                    })}
                   </KeyValues>
+                ) : (
+                  <Hint>No metrics recorded yet.</Hint>
                 )}
+                <Form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (provenance.addExperimentMetric(active.id, metric.key, metric.value)) setMetric({ key: "", value: "" });
+                  }}
+                >
+                  <Field>
+                    Metric
+                    <Input aria-label="Metric name" value={metric.key} onInput={(e) => setMetric({ ...metric, key: e.currentTarget.value })} />
+                  </Field>
+                  <Field>
+                    Value
+                    <Input aria-label="Metric value" value={metric.value} onInput={(e) => setMetric({ ...metric, value: e.currentTarget.value })} />
+                  </Field>
+                  <div>
+                    <DefaultButton $variant="outline" type="submit">
+                      Add metric
+                    </DefaultButton>
+                  </div>
+                </Form>
               </Section>
-            )}
-          </>
-        )}
+
+              <Section>
+                <SectionTitle>Configuration</SectionTitle>
+                {Object.entries(active.parameters).length ? (
+                  <KeyValues>
+                    {Object.entries(active.parameters).map(([key, value]) => (
+                      <KeyValue key={key}>
+                        <strong>{key}</strong>
+                        <span>{String(value)}</span>
+                        <DefaultButton
+                          $variant="outline"
+                          type="button"
+                          onClick={() => {
+                            const created = provenance.addStandaloneEvidence({
+                              type: "configuration",
+                              evidenceKind: "methodological-configuration",
+                              label: `${active.name} · ${key}`,
+                              experimentId: active.id,
+                              commit: active.sourceCommit,
+                              metric: `${key}=${String(value)}`,
+                              value: String(value),
+                              notes: `Configuration published from ${active.id}.`,
+                            });
+                            if (created) editorState.activeEvidenceId.value = created.id;
+                          }}
+                        >
+                          Publish evidence
+                        </DefaultButton>
+                      </KeyValue>
+                    ))}
+                  </KeyValues>
+                ) : (
+                  <Hint>No parameters recorded yet.</Hint>
+                )}
+                <Form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (provenance.addExperimentParameter(active.id, parameter.key, parameter.value)) setParameter({ key: "", value: "" });
+                  }}
+                >
+                  <Field>
+                    Parameter
+                    <Input
+                      aria-label="Parameter name"
+                      value={parameter.key}
+                      onInput={(e) => setParameter({ ...parameter, key: e.currentTarget.value })}
+                    />
+                  </Field>
+                  <Field>
+                    Value
+                    <Input
+                      aria-label="Parameter value"
+                      value={parameter.value}
+                      onInput={(e) => setParameter({ ...parameter, value: e.currentTarget.value })}
+                    />
+                  </Field>
+                  <div>
+                    <DefaultButton $variant="outline" type="submit">
+                      Add parameter
+                    </DefaultButton>
+                  </div>
+                </Form>
+              </Section>
+
+              <Section>
+                <SectionTitle>Datasets</SectionTitle>
+                {active.datasets.length ? (
+                  <KeyValues>
+                    {active.datasets.map((item) => (
+                      <KeyValue key={item}>
+                        <strong>dataset</strong>
+                        <span>{item}</span>
+                        <span />
+                      </KeyValue>
+                    ))}
+                  </KeyValues>
+                ) : (
+                  <Hint>No datasets recorded yet.</Hint>
+                )}
+                <Form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (!dataset.trim()) return;
+                    provenance.updateExperiment(active.id, { datasets: [...active.datasets, dataset.trim()] });
+                    setDataset("");
+                  }}
+                >
+                  <Field data-wide="true">
+                    Dataset or manifest
+                    <Input aria-label="Dataset or manifest" value={dataset} onInput={(event) => setDataset(event.currentTarget.value)} />
+                  </Field>
+                  <div>
+                    <DefaultButton $variant="outline" type="submit">
+                      Add dataset
+                    </DefaultButton>
+                  </div>
+                </Form>
+              </Section>
+
+              <Section>
+                <SectionTitle>Artifacts</SectionTitle>
+                {active.artifacts.length ? (
+                  <KeyValues>
+                    {active.artifacts.map((item) => (
+                      <KeyValue key={item.id}>
+                        <strong>{item.type}</strong>
+                        <span>{item.uri || item.label}</span>
+                        <DefaultButton
+                          $variant="outline"
+                          type="button"
+                          onClick={() => {
+                            const created = provenance.addStandaloneEvidence({
+                              type: item.type === "figure" ? "figure-source" : "result-file",
+                              evidenceKind: item.type === "figure" ? "figure-generating-result" : "quantitative-result",
+                              label: item.label,
+                              experimentId: active.id,
+                              commit: active.sourceCommit,
+                              artifactId: item.id,
+                              uri: item.uri,
+                            });
+                            if (created) editorState.activeEvidenceId.value = created.id;
+                          }}
+                        >
+                          Publish evidence
+                        </DefaultButton>
+                      </KeyValue>
+                    ))}
+                  </KeyValues>
+                ) : (
+                  <Hint>No result artifacts attached yet.</Hint>
+                )}
+                <Form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (provenance.attachExperimentArtifact(active.id, artifact)) setArtifact({ label: "", type: "result", uri: "" });
+                  }}
+                >
+                  <Field>
+                    Label
+                    <Input
+                      aria-label="Artifact label"
+                      value={artifact.label}
+                      onInput={(e) => setArtifact({ ...artifact, label: e.currentTarget.value })}
+                    />
+                  </Field>
+                  <Field>
+                    Type
+                    <Input
+                      aria-label="Artifact type"
+                      value={artifact.type}
+                      onInput={(e) => setArtifact({ ...artifact, type: e.currentTarget.value })}
+                    />
+                  </Field>
+                  <Field data-wide="true">
+                    URI
+                    <Input aria-label="Artifact URI" value={artifact.uri} onInput={(e) => setArtifact({ ...artifact, uri: e.currentTarget.value })} />
+                  </Field>
+                  <div>
+                    <DefaultButton $variant="outline" type="submit">
+                      Attach artifact
+                    </DefaultButton>
+                  </div>
+                </Form>
+              </Section>
+
+              {data.experiments.length > 1 && (
+                <Section>
+                  <SectionTitle>Compare runs</SectionTitle>
+                  <Select aria-label="Compare experiment" value={compareId} onChange={(event) => setCompareId(event.currentTarget.value)}>
+                    <option value="">Choose another run…</option>
+                    {data.experiments
+                      .filter((item) => item.id !== active.id)
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
+                  </Select>
+                  {comparison && (
+                    <KeyValues style={{ marginTop: "16px" }}>
+                      {[...new Set([...Object.keys(comparison.metrics), ...Object.keys(active.metrics)])]
+                        .filter((key) => String(comparison.metrics[key] ?? "") !== String(active.metrics[key] ?? ""))
+                        .map((key) => (
+                          <KeyValue key={`metric-${key}`}>
+                            <strong>{key}</strong>
+                            <span>
+                              {String(comparison.metrics[key] ?? "—")} → {String(active.metrics[key] ?? "—")}
+                            </span>
+                            <span />
+                          </KeyValue>
+                        ))}
+                      {[...new Set([...Object.keys(comparison.parameters), ...Object.keys(active.parameters)])]
+                        .filter((key) => String(comparison.parameters[key] ?? "") !== String(active.parameters[key] ?? ""))
+                        .map((key) => (
+                          <KeyValue key={`parameter-${key}`}>
+                            <strong>{key}</strong>
+                            <span>
+                              {String(comparison.parameters[key] ?? "—")} → {String(active.parameters[key] ?? "—")}
+                            </span>
+                            <span />
+                          </KeyValue>
+                        ))}
+                    </KeyValues>
+                  )}
+                </Section>
+              )}
+            </>
+          )}
+        </Content>
       </Main>
 
       <Rail>
         <RailHeader>
-          <Eyebrow>Research impact</Eyebrow>
-          <ListTitle>Evidence → paper</ListTitle>
+          <RailTitle>Evidence → paper</RailTitle>
         </RailHeader>
         {active ? (
           <>
-            <Empty>{active.notes || "This run has no research notes yet."}</Empty>
-            {evidence.map((item) => (
-              <ImpactItem
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  editorState.activeEvidenceId.value = item.id;
-                  editorState.workspaceView.value = "evidence";
-                }}
-              >
-                <ListTitle>{item.label}</ListTitle>
-                <ListMeta>{item.metric || item.type}</ListMeta>
-              </ImpactItem>
-            ))}
-            {!evidence.length && <Empty>Complete the run, then turn a metric or artifact into evidence for the manuscript.</Empty>}
-            {affectedObjects.map((object) => (
-              <ImpactItem
-                key={object.id}
-                type="button"
-                onClick={() => {
-                  editorState.workspaceView.value = "paper";
-                  editorState.integrityPanelOpen.value = true;
-                }}
-              >
-                <Status $status={object.verificationState}>{object.verificationState}</Status>
-                <ListMeta>
-                  {object.kind} · {object.text}
-                </ListMeta>
-              </ImpactItem>
-            ))}
+            <RailNote>{active.notes || "This run has no research notes yet."}</RailNote>
+            <RailBody>
+              {evidence.map((item) => (
+                <ImpactItem
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    editorState.activeEvidenceId.value = item.id;
+                    editorState.workspaceView.value = "evidence";
+                  }}
+                >
+                  <ListTitle>{item.label}</ListTitle>
+                  <ListMeta>{item.metric || item.type}</ListMeta>
+                </ImpactItem>
+              ))}
+            </RailBody>
+            {!evidence.length && <RailEmpty>Complete the run, then turn a metric or artifact into evidence for the manuscript.</RailEmpty>}
+            <RailBody>
+              {affectedObjects.map((object) => (
+                <ImpactItem
+                  key={object.id}
+                  type="button"
+                  onClick={() => {
+                    editorState.workspaceView.value = "paper";
+                    editorState.integrityPanelOpen.value = true;
+                  }}
+                >
+                  <Tag $status={object.verificationState}>{object.verificationState}</Tag>
+                  <ListMeta>
+                    {object.kind} · {object.text}
+                  </ListMeta>
+                </ImpactItem>
+              ))}
+            </RailBody>
           </>
         ) : (
-          <Empty>Select a run to trace what it produced and where the paper uses it.</Empty>
+          <RailEmpty>Select a run to trace what it produced and where the paper uses it.</RailEmpty>
         )}
       </Rail>
     </Workspace>
@@ -989,8 +944,7 @@ function EvidenceWorkspace({ provenance }) {
     <Workspace data-testid="evidence-workspace">
       <Rail>
         <RailHeader>
-          <Eyebrow>Evidence catalog</Eyebrow>
-          <ListTitle>{data.evidence.length} research results</ListTitle>
+          <RailTitle>{data.evidence.length} research results</RailTitle>
         </RailHeader>
         {data.evidence.length ? (
           <List>
@@ -1002,148 +956,162 @@ function EvidenceWorkspace({ provenance }) {
                 type="button"
                 onClick={() => (editorState.activeEvidenceId.value = item.id)}
               >
-                <ListTop>
-                  <ListTitle>{item.label}</ListTitle>
-                  <Status $status={item.supersededByEvidenceId ? "superseded" : "completed"}>
-                    {item.supersededByEvidenceId ? "older" : "current"}
-                  </Status>
-                </ListTop>
+                <ListTitle>{item.label}</ListTitle>
                 <ListMeta>
-                  {item.metric || item.type} · {item.experimentId || "manual evidence"}
+                  <Tag $status={item.supersededByEvidenceId ? "superseded" : "current"}>{item.supersededByEvidenceId ? "older" : "current"}</Tag>
+                  <span>
+                    {item.metric || item.type} · {item.experimentId || "manual evidence"}
+                  </span>
                 </ListMeta>
               </ListItem>
             ))}
           </List>
         ) : (
-          <Empty>Experiments produce evidence. Complete a run and publish a metric or artifact here.</Empty>
+          <RailEmpty>Experiments produce evidence. Complete a run and publish a metric or artifact here.</RailEmpty>
         )}
       </Rail>
 
       <Main>
-        <Eyebrow>Evidence</Eyebrow>
-        <Heading>{active?.label || "The bridge between runs and writing"}</Heading>
-        <Intro>
-          Evidence is the durable research fact the paper depends on. It retains the run, artifact, configuration, and commit that produced it.
-        </Intro>
-        {active && (
-          <>
-            <DataGrid>
-              <div>
-                <dt>Kind</dt>
-                <dd>{active.evidenceKind || evidenceKindForType(active.type)}</dd>
-              </div>
-              <div>
-                <dt>Research value</dt>
-                <dd>{active.metric || active.value || "—"}</dd>
-              </div>
-              <div>
-                <dt>Paper uses</dt>
-                <dd>{linkedObjects.length}</dd>
-              </div>
-              <div>
-                <dt>Run</dt>
-                <dd>{run?.name || active.experimentId || "Manual"}</dd>
-              </div>
-              <div>
-                <dt>Commit</dt>
-                <dd>{active.commit || run?.sourceCommit || "—"}</dd>
-              </div>
-              <div>
-                <dt>Artifact</dt>
-                <dd>{active.uri || active.artifactId || "—"}</dd>
-              </div>
-            </DataGrid>
-            <Path>
-              <strong>RUN</strong> {run?.name || active.experimentId || "Manual record"}
-              <br />↓<br />
-              <strong>RESULT / EVIDENCE</strong> {active.metric || active.label}
-              <br />↓<br />
-              <strong>PAPER</strong> {linkedObjects.length ? linkedObjects.map((item) => `${item.kind}: ${item.text}`).join(" · ") : "Not used yet"}
-            </Path>
+        <Content>
+          <Heading>{active?.label || "The bridge between runs and writing"}</Heading>
+          <Intro>
+            Evidence is the durable research fact the paper depends on. It retains the run, artifact, configuration, and commit that produced it.
+          </Intro>
+          {active && (
+            <>
+              <Summary>
+                <PropertyRow>
+                  <dt>Kind</dt>
+                  <dd>{active.evidenceKind || evidenceKindForType(active.type)}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Research value</dt>
+                  <dd>{active.metric || active.value ? <Mono>{active.metric || active.value}</Mono> : "—"}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Paper uses</dt>
+                  <dd>{linkedObjects.length}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Run</dt>
+                  <dd>{run?.name || active.experimentId || "Manual"}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Commit</dt>
+                  <dd>{active.commit || run?.sourceCommit ? <Mono>{active.commit || run?.sourceCommit}</Mono> : "—"}</dd>
+                </PropertyRow>
+                <PropertyRow>
+                  <dt>Artifact</dt>
+                  <dd>{active.uri || active.artifactId ? <Mono>{active.uri || active.artifactId}</Mono> : "—"}</dd>
+                </PropertyRow>
+              </Summary>
+              <Path>
+                <PathStep>
+                  <strong>RUN</strong>
+                  {run?.name || active.experimentId || "Manual record"}
+                </PathStep>
+                <PathStep>
+                  <strong>EVIDENCE</strong>
+                  {active.metric || active.label}
+                </PathStep>
+                <PathStep>
+                  <strong>PAPER</strong>
+                  {linkedObjects.length ? linkedObjects.map((item) => `${item.kind}: ${item.text}`).join(" · ") : "Not used yet"}
+                </PathStep>
+              </Path>
 
-            <Section>
-              <SectionTitle>Use this result in the paper</SectionTitle>
-              <ButtonRow>
-                <Button
-                  $primary
-                  data-testid="create-linked-claim"
-                  type="button"
-                  onClick={() => createPaperObject(editorState, provenance, active, "claim")}
+              <Section>
+                <SectionTitle>Use this result in the paper</SectionTitle>
+                <ButtonRow>
+                  <DefaultButton
+                    $variant="primary"
+                    data-testid="create-linked-claim"
+                    type="button"
+                    onClick={() => createPaperObject(editorState, provenance, active, "claim")}
+                  >
+                    Create linked claim
+                  </DefaultButton>
+                  <DefaultButton $variant="outline" type="button" onClick={() => createPaperObject(editorState, provenance, active, "table")}>
+                    Create table
+                  </DefaultButton>
+                  <DefaultButton
+                    $variant="outline"
+                    type="button"
+                    disabled={!active.uri}
+                    onClick={() => createPaperObject(editorState, provenance, active, "figure")}
+                  >
+                    Associate figure
+                  </DefaultButton>
+                  <DefaultButton $variant="outline" type="button" onClick={() => createPaperObject(editorState, provenance, active, "method")}>
+                    Link methodology
+                  </DefaultButton>
+                </ButtonRow>
+                <Form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    if (targetObjectId) provenance.linkEvidence(targetObjectId, active.id);
+                  }}
                 >
-                  Create linked claim
-                </Button>
-                <Button type="button" onClick={() => createPaperObject(editorState, provenance, active, "table")}>
-                  Create table
-                </Button>
-                <Button type="button" disabled={!active.uri} onClick={() => createPaperObject(editorState, provenance, active, "figure")}>
-                  Associate figure
-                </Button>
-                <Button type="button" onClick={() => createPaperObject(editorState, provenance, active, "method")}>
-                  Link methodology
-                </Button>
-              </ButtonRow>
-              <Form
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (targetObjectId) provenance.linkEvidence(targetObjectId, active.id);
-                }}
-              >
-                <Field data-wide="true">
-                  Existing manuscript object
-                  <Select aria-label="Existing manuscript object" value={targetObjectId} onChange={(e) => setTargetObjectId(e.currentTarget.value)}>
-                    <option value="">Choose a claim, figure, table, or method…</option>
-                    {data.objects.map((object) => (
-                      <option key={object.id} value={object.id}>
-                        {object.kind}: {object.text.slice(0, 80)}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Button type="submit" disabled={!targetObjectId}>
-                  Link existing object
-                </Button>
-              </Form>
-            </Section>
-          </>
-        )}
+                  <Field data-wide="true">
+                    Existing manuscript object
+                    <Select aria-label="Existing manuscript object" value={targetObjectId} onChange={(e) => setTargetObjectId(e.currentTarget.value)}>
+                      <option value="">Choose a claim, figure, table, or method…</option>
+                      {data.objects.map((object) => (
+                        <option key={object.id} value={object.id}>
+                          {object.kind}: {object.text.slice(0, 80)}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <div>
+                    <DefaultButton $variant="outline" type="submit" disabled={!targetObjectId}>
+                      Link existing object
+                    </DefaultButton>
+                  </div>
+                </Form>
+              </Section>
+            </>
+          )}
+        </Content>
       </Main>
 
       <Rail>
         <RailHeader>
-          <Eyebrow>Bidirectional trace</Eyebrow>
-          <ListTitle>Origin & manuscript usage</ListTitle>
+          <RailTitle>Origin & manuscript usage</RailTitle>
         </RailHeader>
-        {run && (
-          <ImpactItem
-            type="button"
-            onClick={() => {
-              editorState.activeExperimentId.value = run.id;
-              editorState.workspaceView.value = "experiments";
-            }}
-          >
-            <ListTitle>← {run.name}</ListTitle>
-            <ListMeta>
-              {run.id} · {run.status}
-            </ListMeta>
-          </ImpactItem>
-        )}
-        {linkedObjects.map((object) => (
-          <ImpactItem
-            key={object.id}
-            type="button"
-            onClick={() => {
-              editorState.workspaceView.value = "paper";
-              editorState.integrityPanelOpen.value = true;
-            }}
-          >
-            <Status $status={object.verificationState}>{object.verificationState}</Status>
-            <ListMeta>
-              {object.kind} · {object.text}
-            </ListMeta>
-          </ImpactItem>
-        ))}
+        <RailBody>
+          {run && (
+            <ImpactItem
+              type="button"
+              onClick={() => {
+                editorState.activeExperimentId.value = run.id;
+                editorState.workspaceView.value = "experiments";
+              }}
+            >
+              <ListTitle>← {run.name}</ListTitle>
+              <ListMeta>
+                {run.id} · {run.status}
+              </ListMeta>
+            </ImpactItem>
+          )}
+          {linkedObjects.map((object) => (
+            <ImpactItem
+              key={object.id}
+              type="button"
+              onClick={() => {
+                editorState.workspaceView.value = "paper";
+                editorState.integrityPanelOpen.value = true;
+              }}
+            >
+              <Tag $status={object.verificationState}>{object.verificationState}</Tag>
+              <ListMeta>
+                {object.kind} · {object.text}
+              </ListMeta>
+            </ImpactItem>
+          ))}
+        </RailBody>
         {!linkedObjects.length && (
-          <Empty>This result is not used in the manuscript yet. Choose an action in the center pane to create the first connection.</Empty>
+          <RailEmpty>This result is not used in the manuscript yet. Choose an action in the center pane to create the first connection.</RailEmpty>
         )}
       </Rail>
     </Workspace>
@@ -1160,41 +1128,33 @@ export function ResearchWorkspace({ children }) {
   return (
     <Shell>
       <Lifecycle aria-label="Research lifecycle">
-        <Promise>
-          <strong>From experiment to paper, without breaking provenance.</strong>
-          <span>One workspace for the evidence behind every manuscript decision.</span>
-        </Promise>
-        <LifecycleSteps>
-          <Step
-            $active={view === "experiments"}
-            aria-current={view === "experiments" ? "page" : undefined}
-            data-testid="nav-experiments"
-            type="button"
-            onClick={() => (editorState.workspaceView.value = "experiments")}
-          >
-            Experiments <Count>{data.experiments.length}</Count>
-          </Step>
-          <Arrow>→</Arrow>
-          <Step
-            $active={view === "evidence"}
-            aria-current={view === "evidence" ? "page" : undefined}
-            data-testid="nav-evidence"
-            type="button"
-            onClick={() => (editorState.workspaceView.value = "evidence")}
-          >
-            Evidence <Count>{data.evidence.length}</Count>
-          </Step>
-          <Arrow>→</Arrow>
-          <Step
-            $active={view === "paper"}
-            aria-current={view === "paper" ? "page" : undefined}
-            data-testid="nav-paper"
-            type="button"
-            onClick={() => (editorState.workspaceView.value = "paper")}
-          >
-            Paper <Count>{linkedCount}</Count>
-          </Step>
-        </LifecycleSteps>
+        <Step
+          $active={view === "experiments"}
+          aria-current={view === "experiments" ? "page" : undefined}
+          data-testid="nav-experiments"
+          type="button"
+          onClick={() => (editorState.workspaceView.value = "experiments")}
+        >
+          Experiments <Count>{data.experiments.length}</Count>
+        </Step>
+        <Step
+          $active={view === "evidence"}
+          aria-current={view === "evidence" ? "page" : undefined}
+          data-testid="nav-evidence"
+          type="button"
+          onClick={() => (editorState.workspaceView.value = "evidence")}
+        >
+          Evidence <Count>{data.evidence.length}</Count>
+        </Step>
+        <Step
+          $active={view === "paper"}
+          aria-current={view === "paper" ? "page" : undefined}
+          data-testid="nav-paper"
+          type="button"
+          onClick={() => (editorState.workspaceView.value = "paper")}
+        >
+          Paper <Count>{linkedCount}</Count>
+        </Step>
       </Lifecycle>
       <Viewport>
         <ViewLayer $hidden={view !== "paper"}>{children}</ViewLayer>

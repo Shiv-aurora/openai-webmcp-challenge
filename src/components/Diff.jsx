@@ -86,6 +86,7 @@ const Diff = () => {
         <h3>Are you sure you want to discard all changes made to this file?</h3>
         <div className="buttons">
           <DefaultButton
+            $variant="danger"
             onClick={() => {
               editorView.value.dispatch({ changes: { from: 0, to: editorView.value.state.doc.length, insert: options.initialText.peek() } });
               options.onDiscardChanges?.value?.();
@@ -94,7 +95,9 @@ const Diff = () => {
           >
             Yes, discard
           </DefaultButton>
-          <DefaultButton onClick={() => modalRef.current.close()}>No, cancel</DefaultButton>
+          <DefaultButton $variant="outline" onClick={() => modalRef.current.close()}>
+            No, cancel
+          </DefaultButton>
         </div>
       </Modal>
     </DiffContainer>

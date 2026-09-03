@@ -7,30 +7,30 @@ import { deriveManuscriptSelection, manuscriptStats } from "./selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "./provenance";
 import { verifyQuantitativeClaim } from "./verification";
 import { refreshXray, resolveXrayRange } from "./xray";
+import { DefaultButton, Field, IconButton, Input, Select, Tag, TextArea, tagColors } from "../components/CommonUI";
 
 const Panel = styled.aside`
-  flex: 0 0 380px;
-  width: 380px;
+  flex: 0 0 360px;
+  width: 360px;
   min-width: 0;
-  border: 1px solid var(--border);
-  border-radius: 10px;
   background: var(--panel-bg);
-  box-shadow: 0 1px 2px var(--box-shadow);
   overflow: auto;
-  scrollbar-width: thin;
+  overscroll-behavior: contain;
   z-index: 8;
 
   @media (max-width: 1180px) {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    bottom: 20px;
+    top: 12px;
+    right: 12px;
+    bottom: 12px;
     margin-left: 0;
-    max-width: calc(100% - 40px);
+    max-width: calc(100% - 24px);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-menu);
   }
 
   @media (max-width: 680px) {
-    left: 20px;
+    left: 12px;
     width: auto;
   }
 
@@ -39,106 +39,75 @@ const Panel = styled.aside`
   }
 `;
 
+/** The panel header stays on the same light surface as the rest of the app. A dark bar here
+ * would read as a separate product bolted onto the side of the editor. */
 const PanelTop = styled.div`
   position: sticky;
   top: 0;
   z-index: 4;
-  background: var(--ink);
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--hairline);
 `;
 
 const Header = styled.header`
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 22px 22px 18px;
-  color: var(--paper);
+  gap: 12px;
+  padding: 16px 14px 12px 18px;
 `;
 
 const Kicker = styled.div`
-  margin-bottom: 5px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: #89bdb0;
+  margin-bottom: 3px;
+  color: var(--ink-faint);
+  font-size: 12px;
+  font-weight: 500;
 `;
 
 const Title = styled.h2`
   margin: 0;
-  font-size: 19px;
-  line-height: 1.25;
-  font-weight: 720;
-  letter-spacing: -0.02em;
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.015em;
 `;
 
 const PromiseLine = styled.p`
-  max-width: 285px;
-  margin: 8px 0 0;
-  font-size: 11.5px;
+  max-width: 280px;
+  margin: 6px 0 0;
+  color: var(--ink-tertiary);
+  font-size: 13px;
   line-height: 1.5;
-  color: color-mix(in srgb, var(--paper) 72%, transparent);
 `;
 
 const ExperienceNav = styled.nav`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  padding: 0 10px 10px;
-  background: var(--ink);
+  display: flex;
+  gap: 16px;
+  padding: 0 18px;
 `;
 
 const ExperienceButton = styled.button`
-  min-width: 0;
-  min-height: 36px;
+  padding: 0 1px 8px;
   border: 0;
-  border-top: 1px solid color-mix(in srgb, var(--paper) 14%, transparent);
-  border-radius: 0;
+  border-bottom: 2px solid transparent;
   background: transparent;
-  color: color-mix(in srgb, var(--paper) 68%, transparent);
+  color: var(--ink-tertiary);
   cursor: pointer;
-  font-size: 10px;
-  font-weight: 680;
-  letter-spacing: 0.02em;
-  transition:
-    color 140ms ease,
-    background 140ms ease;
-
-  & + & {
-    border-left: 1px solid color-mix(in srgb, var(--paper) 12%, transparent);
-  }
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  transition: color 20ms ease-in;
 
   &:hover,
   &:focus-visible {
-    background: color-mix(in srgb, var(--paper) 8%, transparent);
-    color: var(--paper);
-  }
-`;
-
-const CloseButton = styled.button`
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--paper) 18%, transparent);
-  border-radius: 7px;
-  background: color-mix(in srgb, var(--paper) 6%, transparent);
-  color: var(--paper);
-  cursor: pointer;
-  font-size: 19px;
-  line-height: 1;
-
-  &:hover {
-    background: color-mix(in srgb, var(--paper) 12%, transparent);
+    color: var(--ink);
   }
 `;
 
 const Section = styled.section`
-  padding: 21px 22px;
-  border-bottom: 1px solid var(--border);
-  scroll-margin-top: 158px;
+  padding: 20px 18px;
+  border-bottom: 1px solid var(--hairline);
+  scroll-margin-top: 116px;
 
   &:last-child {
     border-bottom: 0;
@@ -146,64 +115,63 @@ const Section = styled.section`
 `;
 
 const SectionHeading = styled.div`
-  margin-bottom: 13px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
-  color: var(--gray-700);
+  margin-bottom: 12px;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 `;
 
 const CoverageRow = styled.div`
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 `;
 
 const CoverageValue = styled.strong`
-  font-size: 26px;
-  line-height: 1;
-  letter-spacing: -0.035em;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
 `;
 
 const Muted = styled.p`
-  margin: 9px 0 0;
-  font-size: 12px;
+  margin: 8px 0 0;
+  color: var(--ink-tertiary);
+  font-size: 13px;
   line-height: 1.5;
-  opacity: 0.68;
+
+  strong {
+    color: var(--ink-secondary);
+  }
 `;
 
+/** Four counts as plain figure/label pairs. Dividers between them would imply they are being
+ * compared with each other, which they are not. */
 const MetricGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 8px;
   margin-top: 16px;
-  padding-top: 15px;
-  border-top: 1px solid var(--border);
 `;
 
 const Metric = styled.div`
   min-width: 0;
-  padding: 0 8px;
-  border-left: 1px solid var(--border);
-
-  &:first-child {
-    padding-left: 0;
-    border-left: 0;
-  }
 `;
 
 const MetricValue = styled.div`
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
 `;
 
 const MetricLabel = styled.div`
   margin-top: 3px;
-  font-size: 9px;
-  line-height: 1.25;
-  opacity: 0.62;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  line-height: 1.3;
 `;
 
 const SelectionHeading = styled.div`
@@ -211,42 +179,26 @@ const SelectionHeading = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 `;
 
 const SelectionKind = styled.strong`
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 600;
   text-transform: capitalize;
 `;
 
-const statusTone = (status) => {
-  if (status === "verified") return "var(--accent-dark)";
-  if (status === "contradicted") return "var(--error-bg)";
-  if (["unlinked", "needs-review", "stale"].includes(status)) return "var(--orange-500)";
-  return "var(--border)";
-};
+const statusTone = (status) => tagColors(status).fg;
 
-const Status = styled.span`
-  display: inline-flex;
-  align-items: center;
-  min-height: 23px;
-  padding: 0 8px;
-  border: 0;
-  border-radius: 6px;
-  background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 12%, transparent);
-  color: ${(props) => statusTone(props.$status)};
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-`;
-
+/** Quoted manuscript text. A soft wash reads as "lifted from the document" without the weight of
+ * a bordered callout. */
 const Snippet = styled.blockquote`
   margin: 0;
-  padding: 12px 13px;
-  border-left: 2px solid var(--accent-dark);
-  border-radius: 0;
-  background: color-mix(in srgb, var(--accent-light) 35%, transparent);
-  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--gray-100);
+  color: var(--ink-secondary);
+  font-size: 13px;
   line-height: 1.55;
   overflow-wrap: anywhere;
 `;
@@ -254,12 +206,12 @@ const Snippet = styled.blockquote`
 const Meta = styled.dl`
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 7px 12px;
-  margin: 14px 0 0;
-  font-size: 11px;
+  gap: 6px 12px;
+  margin: 12px 0 0;
+  font-size: 13px;
 
   dt {
-    opacity: 0.58;
+    color: var(--ink-tertiary);
   }
 
   dd {
@@ -273,77 +225,77 @@ const Meta = styled.dl`
 `;
 
 const EmptyState = styled.div`
-  padding: 14px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--editor-bg);
-  color: var(--gray-800);
-  font-size: 12px;
+  color: var(--ink-tertiary);
+  font-size: 13px;
   line-height: 1.55;
 `;
 
 const ObjectCard = styled.div`
-  padding: 14px;
-  border: 0;
-  border-radius: 8px;
-  background: var(--editor-bg);
+  display: grid;
+  gap: 12px;
 `;
 
 const ObjectTitle = styled.div`
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
 `;
 
 const EvidenceList = styled.div`
   display: grid;
   gap: 0;
-  margin-top: 12px;
 `;
 
 const EvidenceCard = styled.div`
-  padding: 13px 0;
-  border: 0;
-  border-top: 1px solid var(--border);
-  background: transparent;
+  padding: 14px 0;
+  border-top: 1px solid var(--hairline);
+
+  &:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
 `;
 
+/** Verification and drift results are the one place a tinted surface is warranted: the outcome
+ * is the content, so the color carries meaning rather than decorating a container. */
 const VerificationCard = styled.div`
-  padding: 14px;
-  border: 1px solid ${(props) => statusTone(props.$status)};
-  border-radius: 8px;
-  background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 8%, var(--editor-bg));
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: ${(props) => tagColors(props.$status).bg};
 `;
 
 const VerificationReason = styled.p`
-  margin: 9px 0 0;
-  font-size: 12px;
+  margin: 8px 0 0;
+  font-size: 13px;
   line-height: 1.5;
 `;
 
 const DiffGroup = styled.div`
   display: grid;
-  gap: 9px;
-  margin-top: 14px;
+  gap: 8px;
+  margin-top: 16px;
 `;
 
 const DiffGroupTitle = styled.div`
-  font-size: 11px;
-  font-weight: 700;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  font-weight: 500;
 `;
 
 const DiffCard = styled.div`
-  padding: 14px 14px 14px 16px;
-  border: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
   border-left: 3px solid ${(props) => statusTone(props.$status === "rejected" ? "contradicted" : "stale")};
-  border-radius: 0 8px 8px 0;
-  background: var(--editor-bg);
+  background: var(--gray-100);
 `;
 
 const DiffChange = styled.div`
-  padding-top: 9px;
-  border-top: 1px solid var(--border);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
 
   &:first-of-type {
+    margin-top: 8px;
     padding-top: 0;
     border-top: 0;
   }
@@ -351,195 +303,120 @@ const DiffChange = styled.div`
 
 const DiffLine = styled.div`
   display: grid;
-  grid-template-columns: 54px minmax(0, 1fr);
+  grid-template-columns: 58px minmax(0, 1fr);
   gap: 8px;
-  margin-top: 7px;
-  font:
-    10px/1.4 ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Monaco,
-    Consolas,
-    monospace;
+  margin-top: 5px;
 
   strong {
-    opacity: 0.62;
+    color: var(--ink-faint);
+    font-size: 12px;
+    font-weight: 500;
     white-space: nowrap;
   }
 
   span {
     min-width: 0;
+    color: var(--ink-secondary);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    line-height: 1.45;
     overflow-wrap: break-word;
     word-break: normal;
   }
 `;
 
 const EvidenceTitle = styled.div`
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   overflow-wrap: anywhere;
 `;
 
 const EvidenceMeta = styled.div`
-  margin-top: 5px;
-  font-size: 10px;
-  line-height: 1.45;
-  opacity: 0.68;
+  margin-top: 4px;
+  color: var(--ink-tertiary);
+  font-size: 12px;
+  line-height: 1.5;
   overflow-wrap: anywhere;
 `;
 
 const ButtonRow = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   margin-top: 12px;
 `;
 
 const DiffActions = styled.div`
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: 12px;
-
-  button {
-    min-width: 0;
-    padding-inline: 8px;
-    font-size: 10px;
-  }
-`;
-
-const ActionButton = styled.button`
-  min-height: 34px;
-  padding: 0 12px;
-  border: 1px solid ${(props) => (props.$primary ? "var(--accent-dark)" : "var(--border)")};
-  border-radius: 7px;
-  background: ${(props) => (props.$primary ? "var(--ink)" : "transparent")};
-  color: ${(props) => (props.$primary ? "white" : "inherit")};
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 680;
-  transition:
-    background 140ms ease,
-    border-color 140ms ease,
-    transform 140ms ease;
-
-  &:hover {
-    background: ${(props) => (props.$primary ? "var(--accent-dark)" : "var(--button-bg-hover)")};
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--accent-dark);
-    outline-offset: 2px;
-  }
-`;
-
-const Field = styled.label`
-  display: grid;
-  gap: 5px;
-  font-size: 10px;
-  font-weight: 700;
-  opacity: ${(props) => (props.$disabled ? 0.55 : 1)};
-`;
-
-const Input = styled.input`
-  width: 100%;
-  min-height: 34px;
-  padding: 7px 9px;
-  box-sizing: border-box;
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  background: var(--editor-bg);
-  color: inherit;
-  font: inherit;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  min-height: 34px;
-  padding: 7px 9px;
-  box-sizing: border-box;
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  background: var(--editor-bg);
-  color: inherit;
-  font: inherit;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  min-height: 62px;
-  padding: 7px 9px;
-  box-sizing: border-box;
-  border: 1px solid var(--border);
-  border-radius: var(--border-radius);
-  background: var(--editor-bg);
-  color: inherit;
-  resize: vertical;
-  font: inherit;
 `;
 
 const EvidenceForm = styled.form`
   display: grid;
-  gap: 10px;
-  margin-top: 14px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
 `;
 
+/** X-Ray tallies. Each count carries its state color on the number itself, so the row scans as
+ * a distribution without five colored chips competing for attention. */
 const XraySummaryGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
-  margin-top: 14px;
+  margin-top: 16px;
 `;
 
 const XraySummaryItem = styled.div`
   min-width: 0;
-  padding: 9px 5px;
-  border: 0;
-  border-top: 2px solid ${(props) => statusTone(props.$status)};
-  border-radius: 0;
-  background: transparent;
   text-align: center;
 `;
 
 const XrayCount = styled.strong`
   display: block;
-  font-size: 17px;
+  color: ${(props) => statusTone(props.$status)};
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 `;
 
 const XrayLabel = styled.span`
   display: block;
-  margin-top: 3px;
-  font-size: 9px;
+  margin-top: 2px;
+  color: var(--ink-tertiary);
+  font-size: 11px;
   line-height: 1.2;
-  text-transform: uppercase;
-  opacity: 0.72;
 `;
 
 const XrayList = styled.div`
   display: grid;
-  gap: 8px;
-  margin-top: 14px;
+  gap: 2px;
+  margin-top: 16px;
 `;
 
 const XrayItem = styled.button`
+  display: grid;
+  gap: 4px;
   width: 100%;
-  padding: 10px 11px;
+  padding: 7px 8px;
   border: 0;
-  border-left: 3px solid ${(props) => statusTone(props.$status)};
-  border-radius: 0 7px 7px 0;
-  background: var(--editor-bg);
+  border-radius: var(--radius);
+  background: transparent;
   color: inherit;
   cursor: pointer;
+  font: inherit;
   text-align: left;
 
   &:hover {
-    background: var(--button-bg-hover);
+    background: var(--hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
   }
 `;
 
@@ -548,19 +425,24 @@ const XrayItemTop = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 500;
 `;
 
 const XraySnippet = styled.div`
-  margin-top: 5px;
-  font-size: 10px;
-  line-height: 1.35;
-  opacity: 0.72;
+  color: var(--ink-tertiary);
+  font-size: 12px;
+  line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 `;
+
+const CloseIcon = () => (
+  <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+  </svg>
+);
 
 const kindLabels = {
   none: "No selection",
@@ -744,9 +626,9 @@ export default function ResearchIntegrityPanel() {
             <Title>{xrayActive ? "Research X-Ray" : "Research integrity"}</Title>
             <PromiseLine>Every claim in your paper stays connected to the research that produced it.</PromiseLine>
           </div>
-          <CloseButton aria-label="Close research integrity panel" type="button" onClick={() => (integrityPanelOpen.value = false)}>
-            ×
-          </CloseButton>
+          <IconButton aria-label="Close research integrity panel" type="button" onClick={() => (integrityPanelOpen.value = false)}>
+            <CloseIcon />
+          </IconButton>
         </Header>
 
         <ExperienceNav aria-label="Integrity workflows">
@@ -764,8 +646,8 @@ export default function ResearchIntegrityPanel() {
 
       <Section data-experience="xray">
         <SectionHeading>Research X-Ray</SectionHeading>
-        <ActionButton
-          $primary={!xrayActive}
+        <DefaultButton
+          $variant={xrayActive ? "outline" : "primary"}
           aria-pressed={xrayActive}
           data-testid="toggle-xray"
           type="button"
@@ -776,7 +658,7 @@ export default function ResearchIntegrityPanel() {
           }}
         >
           {xrayActive ? "Exit X-Ray" : "Enter X-Ray"}
-        </ActionButton>
+        </DefaultButton>
         <Muted>
           {xrayActive
             ? "The manuscript is showing provenance health directly on every tracked research object."
@@ -784,22 +666,24 @@ export default function ResearchIntegrityPanel() {
         </Muted>
         {!provenanceStats.objectCount && (
           <ButtonRow>
-            <ActionButton
-              $primary
+            <DefaultButton
+              $variant="outline"
               data-testid="load-demo-research"
               type="button"
               onClick={() => provenance.replaceData(buildDemoResearchProject(text.text.value))}
             >
               Start the deterministic demo
-            </ActionButton>
+            </DefaultButton>
           </ButtonRow>
         )}
         {xrayActive && (
           <>
             <XraySummaryGrid data-testid="xray-summary">
               {xrayStatuses.map((status) => (
-                <XraySummaryItem $status={status} key={status}>
-                  <XrayCount data-testid={`xray-count-${status}`}>{stateCounts[status] || 0}</XrayCount>
+                <XraySummaryItem key={status}>
+                  <XrayCount $status={status} data-testid={`xray-count-${status}`}>
+                    {stateCounts[status] || 0}
+                  </XrayCount>
                   <XrayLabel>{status === "needs-review" ? "Review" : statusLabels[status]}</XrayLabel>
                 </XraySummaryItem>
               ))}
@@ -808,7 +692,6 @@ export default function ResearchIntegrityPanel() {
               <XrayList data-testid="xray-list">
                 {xrayObjects.map((object) => (
                   <XrayItem
-                    $status={object.verificationState}
                     aria-label={`Inspect ${objectLabel(object)} ${statusLabels[object.verificationState]}`}
                     data-testid="xray-item"
                     key={object.id}
@@ -817,7 +700,7 @@ export default function ResearchIntegrityPanel() {
                   >
                     <XrayItemTop>
                       <span>{objectLabel(object)}</span>
-                      <Status $status={object.verificationState}>{statusLabels[object.verificationState]}</Status>
+                      <Tag $status={object.verificationState}>{statusLabels[object.verificationState]}</Tag>
                     </XrayItemTop>
                     <XraySnippet>{object.text}</XraySnippet>
                   </XrayItem>
@@ -834,7 +717,7 @@ export default function ResearchIntegrityPanel() {
         <SectionHeading>Provenance coverage</SectionHeading>
         <CoverageRow>
           <CoverageValue data-testid="linked-object-count">{provenanceStats.linkedObjectCount} linked</CoverageValue>
-          <Status $status={provenanceStats.objectCount ? "needs-review" : "context-only"}>{provenanceStats.objectCount} tracked</Status>
+          <Tag $status="tracked">{provenanceStats.objectCount} tracked</Tag>
         </CoverageRow>
         <Muted>Tracked manuscript objects remain connected to their evidence metadata across browser reloads.</Muted>
         <MetricGrid>
@@ -861,9 +744,9 @@ export default function ResearchIntegrityPanel() {
         <SectionHeading>Current selection</SectionHeading>
         <SelectionHeading>
           <SelectionKind data-testid="selection-kind">{selectionKind}</SelectionKind>
-          <Status data-testid="selection-status" $status={selectionState}>
+          <Tag data-testid="selection-status" $status={selectionState}>
             {selectionStatus}
-          </Status>
+          </Tag>
         </SelectionHeading>
         {selection.snippet ? (
           <>
@@ -888,8 +771,10 @@ export default function ResearchIntegrityPanel() {
         <SectionHeading>Provenance object</SectionHeading>
         {activeObject ? (
           <ObjectCard data-testid="provenance-object">
-            <ObjectTitle data-testid="tracked-object-kind">{objectLabel(activeObject)}</ObjectTitle>
-            <Muted>{activeObject.text}</Muted>
+            <div>
+              <ObjectTitle data-testid="tracked-object-kind">{objectLabel(activeObject)}</ObjectTitle>
+              <Muted>{activeObject.text}</Muted>
+            </div>
             <Field $disabled={!activeEvidence.length}>
               Verification state
               <Select
@@ -906,9 +791,10 @@ export default function ResearchIntegrityPanel() {
                 ))}
               </Select>
             </Field>
-            {!activeEvidence.length && <Muted>Add evidence before changing the verification state.</Muted>}
+            {!activeEvidence.length && <EmptyState>Add evidence before changing the verification state.</EmptyState>}
             <ButtonRow>
-              <ActionButton
+              <DefaultButton
+                $variant="danger"
                 aria-label={`Remove tracked ${activeObject.kind}`}
                 type="button"
                 onClick={() => {
@@ -917,21 +803,21 @@ export default function ResearchIntegrityPanel() {
                 }}
               >
                 Remove tracked object
-              </ActionButton>
+              </DefaultButton>
             </ButtonRow>
           </ObjectCard>
         ) : canTrack ? (
           <>
             <EmptyState>This {selectionKind.toLowerCase()} is not yet a durable provenance object.</EmptyState>
             <ButtonRow>
-              <ActionButton
-                $primary
+              <DefaultButton
+                $variant="primary"
                 data-testid="create-provenance-object"
                 type="button"
                 onClick={() => provenance.createObject(selection, requestedKind)}
               >
                 {selection.kind === "text" ? "Mark as claim" : `Track ${selectionKind.toLowerCase()}`}
-              </ActionButton>
+              </DefaultButton>
             </ButtonRow>
           </>
         ) : (
@@ -945,15 +831,15 @@ export default function ResearchIntegrityPanel() {
           <EmptyState>Select a quantitative claim to run an evidence-backed deterministic check.</EmptyState>
         ) : (
           <>
-            <ActionButton $primary data-testid="verify-this" type="button" onClick={verifySelection}>
+            <DefaultButton $variant="primary" data-testid="verify-this" type="button" onClick={verifySelection}>
               Verify This
-            </ActionButton>
+            </DefaultButton>
             <Muted>Compares one unambiguous manuscript value with linked evidence. It never reruns experiments or guesses missing metrics.</Muted>
             {activeVerification && (
               <VerificationCard $status={activeVerification.verificationState} data-testid="verification-result">
                 <SelectionHeading>
                   <ObjectTitle>{prettyValue(activeVerification.outcome)}</ObjectTitle>
-                  <Status $status={activeVerification.verificationState}>{statusLabels[activeVerification.verificationState]}</Status>
+                  <Tag $status={activeVerification.verificationState}>{statusLabels[activeVerification.verificationState]}</Tag>
                 </SelectionHeading>
                 <VerificationReason data-testid="verification-reason">{activeVerification.reason}</VerificationReason>
                 <EvidenceMeta>
@@ -985,7 +871,7 @@ export default function ResearchIntegrityPanel() {
                   <DiffCard $status={diff.status} data-testid="research-diff-card" key={diff.id}>
                     <SelectionHeading>
                       <ObjectTitle>{diff.changes[0].label}</ObjectTitle>
-                      <Status $status={diff.status === "rejected" ? "contradicted" : "stale"}>{prettyValue(diff.status)}</Status>
+                      <Tag $status={diff.status === "rejected" ? "contradicted" : "stale"}>{prettyValue(diff.status)}</Tag>
                     </SelectionHeading>
                     {diff.changes.map((change, index) => (
                       <DiffChange key={`${change.kind}-${index}`}>
@@ -1000,20 +886,20 @@ export default function ResearchIntegrityPanel() {
                       </DiffChange>
                     ))}
                     <DiffActions>
-                      <ActionButton type="button" onClick={() => inspectResearchDiff(diff)}>
+                      <DefaultButton $variant="outline" type="button" onClick={() => inspectResearchDiff(diff)}>
                         Inspect
-                      </ActionButton>
+                      </DefaultButton>
                       {diff.proposedText && diff.status !== "in-review" && (
-                        <ActionButton $primary data-testid="stage-research-diff" type="button" onClick={() => stageResearchDiff(diff)}>
+                        <DefaultButton $variant="primary" data-testid="stage-research-diff" type="button" onClick={() => stageResearchDiff(diff)}>
                           Accept → review
-                        </ActionButton>
+                        </DefaultButton>
                       )}
-                      <ActionButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "rejected")}>
+                      <DefaultButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "rejected")}>
                         Reject
-                      </ActionButton>
-                      <ActionButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "deferred")}>
+                      </DefaultButton>
+                      <DefaultButton type="button" onClick={() => provenance.reviewResearchDiff(diff.id, "deferred")}>
                         Defer
-                      </ActionButton>
+                      </DefaultButton>
                     </DiffActions>
                     {diff.status === "in-review" && (
                       <Muted>Update staged in the manuscript. Use the visible accept/reject suggestion controls.</Muted>
@@ -1056,7 +942,7 @@ export default function ResearchIntegrityPanel() {
                       )}
                       <ButtonRow>
                         {experiment && (
-                          <ActionButton
+                          <DefaultButton
                             type="button"
                             onClick={() => {
                               editorState.activeExperimentId.value = experiment.id;
@@ -1064,12 +950,13 @@ export default function ResearchIntegrityPanel() {
                             }}
                           >
                             Open run
-                          </ActionButton>
+                          </DefaultButton>
                         )}
-                        <ActionButton type="button" aria-label={`Edit evidence ${entry.evidence.label}`} onClick={() => editEvidence(entry)}>
+                        <DefaultButton type="button" aria-label={`Edit evidence ${entry.evidence.label}`} onClick={() => editEvidence(entry)}>
                           Edit
-                        </ActionButton>
-                        <ActionButton
+                        </DefaultButton>
+                        <DefaultButton
+                          $variant="danger"
                           type="button"
                           aria-label={`Remove evidence ${entry.evidence.label}`}
                           onClick={() => {
@@ -1078,7 +965,7 @@ export default function ResearchIntegrityPanel() {
                           }}
                         >
                           Remove
-                        </ActionButton>
+                        </DefaultButton>
                       </ButtonRow>
                     </EvidenceCard>
                   );
@@ -1178,13 +1065,13 @@ export default function ResearchIntegrityPanel() {
                 />
               </Field>
               <ButtonRow>
-                <ActionButton $primary type="submit" data-testid="save-evidence">
+                <DefaultButton $variant="primary" type="submit" data-testid="save-evidence">
                   {editing ? "Save evidence" : "Add evidence"}
-                </ActionButton>
+                </DefaultButton>
                 {editing && (
-                  <ActionButton type="button" onClick={resetEvidenceForm}>
+                  <DefaultButton type="button" onClick={resetEvidenceForm}>
                     Cancel
-                  </ActionButton>
+                  </DefaultButton>
                 )}
               </ButtonRow>
             </EvidenceForm>

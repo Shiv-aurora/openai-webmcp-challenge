@@ -24,7 +24,7 @@ export const FoldChevron = css`
 export const MdStyles = css`
   p {
     margin-top: 0px;
-    line-height: 1.3em;
+    line-height: 1.6;
     display: block;
 
     a {
@@ -33,62 +33,81 @@ export const MdStyles = css`
   }
 
   a {
-    color: var(--accent-dark);
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--gray-400);
+    text-underline-offset: 2px;
     word-break: break-word;
+
+    &:hover {
+      text-decoration-color: var(--ink-secondary);
+    }
   }
 
+  /* Headings lead their section: a generous space above, almost none below, so a heading reads as
+     attached to the text it introduces rather than floating between two blocks. */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-weight: bold;
-    line-height: 1.5;
-    margin: 1em 0;
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.015em;
+    margin: 1.6em 0 0.35em;
   }
   h1 {
-    font-size: 1.8em;
+    font-size: 1.875em;
+    letter-spacing: -0.025em;
   }
   h2 {
     font-size: 1.5em;
+    letter-spacing: -0.02em;
   }
   h3 {
     font-size: 1.25em;
   }
   h4 {
-    font-size: 1.15em;
+    font-size: 1.125em;
   }
   h5 {
-    font-size: 1.1em;
+    font-size: 1em;
   }
   h6 {
-    font-size: 1em;
+    font-size: 0.9375em;
+    color: var(--ink-secondary);
   }
 
   hr {
     height: 1px;
-    margin: 16px 0;
-    background-color: var(--gray-500);
+    margin: 28px 0;
+    background-color: var(--hairline);
     border: 0 none;
   }
 
   code,
   pre {
-    border-radius: var(--border-radius);
-    background-color: var(--editor-bg);
+    border-radius: var(--radius-sm);
+    background-color: var(--gray-100);
   }
   code {
-    padding: 0.1em 0.4em;
-    font-family: monospace;
-    font-size: 0.9em;
+    padding: 0.15em 0.35em;
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    color: #c0483f;
     border: none;
   }
   pre {
     white-space: pre-wrap;
-    padding: 16px;
+    padding: 16px 18px;
+    border-radius: var(--radius);
+    line-height: 1.5;
     & > code {
       padding: 0px;
+      color: var(--ink);
+      background: transparent;
     }
   }
   details > summary {
@@ -96,10 +115,11 @@ export const MdStyles = css`
     cursor: pointer;
   }
   aside {
-    border-radius: var(--border-radius);
+    border-radius: var(--radius);
+    overflow: hidden;
 
     &.admonition {
-      border: var(--border-2) solid var(--green-500);
+      border: 1px solid var(--green-500);
       margin-bottom: 16px;
 
       .admonition {
@@ -146,7 +166,7 @@ export const MdStyles = css`
     }
 
     &.warning {
-      border: 3px solid var(--orange-500);
+      border: 1px solid var(--orange-500);
 
       & > header {
         background-color: var(--orange-500);
@@ -184,8 +204,9 @@ export const MdStyles = css`
 
         code {
           background: transparent;
-          font-family: "Lato", sans-serif;
+          font-family: var(--font-sans);
           font-weight: bold;
+          color: inherit;
           padding: 0;
           margin-left: 0.3em;
         }
@@ -194,19 +215,19 @@ export const MdStyles = css`
       pre {
         background-color: var(--panel-bg);
         margin: 0;
-        font-family: "Lato", sans-serif;
+        font-family: var(--font-sans);
       }
     }
 
     &.directive-unhandled {
-      border: 3px solid var(--gray-700);
+      border: 1px solid var(--gray-700);
       & > header {
         background-color: var(--gray-700);
       }
     }
 
     &.directive-error {
-      border: 3px solid var(--error-bg);
+      border: 1px solid var(--error-bg);
       & > header {
         background-color: var(--error-bg);
       }
@@ -233,8 +254,8 @@ export const MdStyles = css`
   }
 
   li {
-    margin-bottom: 0.5em;
-    line-height: 1.3em;
+    margin-bottom: 0.25em;
+    line-height: 1.6;
     p {
       padding: 0px;
     }
@@ -242,82 +263,55 @@ export const MdStyles = css`
   ul,
   ol {
     list-style: revert;
-    padding-left: 40px;
-    padding-top: 0.5em;
+    padding-left: 28px;
+    padding-top: 0.25em;
   }
   /* Add some padding to the outermost ul */
   &[class^="Preview"] > ul {
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
   }
 
   blockquote {
-    border-left: 5px solid var(--green-500);
+    border-left: 3px solid var(--ink);
     margin-left: 0;
     margin-top: 0;
-    padding-left: 12px;
+    padding-left: 14px;
+    color: var(--ink);
   }
 
+  /* Hairline rules and a tinted header row, rather than a black header band. A results table is
+     data the reader scans; the grid should stay behind the numbers. */
   table {
     border-spacing: 0;
-    margin: 20px 0 20px 0;
+    margin: 24px 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
   }
   th,
   td {
-    padding: 20px;
+    padding: 8px 12px;
     text-align: left;
-    border-right: 1px solid var(--gray-500);
-    border-bottom: 1px solid var(--gray-500);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  th:last-child,
+  td:last-child {
+    border-right: 0;
+  }
+  tr:last-of-type td {
+    border-bottom: 0;
   }
   th {
-    background: var(--gray-900);
-    border-top: 1px solid var(--gray-500);
-    color: white;
-
-    &:first-of-type {
-      border-top-left-radius: var(--border-radius);
-      border-left: 1px solid var(--gray-500);
-    }
-
-    &:last-of-type {
-      border-top-right-radius: var(--border-radius);
-    }
+    background: var(--gray-100);
+    color: var(--ink-secondary);
+    font-size: 0.875em;
+    font-weight: 500;
   }
   td {
-    &:first-of-type {
-      border-left: 1px solid var(--gray-500);
-    }
-
     p:last-of-type {
       margin-bottom: 0;
-    }
-  }
-  table:not(:has(thead)) > tbody > tr:first-of-type > td {
-    border-top: 1px solid var(--gray-500);
-
-    &:first-of-type {
-      border-top-left-radius: var(--border-radius);
-    }
-
-    &:last-of-type {
-      border-top-right-radius: var(--border-radius);
-    }
-  }
-  tr {
-    &:nth-child(2n + 2) {
-      background: var(--gray-100);
-    }
-
-    &:last-of-type {
-      td {
-        &:first-of-type {
-          border-bottom-left-radius: var(--border-radius);
-        }
-
-        &:last-of-type {
-          border-bottom-right-radius: var(--border-radius);
-        }
-      }
     }
   }
 
@@ -391,47 +385,33 @@ export const MdStyles = css`
 
 const Preview = styled.div`
   background-color: var(--paper);
-  padding: clamp(28px, 4vw, 64px);
+  padding: clamp(32px, 4vw, 72px) clamp(24px, 4vw, 56px) 25vh;
   box-sizing: border-box;
   height: 100%;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 2px var(--box-shadow);
-  border-radius: 10px;
   vertical-align: top;
   word-wrap: break-word;
   position: relative;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.6;
 
   ${MdStyles}
 
-  & > h1,
-  & > h2,
-  & > h3,
-  & > p,
-  & > table,
-  & > figure,
-  & > .math {
-    max-width: 760px;
+  /* Rendered markdown arrives wrapped in per-block <html-chunk> custom elements, which default to
+     display: inline and so ignore any width. Promoting them to blocks is what gives the document a
+     single measured column instead of every block finding its own width. */
+  html-chunk {
+    display: block;
+    max-width: 720px;
     margin-left: auto;
     margin-right: auto;
   }
 
-  h1,
-  h2,
-  h3 {
-    color: var(--ink);
-    font-family: Georgia, "Times New Roman", serif;
-    letter-spacing: -0.02em;
-  }
-
-  p,
-  li,
-  table {
-    font-family: Georgia, "Times New Roman", serif;
-    font-size: 16px;
-    line-height: 1.6;
+  html-chunk:first-of-type h1:first-child,
+  html-chunk:nth-of-type(2) h1:first-child {
+    margin-top: 0;
   }
 
   @media print {
@@ -457,7 +437,8 @@ const Preview = styled.div`
 
 export const PreviewFocusHighlight = styled.div`
   position: absolute;
-  width: 5px;
+  width: 2px;
+  border-radius: 1px;
   background-color: var(--accent);
 `;
 
