@@ -1,57 +1,37 @@
 # Status
 
-Current phase: Phase 6 — Build Research Diff
-Current objective: Detect evidence-driven drift across tracked manuscript objects and provide a real, grouped review workflow showing manuscript state beside current research state with inspect, accept-for-visible-review, reject, and defer actions.
+Current phase: Phase 11 — implementation complete; public deployment being finalized.
 
-Completed:
-- Imported and attributed Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
-- Preserved inherited scientific editing, preview, equations, tables, comments, suggestions, collaboration, templates, diff, and outline capabilities.
-- Established a product-branded scientific manuscript workspace and deterministic demo manuscript.
-- Added a native research-integrity side panel inside the editor's live Shadow DOM and state model.
-- Added live manuscript metrics and first-class selection context for text, claims, methods, tables, figures, and sections.
-- Added durable first-class provenance objects for claims, methods, figures, and tables.
-- Added manual claim creation from ordinary selected text.
-- Added structured research evidence and provenance links with evidence type, source/artifact, artifact identity, experiment identity, commit, metric, relationship, URI/path, and notes.
-- Added manual create, inspect, edit, remove, and review workflows for provenance relationships.
-- Added verification states for unlinked, needs review, verified, stale, and contradicted manuscript objects.
-- Persisted provenance state across browser reloads and exposed it on the live editor state for WebMCP tools.
-- Added a global Research X-Ray mode with distinct verified, needs-review, stale, contradicted, and unlinked treatments, manuscript-level counts, navigation, and an honest empty state.
-- Registered WebMCP tools through `document.modelContext.registerTool()` with editor-lifecycle cleanup and graceful no-op behavior when WebMCP is unavailable.
-- Completed nine invocation-time read tools for selection, manuscript context, claims, figures, tables, current section, provenance, integrity status, and navigation targets.
-- Completed ten action/review tools for claim creation, evidence attachment/update, evidence-gated verification, review-only claim and selection replacements, additive comments, object navigation, pending review diff retrieval, and review-diff navigation.
-- Kept all researcher-authored manuscript and evidence content marked as untrusted WebMCP content.
-- Added exact-text stale-selection guards for claim creation and manuscript replacement actions.
-- Kept consequential manuscript rewrites reviewable: WebMCP stages CriticMarkup proposals, while only the researcher has the existing visible accept/reject controls.
-- Kept comments additive rather than overwriting existing threads and kept navigation actions non-destructive to manuscript/provenance content.
-- Preserved the product's evidence-gated verification rules through the WebMCP action surface.
-- Added browser coverage for the complete 19-tool WebMCP surface, shared human/agent provenance state, stale-context rejection, evidence workflows, verification gating, review-only manuscript writes, additive comments, non-mutating navigation, and pending review diffs.
-- Added repeatable CI for formatting, lint, production build, collaboration runtime, and browser tests.
-- Added the deterministic Verify This workflow for selected quantitative claims.
-- Added honest verified, contradicted, missing-evidence, stale, partially-supported, and review-required outcomes with explicit reasons.
-- Added deterministic comparison for percentages, grouped numbers, decimals, and scientific notation while rejecting ambiguous, conflicting, or incompatible values.
-- Persisted structured verification outcomes, evidence references, source, timestamps, and bounded history on provenance objects.
-- Made edits to evidence automatically stale previously verified linked objects.
-- Added `verify_claim` and `record_verification_result` WebMCP tools that synchronize with the visible researcher UI.
-- Preserved the manuscript boundary: external verification conclusions never rewrite text, and corrections still use researcher-reviewed CriticMarkup proposals.
-- Confirmed the current WebMCP draft still uses `document.modelContext.registerTool(tool, { signal })` and supports only `readOnlyHint` and `untrustedContentHint` annotations.
+## Completed phases
 
-Last verified:
+- **0–4:** attributed MyST Editor foundation, human scientific-editor workflow, provenance-native claims/methods/tables/figures, Research X-Ray, and the initial WebMCP surface.
+- **5 — Verify This:** deterministic evidence-backed verification with explicit verified, contradicted, stale, missing-evidence, partially-supported, and needs-review outcomes. External conclusions cannot rewrite manuscript text.
+- **6 — Research Diff:** live evidence-driven drift detection for results, methods/configuration, tables, figures, and artifact identity; grouped review state; visible CriticMarkup staging; human-only acceptance.
+- **7 — Figures, tables, and methods:** first-class provenance and consistent stale/contradicted/review states across all object kinds.
+- **8 — Demo project:** checked-in versioned results, configs, table data, dataset and figure manifests, two generated figures, five provenance objects, and five evidence records. The one-click demo deterministically reproduces all three core experiences.
+- **9 — Product polish:** prominent product promise, sticky workflow navigation, direct demo entry point, honest empty/result states, corrected front-matter cursor behavior and LaTeX source, and tested 1366×768 layout.
+- **10 — WebMCP reliability:** 23 live tools with current registration/annotation shape, lifecycle cleanup, explicit input schemas and structured failures, stale-context guards, evidence gating, non-mutating navigation, additive comments, and review-only manuscript writes.
+- **11 — Submission story:** judge-first README, two-minute walkthrough, demo script, WebMCP reference, deployment guide, security/limitations disclosure, attribution, license, and GitHub Pages workflow.
+
+## Last verified
+
 - `npm ci`
 - `npm run check-format`
-- `npm run lint` with zero errors
-- `npm run build`
-- `npm run test` — 89/89 Playwright tests passed against the production preview and live collaboration server
+- `npm run lint` — 0 errors; 16 inherited non-blocking hook/JSDoc warnings
+- `npm run build` — production bundle succeeds with a deterministic Node heap budget
+- Playwright — **102/102 passed** against the production preview and live collaboration server
+- Focused release suite — **23/23 passed** for demo, Research Diff, WebMCP action/error boundaries, and laptop layout
+- Real in-app browser — all 23 tools registered; live integrity/diff reads succeeded; WebMCP diff navigation moved the visible manuscript selection without changing content
+- `npm audit --omit=dev` — critical findings reduced from 2 to 0; 14 inherited production-tree advisories remain documented in `docs/SECURITY.md`
 
-Blockers:
-- None for Phase 6 implementation.
+## Known limitations
 
-Known risks:
-- The inherited dependency lock reports 43 npm audit findings that require production-impact triage before public deployment.
-- The pinned upstream code still emits non-blocking lint warnings that should be addressed only when touched or shown to affect behavior.
-- Provenance and X-Ray state remain browser-local and are not yet synchronized through the inherited collaboration server; the storage/synchronization boundary must be resolved before multi-user or production WebMCP use.
+- Provenance, verification, and Research Diff review state are browser-local and are not synchronized by the inherited collaboration server.
+- Verification intentionally handles deterministic quantitative comparisons, not arbitrary scientific reasoning; an external agent can record a reasoned evidence-backed outcome through WebMCP.
+- The WebMCP API is a moving draft. The current registration and annotations match the W3C Community Group draft checked for this release.
+- A final smoke test in the challenge's supported Chrome WebMCP build remains an environment-specific manual check; the same registered tools are covered by automated invocation tests and were exercised in the real in-app browser.
+- The inherited Markdown/YAML/polyfill dependency tree retains non-critical advisories; threat boundaries and mitigations are documented.
 
-Next:
-- Build evidence-driven Research Diff detection from real provenance objects and linked evidence, not presentation fixtures.
-- Cover quantitative, method/configuration, figure, table, and artifact changes with stable grouped diff entries.
-- Add inspect, accept-for-visible-review, reject, and defer workflows without giving agents acceptance authority over manuscript rewrites.
-- Expose the same pending diff state and navigation through the researcher UI and WebMCP.
+## Submission readiness
+
+Source, license, attribution, deterministic demo, automated tests, CI, public deployment workflow, judge instructions, and accurate limitation disclosures are present. After the Pages workflow reports a successful public URL, the repository is ready to submit; the remaining submission operation is the external hackathon form/video upload.
