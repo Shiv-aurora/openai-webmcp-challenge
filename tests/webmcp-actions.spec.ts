@@ -1,10 +1,11 @@
 import { expect, Page, test } from "@playwright/test";
 
-const installWebMCPHarness = async (page: Page) => {
-  await page.addInitScript(() => {
+const installWebMCPHarness = async (page: Page, rejectedToolName?: string) => {
+  await page.addInitScript((blockedToolName) => {
     const tools = new Map();
     const modelContext = {
       async registerTool(tool: any, options: any = {}) {
+        if (tool.name === blockedToolName) throw new Error(`Registration rejected for ${tool.name}`);
         if (tools.has(tool.name)) throw new Error(`Duplicate WebMCP tool: ${tool.name}`);
         tools.set(tool.name, tool);
         options.signal?.addEventListener("abort", () => tools.delete(tool.name), { once: true });
@@ -21,20 +22,21 @@ const installWebMCPHarness = async (page: Page) => {
     };
     Object.defineProperty(document, "modelContext", { configurable: true, value: modelContext });
     Object.defineProperty(window, "__webmcpTools", { configurable: true, value: tools });
-  });
+  }, rejectedToolName);
 };
 
-const loadWorkspace = async (page: Page, collaboration = false) => {
-  await installWebMCPHarness(page);
+const loadWorkspace = async (page: Page, collaboration = false, rejectedToolName?: string) => {
+  await installWebMCPHarness(page, rejectedToolName);
   await page.goto(collaboration ? "/" : "/?collab=false&empty=true");
   await page.evaluate(() => localStorage.removeItem("myst/provenance/demo"));
   await page.reload();
   await page.waitForSelector(".cm-content");
   if (collaboration) await page.waitForFunction(() => (window as any).myst_editor?.demo?.state?.collab?.value?.ready?.value === true);
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(37);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(rejectedToolName ? 36 : 37);
 };
 
 const selectText = async (page: Page, needle: string) => {
+  await page.getByTestId("activity-verify").click();
   await page.evaluate((text) => {
     const view = (window as any).myst_editor.demo.main_editor;
     const source = view.state.doc.toString();
@@ -93,11 +95,18 @@ test.describe("review-safe WebMCP actions", () => {
     }
     expect((byName.get("get_research_diffs") as any)?.annotations?.readOnlyHint).toBe(true);
     expect((byName.get("get_research_diffs") as any)?.annotations?.untrustedContentHint).toBe(true);
+
+    await expect.poll(() => page.evaluate(() => (window as any).myst_editor.demo.state.webmcp?.status)).toBe("ready");
+    const registration = await page.evaluate(() => {
+      const state = (window as any).myst_editor.demo.state.webmcp;
+      return { registeredCount: state.registeredCount, failures: state.failures };
+    });
+    expect(registration).toEqual({ registeredCount: 37, failures: [] });
   });
 
   test("creates a claim in the same provenance state the researcher sees", async ({ page }) => {
     const { claim } = await createStressClaim(page);
-    await expect(page.getByTestId("provenance-object-count")).toHaveText("1");
+    await expect(page.getByTestId("provenance-object")).toBeVisible();
 
     const read = payload(await executeTool(page, "get_claim"));
     expect(read.tracked).toBe(true);
@@ -129,7 +138,7 @@ test.describe("review-safe WebMCP actions", () => {
       }),
     );
 
-    await expect(page.getByTestId("evidence-count")).toHaveText("1");
+    await expect(page.getByTestId("evidence-card")).toHaveCount(1);
     await expect(page.getByTestId("selection-status")).toHaveText("Needs review");
 
     const updated = payload(
@@ -209,7 +218,7 @@ test.describe("review-safe WebMCP actions", () => {
   });
 
   test("guards selected replacement with exact text and exposes the pending review diff", async ({ page }) => {
-    const text = "All names and values in this project are synthetic and are provided solely to demonstrate the workflow.";
+    const text = "Everything here is synthetic.";
     await selectText(page, text);
     const before = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
     const stale = await executeTool(page, "replace_selected_content", {
@@ -220,7 +229,7 @@ test.describe("review-safe WebMCP actions", () => {
     expect(payload(stale).error.code).toBe("STALE_SELECTION");
     expect(await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString())).toBe(before);
 
-    const replacement = "The project is synthetic and provided solely to demonstrate the workflow.";
+    const replacement = "This entire project is synthetic.";
     const staged = payload(await executeTool(page, "replace_selected_content", { expectedText: text, replacementText: replacement }));
     expect(staged.reviewRequired).toBe(true);
     expect(staged.applied).toBe(false);
@@ -232,7 +241,7 @@ test.describe("review-safe WebMCP actions", () => {
 
   test("navigates to tracked objects without changing manuscript or provenance content", async ({ page }) => {
     const { claim } = await createStressClaim(page);
-    await selectText(page, "A scientific manuscript should remain connected to the experiments that produced it.");
+    await selectText(page, "Everything here is synthetic.");
     const beforeDoc = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
     const beforeProvenance = await page.evaluate(() => JSON.stringify((window as any).myst_editor.demo.state.provenance.data.peek()));
 
@@ -244,11 +253,11 @@ test.describe("review-safe WebMCP actions", () => {
   });
 
   test("navigates to a pending research diff without accepting it", async ({ page }) => {
-    const text = "All names and values in this project are synthetic and are provided solely to demonstrate the workflow.";
+    const text = "Everything here is synthetic.";
     await selectText(page, text);
     await executeTool(page, "replace_selected_content", {
       expectedText: text,
-      replacementText: "The project is synthetic and provided solely to demonstrate the workflow.",
+      replacementText: "This entire project is synthetic.",
     });
     const diffs = payload(await executeTool(page, "get_research_diffs"));
     const diff = diffs.diffs[0];
@@ -376,4 +385,18 @@ test("detects, navigates, defers, and stages an evidence-driven Research Diff", 
   expect(staged.applied).toBe(false);
   const source = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
   expect(source).toContain("{~~76.9% on the Astra Reasoning Index~>78.4% on the Astra Reasoning Index~~}");
+});
+
+test("reports a partial WebMCP registration with the failed tool name", async ({ page }) => {
+  await loadWorkspace(page, false, "verify_claim");
+  await expect.poll(() => page.evaluate(() => (window as any).myst_editor.demo.state.webmcp?.status)).toBe("partial");
+
+  const registration = await page.evaluate(() => {
+    const state = (window as any).myst_editor.demo.state.webmcp;
+    return { registeredCount: state.registeredCount, failures: state.failures };
+  });
+  expect(registration).toEqual({
+    registeredCount: 36,
+    failures: [{ toolName: "verify_claim", message: "Registration rejected for verify_claim" }],
+  });
 });

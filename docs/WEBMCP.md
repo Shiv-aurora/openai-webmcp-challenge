@@ -1,6 +1,8 @@
 # WebMCP contract
 
-The application registers 36 tools through the current `document.modelContext.registerTool(tool, { signal })` surface. All researcher-authored experiment, evidence, and manuscript data is marked with `untrustedContentHint`. Read tools use `readOnlyHint: true`; navigation and state-changing tools use `readOnlyHint: false`.
+The application registers 37 tools through the current `document.modelContext.registerTool(tool, { signal })` surface. All researcher-authored experiment, evidence, and manuscript data is marked with `untrustedContentHint`. Read tools use `readOnlyHint: true`; navigation and state-changing tools use `readOnlyHint: false`.
+
+Registration state is exposed on the editor as `webmcp.status`, `webmcp.registeredCount`, and `webmcp.failures`. A rejected tool therefore produces an explicit `partial` state with its tool name and error instead of being mistaken for a complete registration.
 
 ## Read tools
 
@@ -40,6 +42,7 @@ The application registers 36 tools through the current `document.modelContext.re
 - `create_experiment`
 - `update_experiment`
 - `add_experiment_metric`
+- `log_experiment_metric_point`
 - `add_experiment_parameter`
 - `attach_experiment_artifact`
 - `set_experiment_status`
@@ -64,6 +67,6 @@ The application registers 36 tools through the current `document.modelContext.re
 
 The Playwright harness supplies the draft browser API and invokes the same registered tool objects as an external agent. Tests cover registration metadata, successful calls, missing/stale context, evidence gating, conflicting evidence, non-mutating navigation, review-only writes, additive comments, diff decisions, and shared UI/tool state.
 
-The implementation is exercised through the browser harness against all 36 registered tools. Lifecycle tests create and compare runs, publish replacement evidence, connect it to a claim, and verify that a Research Diff appears while the manuscript text remains unchanged.
+The implementation is exercised through the browser harness against all 37 registered tools. Lifecycle tests create and compare runs, publish replacement evidence, connect it to a claim, and verify that a Research Diff appears while the manuscript text remains unchanged.
 
 The WebMCP browser API is an evolving draft. The implementation was checked against the [W3C Community Group draft](https://webmachinelearning.github.io/webmcp/) and its [canonical specification source](https://github.com/webmachinelearning/webmcp/blob/main/index.bs).

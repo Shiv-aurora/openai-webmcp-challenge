@@ -14,7 +14,7 @@ Current objective: preserve the verified release while completing the external h
 - **9 — Product polish:** prominent product promise, sticky workflow navigation, direct demo entry point, honest empty/result states, corrected front-matter cursor behavior and LaTeX source, and tested 1366×768 layout.
 - **10 — WebMCP reliability:** 23 live tools with current registration/annotation shape, lifecycle cleanup, explicit input schemas and structured failures, stale-context guards, evidence gating, non-mutating navigation, additive comments, and review-only manuscript writes.
 - **11 — Submission story:** judge-first README, two-minute walkthrough, demo script, WebMCP reference, deployment guide, security/limitations disclosure, attribution, license, and GitHub Pages workflow.
-- **12 — End-to-end research workspace:** first-class experiment runs, a standalone evidence catalog, bidirectional lifecycle navigation, manual result-to-paper actions, run/evidence supersession, experiment-aware Research X-Ray, and 13 experiment/evidence WebMCP tools.
+- **12 — End-to-end research workspace:** first-class experiment runs, a standalone evidence catalog, bidirectional lifecycle navigation, manual result-to-paper actions, run/evidence supersession, experiment-aware Research X-Ray, and 14 experiment/evidence WebMCP tools.
 
 ## Last verified
 
@@ -24,7 +24,7 @@ Current objective: preserve the verified release while completing the external h
 - `npm run build` — production bundle succeeds with a deterministic Node heap budget
 - Playwright — **105/105 passed** against the production preview and live collaboration server
 - Focused lifecycle suite — **4/4 passed** for experiment creation, evidence publication, paper linkage, supersession, and laptop layout
-- Real in-app browser — all **36 tools** registered; the run/evidence/paper trace and four Research Diffs are visible against shared live state
+- Real in-app browser — all **37 tools** registered; the run/evidence/paper trace and four Research Diffs are visible against shared live state
 - Visual review — loaded Experiments and Evidence workspaces verified at 1440×900 and the two-column experiment layout verified at 768×900
 - GitHub Actions — CI and Pages deployment both succeeded for Phase 12 commit `a86fe85`
 - Public deployment — `https://shiv-aurora.github.io/openai-webmcp-challenge/` passed a live Phase 12 smoke test: 2 experiments, 5 evidence records, 5 paper objects, 4 Research Diffs, 36 WebMCP tools, and navigable run → evidence → manuscript usage

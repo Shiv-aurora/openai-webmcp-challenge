@@ -179,4 +179,69 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
     expect(source).toContain("76.9% on the Astra Reasoning Index");
     expect(source).not.toContain("86.4% on the Astra Reasoning Index");
   });
+
+  test("covers experiment metadata, parameters, artifacts, status, and reads through WebMCP", async ({ page }) => {
+    const created = payload(
+      await executeTool(page, "create_experiment", {
+        id: "run-contract-audit",
+        name: "WebMCP contract audit",
+        status: "planned",
+        sourceCommit: "contract01",
+      }),
+    ).experiment;
+
+    const updated = payload(
+      await executeTool(page, "update_experiment", {
+        experimentId: created.id,
+        notes: "Exercises the complete experiment lifecycle contract.",
+        datasets: ["astra-eval@1"],
+      }),
+    ).experiment;
+    expect(updated.notes).toContain("complete experiment lifecycle");
+    expect(updated.datasets).toEqual(["astra-eval@1"]);
+
+    const parameterized = payload(
+      await executeTool(page, "add_experiment_parameter", {
+        experimentId: created.id,
+        key: "router_temperature",
+        value: 0.7,
+      }),
+    ).experiment;
+    expect(parameterized.parameters.router_temperature).toBe(0.7);
+
+    const artifactResult = payload(
+      await executeTool(page, "attach_experiment_artifact", {
+        experimentId: created.id,
+        id: "contract-report",
+        label: "Contract report",
+        type: "result",
+        uri: "memory://webmcp/contract-report.json",
+      }),
+    );
+    expect(artifactResult.artifact.id).toBe("contract-report");
+    expect(artifactResult.experiment.artifacts).toContainEqual(
+      expect.objectContaining({ id: "contract-report", uri: "memory://webmcp/contract-report.json" }),
+    );
+
+    const completed = payload(
+      await executeTool(page, "set_experiment_status", {
+        experimentId: created.id,
+        status: "completed",
+        completedAt: "2026-09-03T12:00:00.000Z",
+      }),
+    ).experiment;
+    expect(completed.status).toBe("completed");
+    expect(completed.completedAt).toBe("2026-09-03T12:00:00.000Z");
+
+    const read = payload(await executeTool(page, "get_experiment", { experimentId: created.id })).experiment;
+    expect(read).toMatchObject({
+      id: created.id,
+      status: "completed",
+      datasets: ["astra-eval@1"],
+      parameters: { router_temperature: 0.7 },
+    });
+
+    const list = payload(await executeTool(page, "get_experiments", { status: "completed", limit: 100 }));
+    expect(list.experiments).toContainEqual(expect.objectContaining({ id: created.id }));
+  });
 });

@@ -47,6 +47,7 @@ const loadWorkspace = async (page: Page) => {
 };
 
 const selectText = async (page: Page, needle: string) => {
+  await page.getByTestId("activity-verify").click();
   await page.evaluate((text) => {
     const view = (window as any).myst_editor.demo.main_editor;
     const documentText = view.state.doc.toString();
@@ -132,7 +133,7 @@ test.describe("read-only WebMCP surface", () => {
   });
 
   test("returns explicit structured errors when claim or provenance context is missing", async ({ page }) => {
-    await selectText(page, "A scientific manuscript should remain connected to the experiments that produced it.");
+    await selectText(page, "Everything here is synthetic.");
 
     const claimResult = await executeTool(page, "get_claim");
     const provenanceResult = await executeTool(page, "get_provenance");
@@ -225,7 +226,7 @@ test.describe("read-only WebMCP surface", () => {
   });
 
   test("returns explicit errors for missing figure, table, and section context", async ({ page }) => {
-    await selectText(page, "A scientific manuscript should remain connected to the experiments that produced it.");
+    await selectText(page, "Everything here is synthetic.");
 
     const figureResult = await executeTool(page, "get_figure");
     const tableResult = await executeTool(page, "get_table");

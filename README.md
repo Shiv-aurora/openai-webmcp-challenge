@@ -59,7 +59,7 @@ See a Git-like review of where live research has drifted from the paper. Each en
 
 ## Why WebMCP
 
-The editor owns live manuscript context and safe controls. The user's external agent owns broader research context and reasoning. Through 36 registered WebMCP tools, an agent can maintain experiment runs, publish and compare evidence, connect results to manuscript objects, inspect integrity state, verify claims, navigate, and stage reviewable corrections. It cannot silently accept its own rewrite.
+The editor owns live manuscript context and safe controls. The user's external agent owns broader research context and reasoning. Through 37 registered WebMCP tools, an agent can maintain experiment runs, publish and compare evidence, connect results to manuscript objects, inspect integrity state, verify claims, navigate, and stage reviewable corrections. It cannot silently accept its own rewrite.
 
 The tools are registered with `document.modelContext.registerTool(tool, { signal })`, operate on the exact state visible to the human, return structured errors for stale or invalid context, and unregister with the editor lifecycle. The full contract and test examples are in [docs/WEBMCP.md](docs/WEBMCP.md).
 
@@ -73,7 +73,7 @@ The tools are registered with `document.modelContext.registerTool(tool, { signal
 
 This repository incorporates [Antmicro MyST Editor](https://github.com/antmicro/myst-editor) at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`. Its scientific editor, preview, collaboration, comments, suggestions, templates, and base diff capabilities are the foundation.
 
-The experiment/evidence graph, lifecycle workspace, provenance model, research-integrity panel, Research X-Ray, Verify This, evidence-driven Research Diff, deterministic research fixture, and 36-tool WebMCP surface are challenge-specific work. See [NOTICE.md](NOTICE.md), [LICENSE](LICENSE), and the preserved [upstream README](docs/UPSTREAM_MYST_EDITOR.md).
+The experiment/evidence graph, lifecycle workspace, provenance model, research-integrity panel, Research X-Ray, Verify This, evidence-driven Research Diff, deterministic research fixture, and 37-tool WebMCP surface are challenge-specific work. See [NOTICE.md](NOTICE.md), [LICENSE](LICENSE), and the preserved [upstream README](docs/UPSTREAM_MYST_EDITOR.md).
 
 ## Development and validation
 
