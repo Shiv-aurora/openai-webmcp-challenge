@@ -249,9 +249,9 @@ export function buildDemoResearchProject(markdown) {
     e("astra-evidence-table-v2", "table-source", "table-generating-result", "Astra model comparison", "astra-comparison-v2", "astra-run-254", "f6a57aa", "baseline=63.8%; final=78.4%", "78.4%", "demo-research/tables/astra-comparison-v2.csv", "Cross-run scorecard generated from the experiment registry."),
     e("astra-evidence-figure-v2", "figure-source", "figure-generating-result", "Astra evaluation figure", "astra-evaluation-figure", "astra-run-254", "f6a57aa", "reasoning_index=78.4%", "78.4%", "demo/astra-evaluation-v2.svg", "Regenerated from the locked scorecard."),
     e("astra-evidence-reasoning", "experiment-result", "quantitative-result", "Locked reasoning index", "astra-locked-eval", "astra-run-254", "f6a57aa", "reasoning_index=78.4%", "78.4%", "demo-research/results/astra-eval-v2.json", "The locked harness supersedes the 76.9% manuscript candidate."),
-    e("astra-evidence-ablation", "analysis-artifact", "quantitative-result", "Execution-feedback ablation", "tool-ablation", "astra-run-248", "e11bc92", "tool_completion_delta=9.6pp", "9.6pp", "demo-research/tables/tool-feedback-ablation.csv", "Controlled removal of sandbox execution feedback."),
-    e("astra-evidence-model", "implementation", "implementation", "Astra research model card", "astra-model-card", "astra-run-254", "f6a57aa", "sha256=6a57…a57a", "6a57…a57a", "demo-research/models/astra-model-card.md", "Synthetic model identity, limitations, and disclosure."),
-    e("astra-evidence-code", "evaluation-script", "implementation", "Frozen Astra evaluation harness", "astra-eval-code", "astra-run-254", "f6a57aa", "protocol=astra-eval-lock@1", "astra-eval-lock@1", "demo-research/scripts/evaluate_astra.py", "Deterministic entry point with immutable prompt hashes."),
+    e("astra-evidence-ablation", "analysis-artifact", "quantitative-result", "Execution-feedback ablation", "tool-ablation", "astra-run-248", "e11bc92", "tool_completion_delta=9.6", 9.6, "demo-research/tables/tool-feedback-ablation.csv", "Controlled removal of sandbox execution feedback, measured in percentage points."),
+    e("astra-evidence-model", "implementation", "implementation", "Astra research model card", "astra-model-card", "astra-run-254", "f6a57aa", "parameters_total=126B; parameters_active=31B", "126B / 31B", "demo-research/models/astra-model-card.md", "Synthetic model identity, architecture, limitations, and disclosure."),
+    e("astra-evidence-code", "evaluation-script", "implementation", "Frozen Astra evaluation harness", "astra-eval-code", "astra-run-254", "f6a57aa", "protocol=frozen-harness", "frozen-harness", "demo-research/scripts/evaluate_astra.py", "Deterministic entry point pinned to astra-eval-lock@1 with immutable prompt hashes."),
     e("astra-evidence-failure", "result-file", "negative-result", "Router collapse trace", "router-collapse-log", "astra-run-212", "a1d09ef", "expert_concentration=61%", "61%", "demo-research/logs/astra-router-collapse.txt", "Preserved negative result from the aggressive router-temperature sweep."),
   ];
 
@@ -261,6 +261,10 @@ export function buildDemoResearchProject(markdown) {
     method: "GPT-6 Astra is optimized with AdamW using a peak learning rate of **2.4e-4**.",
     table: "| Model | Reasoning index | Tool completion | 128k retrieval |\n| --- | ---: | ---: | ---: |\n| Dense 34B baseline | 63.8% | 58.1% | 71.4% |\n| Astra MoE candidate | 76.9% | 81.2% | 92.6% |",
     figure: "![GPT-6 Astra evaluation](demo/astra-evaluation-v1.svg)",
+    ablation: "Removing execution feedback lowers tool completion by 9.6 percentage points",
+    model: "The candidate activates 31B of 126B parameters per token",
+    code: "All candidates are evaluated with a frozen harness and prompt set.",
+    failure: "Disabling the router balance term concentrates 61% of tokens in three experts",
   };
   const refs = Object.fromEntries(evidence.map((item) => [item.id, evidenceReference(item, "supports")]));
   const objects = [
@@ -284,14 +288,35 @@ export function buildDemoResearchProject(markdown) {
       id: "astra-object-figure", kind: "figure", subtype: null, text: snippets.figure, anchor: anchorFor(markdown, snippets.figure), verificationState: "stale", createdAt: DEMO_TIME, updatedAt: DEMO_TIME,
       verification: verification("stale", "stale", "The displayed figure predates the locked replacement run.", [{ ...refs["astra-evidence-figure-v2"], artifactId: "astra-evaluation-v1", commit: "d9a42c7", metric: "reasoning_index=76.9%", uri: "demo/astra-evaluation-v1.svg" }]),
     },
+    {
+      id: "astra-object-ablation-claim", kind: "claim", subtype: "quantitative-result", text: snippets.ablation, anchor: anchorFor(markdown, snippets.ablation), verificationState: "verified", createdAt: DEMO_TIME, updatedAt: DEMO_TIME,
+      verification: verification("verified", "verified", "The execution-feedback ablation reproduces the reported 9.6-point decrease.", [refs["astra-evidence-ablation"]]),
+    },
+    {
+      id: "astra-object-model-claim", kind: "claim", subtype: "quantitative-result", text: snippets.model, anchor: anchorFor(markdown, snippets.model), verificationState: "verified", createdAt: DEMO_TIME, updatedAt: DEMO_TIME,
+      verification: verification("verified", "verified", "The model card records 126B total parameters and 31B active parameters per token.", [refs["astra-evidence-model"]]),
+    },
+    {
+      id: "astra-object-eval-method", kind: "method", subtype: null, text: snippets.code, anchor: anchorFor(markdown, snippets.code), verificationState: "verified", createdAt: DEMO_TIME, updatedAt: DEMO_TIME,
+      verification: verification("verified", "verified", "The frozen evaluation entry point is pinned to astra-eval-lock@1.", [refs["astra-evidence-code"]]),
+    },
+    {
+      id: "astra-object-router-claim", kind: "claim", subtype: "quantitative-result", text: snippets.failure, anchor: anchorFor(markdown, snippets.failure), verificationState: "verified", createdAt: DEMO_TIME, updatedAt: DEMO_TIME,
+      verification: verification("verified", "verified", "The retained failure trace records 61% expert concentration.", [refs["astra-evidence-failure"]]),
+    },
   ];
-  const relationByObject = {
-    "astra-object-result-claim": ["astra-evidence-reasoning", "supports"],
-    "astra-object-data-claim": ["astra-evidence-data", "supports"],
-    "astra-object-method": ["astra-evidence-config-v2", "describes"],
-    "astra-object-table": ["astra-evidence-table-v2", "derived-from"],
-    "astra-object-figure": ["astra-evidence-figure-v2", "produces"],
-  };
-  const links = objects.map((object) => ({ id: `astra-link-${object.id}`, objectId: object.id, evidenceId: relationByObject[object.id][0], relation: relationByObject[object.id][1], createdAt: DEMO_TIME, updatedAt: DEMO_TIME }));
-  return { version: 2, demoProject: "gpt6-astra-v2", experiments, objects, evidence, links, diffReviews: {} };
+  const linkSpecs = [
+    ["astra-object-result-claim", "astra-evidence-reasoning", "supports"],
+    ["astra-object-result-claim", "astra-evidence-eval-v2", "supports"],
+    ["astra-object-data-claim", "astra-evidence-data", "supports"],
+    ["astra-object-method", "astra-evidence-config-v2", "describes"],
+    ["astra-object-table", "astra-evidence-table-v2", "derived-from"],
+    ["astra-object-figure", "astra-evidence-figure-v2", "produces"],
+    ["astra-object-ablation-claim", "astra-evidence-ablation", "supports"],
+    ["astra-object-model-claim", "astra-evidence-model", "describes"],
+    ["astra-object-eval-method", "astra-evidence-code", "describes"],
+    ["astra-object-router-claim", "astra-evidence-failure", "supports"],
+  ];
+  const links = linkSpecs.map(([objectId, evidenceId, relation], index) => ({ id: `astra-link-${index + 1}`, objectId, evidenceId, relation, createdAt: DEMO_TIME, updatedAt: DEMO_TIME }));
+  return { version: 2, demoProject: "gpt6-astra-v4", experiments, objects, evidence, links, diffReviews: {} };
 }

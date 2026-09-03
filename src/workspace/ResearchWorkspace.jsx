@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from "preact/hooks";
+import { useContext, useEffect, useState } from "preact/hooks";
 import { styled } from "styled-components";
 import { MystState } from "../mystState";
 import { ensureProvenanceStore, EXPERIMENT_STATUSES } from "../integrity/provenance";
@@ -1304,13 +1304,12 @@ export function ResearchWorkspace({ children }) {
   const provenance = ensureProvenanceStore(editorState);
   const data = provenance.data.value;
   const view = editorState.workspaceView.value;
-  const linkedCount = useMemo(() => new Set(data.links.map((link) => link.objectId)).size, [data.links]);
 
   useEffect(() => {
     const allowEmpty = new URLSearchParams(window.location.search).get("empty") === "true";
     const isEmpty = !data.experiments.length && !data.objects.length && !data.evidence.length && !data.links.length;
     const isPreviousDemo =
-      (!!data.demoProject && data.demoProject !== "gpt6-astra-v2") ||
+      (!!data.demoProject && data.demoProject !== "gpt6-astra-v4") ||
       data.experiments.some((run) => run.id.startsWith("audio-run-")) ||
       (!data.demoProject && data.experiments.length > 0 && data.experiments.every((run) => run.id.startsWith("stress-run-")));
     const source = editorState.editorView.value?.state.doc.toString() || editorState.text.text.value || "";
@@ -1358,7 +1357,7 @@ export function ResearchWorkspace({ children }) {
           type="button"
           onClick={() => (editorState.workspaceView.value = "paper")}
         >
-          Paper <Count>{linkedCount}</Count>
+          Paper
         </Step>
       </Lifecycle>
       <Viewport>

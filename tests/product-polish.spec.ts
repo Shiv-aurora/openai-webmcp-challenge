@@ -13,9 +13,11 @@ test("keeps the promise and three core workflows usable on a common laptop viewp
   await expect(panel.getByText("Every claim in your paper stays connected to the research that produced it.")).toHaveCount(0);
   await expect(activityBar.getByRole("button", { name: "Research X-Ray" })).toBeVisible();
   await expect(activityBar.getByRole("button", { name: "Source provenance" })).toBeVisible();
-  await expect(activityBar.getByRole("button", { name: "Experiment tracking" })).toBeVisible();
+  await expect(activityBar.getByRole("button", { name: "Experiment tracking" })).toHaveCount(0);
   await expect(activityBar.getByRole("button", { name: "Research Diff" })).toBeVisible();
   await expect(activityBar.getByRole("button", { name: "Verify claim" })).toBeVisible();
+  await expect(page.getByText("Demo", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("nav-paper")).toHaveText("Paper");
   await expect(page.getByRole("button", { name: "Agent", exact: true })).toHaveCount(0);
   await expect(page.getByTestId("load-demo-research")).toBeVisible();
 

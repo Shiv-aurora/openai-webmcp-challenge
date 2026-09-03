@@ -24,12 +24,25 @@ test.describe("deterministic demo research project", () => {
   test.beforeEach(async ({ page }) => loadWorkspace(page));
 
   test("loads a complete provenance graph for claims, method, table, and figure", async ({ page }) => {
-    await expect(page.getByTestId("xray-item")).toHaveCount(5);
+    await expect(page.getByTestId("xray-item")).toHaveCount(9);
     await page.getByTestId("toggle-xray").click();
-    await expect(page.getByTestId("xray-count-verified")).toHaveText("1");
+    await expect(page.getByTestId("xray-count-verified")).toHaveText("5");
     await expect(page.getByTestId("xray-count-stale")).toHaveText("3");
     await expect(page.getByTestId("xray-count-contradicted")).toHaveText("1");
-    await expect(page.getByTestId("xray-item")).toHaveCount(5);
+    await expect(page.getByTestId("xray-item")).toHaveCount(9);
+  });
+
+  test("links every demo result into the manuscript provenance graph", async ({ page }) => {
+    const orphanEvidence = await page.evaluate(() => {
+      const data = (window as any).myst_editor.demo.state.provenance.data.peek();
+      return data.evidence.filter((item: any) => !data.links.some((link: any) => link.evidenceId === item.id)).map((item: any) => item.id);
+    });
+    expect(orphanEvidence).toEqual([]);
+
+    await page.getByTestId("nav-evidence").click();
+    await page.getByTestId("evidence-list-item").last().click();
+    await expect(page.getByText("Paper uses", { exact: true }).locator("..")).toContainText("1");
+    await expect(page.getByText("Not used yet", { exact: true })).toHaveCount(0);
   });
 
   test("reproduces correct and incorrect Verify This outcomes", async ({ page }) => {

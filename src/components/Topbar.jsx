@@ -199,6 +199,21 @@ const Separator = styled.div`
   background: var(--hairline);
 `;
 
+const DemoLabel = styled.span`
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  color: var(--ink-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+`;
+
 const Alert = styled.span`
   display: inline-flex;
   align-items: center;
@@ -612,6 +627,7 @@ export const EditorTopbar = ({ alert, buttons }) => {
       <BrandWordmark className="brand-wordmark">{APP_NAME}</BrandWordmark>
 
       <div className="side">
+        <DemoLabel>Demo</DemoLabel>
         {textButtons.length > 0 && (
           <div className="btns">
             {textButtons.map((b) => (

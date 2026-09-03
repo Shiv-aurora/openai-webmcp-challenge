@@ -98,15 +98,6 @@ const SourceIcon = () => (
   </svg>
 );
 
-const TrackingIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M4 18V9M10 18V5M16 18v-6M22 18V3" stroke="currentColor" stroke-width="1.8" />
-    <path d="m3 14 7-5 6 1 6-5" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" />
-    <circle cx="10" cy="9" r="1.5" fill="var(--sidebar-bg)" stroke="currentColor" stroke-width="1.4" />
-    <circle cx="16" cy="10" r="1.5" fill="var(--sidebar-bg)" stroke="currentColor" stroke-width="1.4" />
-  </svg>
-);
-
 const DiffIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M7 4v16M17 4v16M3.5 8.5h7M13.5 15.5h7" stroke="currentColor" stroke-width="1.7" />
@@ -126,14 +117,9 @@ export default function ResearchActivityBar() {
   const provenance = ensureProvenanceStore(editorState);
   const data = provenance.data.value;
   const diffs = detectResearchDiffs(data);
-  const activity = editorState.workspaceView.value === "experiments" ? "tracking" : editorState.integrityExperience.value;
+  const activity = editorState.integrityExperience.value;
 
   const activate = (next) => {
-    if (next === "tracking") {
-      editorState.workspaceView.value = "experiments";
-      editorState.integrityPanelOpen.value = false;
-      return;
-    }
     editorState.workspaceView.value = "paper";
     editorState.integrityExperience.value = next;
     editorState.integrityPanelOpen.value = true;
@@ -142,7 +128,6 @@ export default function ResearchActivityBar() {
   const items = [
     { id: "xray", label: "Research X-Ray", icon: XrayIcon, count: data.objects.length },
     { id: "github", label: "Source provenance", icon: SourceIcon },
-    { id: "tracking", label: "Experiment tracking", icon: TrackingIcon, count: data.experiments.length },
     { id: "diff", label: "Research Diff", icon: DiffIcon, count: diffs.length },
     { id: "verify", label: "Verify claim", icon: VerifyIcon },
   ];
@@ -151,7 +136,7 @@ export default function ResearchActivityBar() {
     <Rail aria-label="Research tools" data-testid="research-activity-bar">
       {items.map((item) => (
         <RailButton
-          $active={activity === item.id && (item.id === "tracking" || editorState.integrityPanelOpen.value)}
+          $active={activity === item.id && editorState.integrityPanelOpen.value}
           aria-label={item.label}
           aria-pressed={activity === item.id}
           data-testid={`activity-${item.id}`}
