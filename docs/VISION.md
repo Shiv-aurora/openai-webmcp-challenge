@@ -34,9 +34,15 @@ The paper should not merely contain citations to external literature. It should 
 - analysis artifacts
 - research decisions
 
-The core promise is:
+The expanded product promise is:
 
-> **Every claim in your paper stays connected to the research that produced it.**
+> **From experiment to paper, without breaking provenance.**
+
+The core model is:
+
+> **EXPERIMENTS → EVIDENCE → PAPER**
+
+Experiments describe what was run. Evidence captures the durable result, comparison, configuration, ablation, figure source, or table source that a run produced. The paper uses that evidence through explicit provenance links. Each layer remains useful without an agent, and each meaningful structured action is available to an external agent through WebMCP.
 
 ---
 
@@ -46,6 +52,9 @@ The application must be a strong scientific writing environment even when no age
 
 A researcher should be able to:
 
+- record, update, complete, fail, compare, and supersede experiment runs
+- publish metrics and artifacts as evidence
+- navigate bidirectionally between runs, evidence, and manuscript usage
 - write and edit a manuscript normally
 - structure sections
 - work with citations
@@ -84,6 +93,8 @@ Instead, it gives the agent a structured way to understand and manipulate the ma
 
 The agent should be able to work with:
 
+- experiment runs, parameters, metrics, artifacts, status, and supersession
+- the evidence catalog and its manuscript usage
 - the current selection
 - the current claim
 - the current section
@@ -100,6 +111,18 @@ The user's agent supplies **research context and reasoning**.
 ---
 
 ## Core Product Model
+
+### Experiment Run
+
+A research run records the method, configuration, metrics, datasets, artifacts, figures, notes, commit, timestamps, and relationship to prior or replacement runs. Potter's Wheel does not execute or deploy the run; it preserves the research facts needed to understand its impact on the paper.
+
+### Evidence
+
+Evidence is the provenance-bearing bridge between a run and manuscript content. It can represent a quantitative result, baseline comparison, methodological configuration, ablation, figure-generating result, or table-generating result.
+
+The trace is explicit and navigable in both directions:
+
+> **RUN → RESULT / EVIDENCE → CLAIM / FIGURE / TABLE / METHOD**
 
 The manuscript is not just text.
 

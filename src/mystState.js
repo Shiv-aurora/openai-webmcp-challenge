@@ -317,6 +317,9 @@ export function createMystState(/** @type {typeof defaults} */ opts) {
     suggestMode: signal(false),
     integrityPanelOpen: signal(fullOptions.integrityPanel),
     manuscriptSelection: signal(createEmptyManuscriptSelection()),
+    workspaceView: signal("paper"),
+    activeExperimentId: signal(null),
+    activeEvidenceId: signal(null),
   };
   state.text = new TextManager({ ...signalOptions, ...state });
 

@@ -125,6 +125,14 @@ const resolveObject = (editorState, provenance, objectId) => {
   return provenance.findObjectForSelection(readSignal(editorState.manuscriptSelection));
 };
 
+const evidenceSnapshot = (provenance, objectId) => {
+  const data = readSignal(provenance.data) || { experiments: [] };
+  return provenance.evidenceForObject(objectId).map((entry) => ({
+    ...entry,
+    experiment: data.experiments.find((run) => run.id === entry.evidence.experimentId) || null,
+  }));
+};
+
 const untrackedObjectFromSelection = (selection, kind) => ({
   id: null,
   kind,
@@ -155,7 +163,7 @@ const trackedKindSnapshot = (editorState, provenance, input, { kind, idKey, notF
       ok: true,
       tracked: true,
       [kind]: selectedObject,
-      evidence: provenance.evidenceForObject(selectedObject.id),
+      evidence: evidenceSnapshot(provenance, selectedObject.id),
       selection,
     });
   }
@@ -230,7 +238,7 @@ const provenanceSnapshot = (editorState, provenance, input = {}) => {
   return toolResult({
     ok: true,
     object,
-    evidence: provenance.evidenceForObject(object.id),
+    evidence: evidenceSnapshot(provenance, object.id),
     integrity: provenance.stats(),
     selection: selectionSnapshot(editorState, provenance),
   });

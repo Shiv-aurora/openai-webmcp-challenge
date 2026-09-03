@@ -43,7 +43,7 @@ const loadWorkspace = async (page: Page) => {
   await page.evaluate(() => localStorage.removeItem("myst/provenance/demo"));
   await page.reload();
   await page.waitForSelector(".cm-content");
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(23);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(36);
 };
 
 const selectText = async (page: Page, needle: string) => {

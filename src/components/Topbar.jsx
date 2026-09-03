@@ -7,6 +7,7 @@ import ButtonGroup from "./ButtonGroup";
 import Avatars from "./Avatars";
 import { MystState } from "../mystState";
 import { useComputed, useSignal } from "@preact/signals";
+import pottersWheelLogo from "../../logo.png?url";
 
 const renderMdLinks = (title) =>
   [...(title || "").matchAll(/\[(.+)\]\(([^\s]+)\)/g)].reduce(
@@ -18,16 +19,16 @@ const Topbar = styled.div`
   z-index: 10;
   position: sticky;
   top: 0;
-  padding: 0 16px;
+  padding: 0 20px;
   width: 100%;
-  height: 64px;
+  height: 56px;
   background-color: var(--navbar-bg);
   border-bottom: 1px solid var(--border);
 
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 16px;
   box-sizing: border-box;
 
   .side {
@@ -43,11 +44,11 @@ const Topbar = styled.div`
 
   .btns {
     display: flex;
-    gap: 2px;
-    padding: 3px;
+    gap: 4px;
+    padding: 2px;
     border: 1px solid var(--border);
-    border-radius: 10px;
-    background: color-mix(in srgb, var(--editor-bg) 74%, transparent);
+    border-radius: 6px;
+    background: var(--paper);
   }
 
   svg > path.inner-copy {
@@ -106,38 +107,11 @@ const TitleBlock = styled.div`
   line-height: 1.2;
 `;
 
-const BrandGlyph = styled.div`
-  position: relative;
-  display: grid;
-  place-items: center;
+const BrandGlyph = styled.img`
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
-  border-radius: 9px;
-  background: var(--ink);
-  color: var(--paper);
-
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    border: 1.5px solid currentColor;
-    border-radius: 50%;
-  }
-
-  &::before {
-    width: 13px;
-    height: 13px;
-  }
-
-  &::after {
-    width: 3px;
-    height: 3px;
-    background: currentColor;
-    box-shadow:
-      7px -5px 0 -1px currentColor,
-      -6px 6px 0 -1px currentColor;
-  }
+  object-fit: contain;
 `;
 
 const TitleCopy = styled.div`
@@ -145,24 +119,25 @@ const TitleCopy = styled.div`
 `;
 
 const Title = styled.div`
-  font-size: 14px;
-  font-weight: 720;
+  font-size: 15px;
+  font-weight: 600;
   letter-spacing: -0.01em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--ink);
   a {
     color: var(--accent-dark);
   }
 `;
 
 const Subtitle = styled.div`
-  margin-top: 3px;
-  font-size: 11px;
+  margin-top: 2px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--gray-800);
+  color: var(--gray-600);
 
   a {
     color: var(--accent-dark);
@@ -190,13 +165,15 @@ const Alert = styled(DefaultButton)`
 
 export const TopbarButton = styled(DefaultButton)`
   border: 1px solid transparent;
-  background-color: ${(props) => (props.active ? "var(--ink)" : "transparent")};
-  color: ${(props) => (props.active ? "var(--paper)" : "var(--gray-800)")};
-  width: 34px;
+  background-color: ${(props) => (props.active ? "var(--accent)" : "transparent")};
+  color: ${(props) => (props.active ? "white" : "var(--gray-600)")};
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
 
   svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
   &:hover ~ .btn-dropdown {
@@ -432,7 +409,7 @@ export const EditorTopbar = ({ alert, buttons }) => {
       <div className="side">
         {options.showTitle.value && (
           <TitleBlock>
-            <BrandGlyph aria-hidden="true" />
+            <BrandGlyph alt="" aria-hidden="true" src={pottersWheelLogo} />
             <TitleCopy>
               <Title id="document-title" dangerouslySetInnerHTML={{ __html: titleHtml.value }} />
               {options.subtitle.value && (

@@ -31,7 +31,7 @@ const loadWorkspace = async (page: Page, collaboration = false) => {
   await page.reload();
   await page.waitForSelector(".cm-content");
   if (collaboration) await page.waitForFunction(() => (window as any).myst_editor?.demo?.state?.collab?.value?.ready?.value === true);
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(23);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(36);
 };
 
 const selectText = async (page: Page, needle: string) => {
@@ -70,7 +70,7 @@ test.describe("review-safe WebMCP actions", () => {
 
   test("registers the Phase 5 surface with current WebMCP annotations", async ({ page }) => {
     const tools = await page.evaluate(async () => (document as any).modelContext.getTools());
-    expect(tools).toHaveLength(23);
+    expect(tools).toHaveLength(36);
 
     const byName = new Map(tools.map((tool: any) => [tool.name, tool]));
     for (const name of [

@@ -261,6 +261,24 @@ The product, repository, live site, and demo are ready for judging.
 
 ---
 
+# Phase 12 — Experiments → Evidence → Paper
+
+- Add a first-class Experiments workspace without replacing the scientific editor.
+- Persist run identity, status, method, parameters, metrics, datasets, artifacts, figures, notes, commits, timestamps, and supersession.
+- Add a standalone Evidence catalog between runs and manuscript objects.
+- Make run → evidence → paper paths visible and bidirectionally navigable.
+- Let researchers publish run metrics and artifacts as evidence and use evidence in claims, methods, tables, and figures.
+- Mark manuscript dependencies stale when a newer run or evidence record supersedes their source.
+- Preserve Research Diff's human-only accept/reject/defer review boundary.
+- Expose experiment and evidence lifecycle operations through the same WebMCP registration surface.
+- Extend the deterministic demo and automated browser suite across all three lifecycle layers.
+
+### Exit State
+
+Potter's Wheel is a coherent research workspace where experiments produce evidence, evidence supports the paper, and newer research produces reviewable manuscript diffs instead of silent rewrites.
+
+---
+
 # Scope Guardrails
 
 The following are explicitly outside the hackathon implementation unless they become necessary for one of the three core experiences:

@@ -17,15 +17,10 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { createLogger, Logger } from "./logger";
 import ResearchIntegrityPanel from "./integrity/ResearchIntegrityPanel";
 import { registerResearchWebMCPTools } from "./webmcp/register";
+import { ResearchWorkspace } from "./workspace/ResearchWorkspace";
 
 const EditorParent = styled.div`
-  font-family:
-    Inter,
-    ui-sans-serif,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
   display: flex;
   flex-flow: row wrap;
   width: 100%;
@@ -54,28 +49,30 @@ const EditorParent = styled.div`
 `;
 
 const MystWrapper = styled.div`
-  padding: 14px;
-  gap: 12px;
+  padding: 16px;
+  gap: 16px;
   display: flex;
   box-sizing: border-box;
-  height: calc(100% - 60px);
+  height: 100%;
   width: 100%;
   position: relative;
   background-color: var(--canvas);
-  ${(props) => props.fullscreen && "box-sizing:border-box; height: calc(100vh - 60px);"}
+  ${(props) => props.fullscreen && "box-sizing:border-box; height: 100%;"}
 `;
 
 const StatusBanner = styled.div`
-  height: 40px;
+  height: 36px;
   position: sticky;
   z-index: 10;
   width: 100%;
-  top: 60px;
+  top: 56px;
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: var(--accent-light);
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
 `;
 
 /** CSS flexbox takes the content size of elements to determine the layout and ignores padding.
@@ -85,6 +82,10 @@ const FlexWrapper = styled.div`
   flex: 1;
   min-width: 0;
   height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--paper);
+  border: 1px solid var(--border);
 
   & > * {
     min-height: 500px;
@@ -147,54 +148,56 @@ const MystEditor = () => {
               <StatusBanner>Connecting to the collaboration server ...</StatusBanner>
             )}
             {options.collaboration.value.enabled && collab.value.lockMsg.value && <StatusBanner>{collab.value.lockMsg}</StatusBanner>}
-            <MystWrapper className="myst-editor-wrapper" fullscreen={fullscreen.value}>
-              <FlexWrapper id="editor-wrapper" className="flex-wrapper">
-                <CodeMirror />
-              </FlexWrapper>
-              <FlexWrapper id="preview-wrapper" className="flex-wrapper">
-                <Preview
-                  className="myst-preview"
-                  ref={preview}
-                  mode={options.mode.value}
-                  onClick={(ev) => {
-                    try {
-                      if (options.onPreviewClick.value?.(ev)) return;
-                      if (text.toggleFoldOnClick(ev)) return;
-
-                      syncCheckboxes(ev, text.lineMap, editorView.value);
-
-                      if (options.syncScroll.value && options.mode.value == "Both") {
-                        handlePreviewClickToScroll(ev, text.lineMap, preview, editorView.value);
-                      }
-                    } catch (e) {
-                      console.error("The following error occured while handling a click on the preview pane");
-                      console.error(e);
-                    }
-                  }}
-                >
-                  <PreviewFocusHighlight className="cm-previewFocus" />
-                </Preview>
-              </FlexWrapper>
-              {options.mode.value === "Diff" && (
-                <FlexWrapper className="flex-wrapper">
-                  <Diff />
+            <ResearchWorkspace>
+              <MystWrapper className="myst-editor-wrapper" fullscreen={fullscreen.value}>
+                <FlexWrapper id="editor-wrapper" className="flex-wrapper">
+                  <CodeMirror />
                 </FlexWrapper>
-              )}
-              {options.mode.value == "Resolved" &&
-                options.collaboration.value.commentsEnabled &&
-                options.collaboration.value.resolvingCommentsEnabled &&
-                collab.value.ready.value && (
-                  <FlexWrapper id="resolved-wrapper" className="flex-wrapper">
-                    <ResolvedComments />
+                <FlexWrapper id="preview-wrapper" className="flex-wrapper">
+                  <Preview
+                    className="myst-preview"
+                    ref={preview}
+                    mode={options.mode.value}
+                    onClick={(ev) => {
+                      try {
+                        if (options.onPreviewClick.value?.(ev)) return;
+                        if (text.toggleFoldOnClick(ev)) return;
+
+                        syncCheckboxes(ev, text.lineMap, editorView.value);
+
+                        if (options.syncScroll.value && options.mode.value == "Both") {
+                          handlePreviewClickToScroll(ev, text.lineMap, preview, editorView.value);
+                        }
+                      } catch (e) {
+                        console.error("The following error occured while handling a click on the preview pane");
+                        console.error(e);
+                      }
+                    }}
+                  >
+                    <PreviewFocusHighlight className="cm-previewFocus" />
+                  </Preview>
+                </FlexWrapper>
+                {options.mode.value === "Diff" && (
+                  <FlexWrapper className="flex-wrapper">
+                    <Diff />
                   </FlexWrapper>
                 )}
-              {options.mode.value === "Outline" && (
-                <FlexWrapper className="flex-wrapper">
-                  <TableOfContents />
-                </FlexWrapper>
-              )}
-              {options.integrityPanel.value && integrityPanelOpen.value && <ResearchIntegrityPanel />}
-            </MystWrapper>
+                {options.mode.value == "Resolved" &&
+                  options.collaboration.value.commentsEnabled &&
+                  options.collaboration.value.resolvingCommentsEnabled &&
+                  collab.value.ready.value && (
+                    <FlexWrapper id="resolved-wrapper" className="flex-wrapper">
+                      <ResolvedComments />
+                    </FlexWrapper>
+                  )}
+                {options.mode.value === "Outline" && (
+                  <FlexWrapper className="flex-wrapper">
+                    <TableOfContents />
+                  </FlexWrapper>
+                )}
+                {options.integrityPanel.value && integrityPanelOpen.value && <ResearchIntegrityPanel />}
+              </MystWrapper>
+            </ResearchWorkspace>
           </EditorParent>
         </ErrorBoundary>
       </MystContainer>

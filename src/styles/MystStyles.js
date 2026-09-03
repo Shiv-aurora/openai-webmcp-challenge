@@ -1,67 +1,63 @@
 import styled from "styled-components";
 
 export const MystCSSVars = styled.div`
-  --gray-900: #17201e;
-  --gray-800: #4f5a57;
-  --gray-700: #7b8582;
-  --gray-600: #c9cfcc;
-  --gray-500: #d9ddda;
-  --gray-400: #e8ebe8;
-  --gray-300: #eef0ed;
-  --gray-200: #f5f6f3;
-  --gray-100: #fafaf7;
-  --blue-500: #286b60;
-  --blue-200: #a9cec5;
-  --blue-100: #dcece7;
-  --red-500: #b8473d;
-  --red-400: #f5dfdc;
-  --orange-500: #b7791f;
-  --green-500: #2e7568;
-  --green-400: #4e9487;
-  --green-300: #e1efe9;
-  --brown-500: #8a5a35;
+  --gray-900: #1a1a1a;
+  --gray-800: #2d3748;
+  --gray-700: #4a5568;
+  --gray-600: #718096;
+  --gray-500: #a0aec0;
+  --gray-400: #cbd5e0;
+  --gray-300: #e2e8f0;
+  --gray-200: #edf2f7;
+  --gray-100: #f7fafc;
+  --blue-500: #3182ce;
+  --blue-200: #bee3f8;
+  --blue-100: #ebf8ff;
+  --red-500: #e53e3e;
+  --red-400: #fc8181;
+  --orange-500: #dd6b20;
+  --green-500: #38a169;
+  --green-400: #68d391;
+  --green-300: #c6f6d5;
+  --brown-500: #8b4513;
 
-  --accent: #8bbcaf;
-  --accent-light: #dcece7;
-  --accent-dark: #24695d;
-  --ink: #17201e;
-  --canvas: #efefeb;
-  --paper: #fffefa;
+  --accent: #6366f1;
+  --accent-light: #e0e7ff;
+  --accent-dark: #4f46e5;
+  --ink: #1a202c;
+  --canvas: #fafafa;
+  --paper: #ffffff;
 
-  --border-2: 3px;
-  --border-radius: 8px;
-  --border: #d7dbd7;
+  --border-2: 2px;
+  --border-radius: 6px;
+  --border: #e2e8f0;
 
-  --navbar-bg: #fbfbf8;
-  --button-bg: #fffefa;
-  --button-bg-hover: #e9efeb;
-  --modal-bg: #fffefa;
-  --switch-bg: var(--gray-500);
-  --switch-active-bg: var(--blue-500);
-  --panel-bg: #fffefa;
-  --box-shadow: rgba(35, 49, 45, 0.14);
+  --navbar-bg: #ffffff;
+  --button-bg: #ffffff;
+  --button-bg-hover: #f8f9fa;
+  --modal-bg: #ffffff;
+  --switch-bg: var(--gray-400);
+  --switch-active-bg: var(--accent);
+  --panel-bg: #ffffff;
+  --box-shadow: rgba(0, 0, 0, 0.1);
   --icon-invert: 0;
   --string-fg: var(--brown-500);
   --deleted-bg: var(--red-400);
   --inserted-bg: var(--green-300);
 
-  --editor-bg: #f8f8f5;
-  --editor-gutter-fg: var(--gray-800);
-  --editor-selection-bg: rgb(215, 212, 240);
-  --editor-active-line-bg: #cceeff44;
+  --editor-bg: #ffffff;
+  --editor-gutter-fg: var(--gray-600);
+  --editor-selection-bg: rgba(99, 102, 241, 0.1);
+  --editor-active-line-bg: rgba(99, 102, 241, 0.03);
   --error-bg: var(--red-500);
 `;
 
 export const MystContainer = styled(MystCSSVars)`
   all: initial;
   color: var(--ink);
-  font-family:
-    Inter,
-    ui-sans-serif,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 14px;
+  line-height: 1.5;
   height: 100%;
 
   @media print {
@@ -116,32 +112,32 @@ export const MystContainer = styled(MystCSSVars)`
 export const darkTheme = new CSSStyleSheet();
 darkTheme.replaceSync(`
   #myst-css-namespace {
-    color: #eef3f0;
-    --ink: #eef3f0;
-    --canvas: #131a18;
-    --navbar-bg: #18201e;
-    --border: #34423e;
-    --button-bg: #202a27;
-    --button-bg-hover: #2b3935;
-    --switch-bg: #394743;
-    --modal-bg: #18201e;
-    --panel-bg: #18201e;
-    --paper: #1d2724;
-    --box-shadow: rgba(0, 0, 0, 0.4);
+    color: #f1f5f9;
+    --ink: #f1f5f9;
+    --canvas: #0f172a;
+    --navbar-bg: #1e293b;
+    --border: #334155;
+    --button-bg: #1e293b;
+    --button-bg-hover: #334155;
+    --switch-bg: #475569;
+    --modal-bg: #1e293b;
+    --panel-bg: #1e293b;
+    --paper: #0f172a;
+    --box-shadow: rgba(0, 0, 0, 0.5);
     --icon-invert: 1;
-    --string-fg: #ffa657;
+    --string-fg: #fbbf24;
 
-    --accent: #69a99a;
-    --accent-light: #274a42;
-    --accent-dark: #85c7b7;
+    --accent: #818cf8;
+    --accent-light: #312e81;
+    --accent-dark: #a5b4fc;
 
-    --editor-bg: #2a2a2a;
-    --editor-gutter-fg: #ddd;
-    --editor-selection-bg: #d7d4f020;
-    --editor-active-line-bg: #cceeff10;
-    --error-bg: #f5766e;
-    --deleted-bg: #e74a3cb2;
-    --inserted-bg: #00af91b2;
+    --editor-bg: #0f172a;
+    --editor-gutter-fg: #64748b;
+    --editor-selection-bg: rgba(129, 140, 248, 0.1);
+    --editor-active-line-bg: rgba(129, 140, 248, 0.03);
+    --error-bg: #ef4444;
+    --deleted-bg: rgba(239, 68, 68, 0.2);
+    --inserted-bg: rgba(34, 197, 94, 0.2);
     
     color-scheme: dark;
   }

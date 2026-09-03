@@ -43,10 +43,55 @@ const verification = (outcome, state, reason, references) => ({
 });
 
 export function buildDemoResearchProject(markdown) {
+  const experiments = [
+    {
+      id: "stress-run-07",
+      name: "Run #191 · stress-regime baseline",
+      status: "superseded",
+      method: "Multi-signal volatility forecaster",
+      parameters: { learning_rate: "3e-4", optimizer: "AdamW", seed: 17 },
+      metrics: { stress_accuracy_improvement: "18.2%", normal_accuracy_improvement: "5.2%" },
+      datasets: ["market-observations-2026-08"],
+      artifacts: [{ id: "stress-eval-v1", label: "Stress evaluation v1", type: "result", uri: "demo-research/results/stress-eval-v1.json" }],
+      figures: ["demo/stress-regime-accuracy-v1.svg"],
+      notes: "The original paper result. Retained so every superseded manuscript value remains explainable.",
+      sourceCommit: "28e6a11",
+      startedAt: "2026-08-27T09:00:00.000Z",
+      completedAt: "2026-08-27T11:42:00.000Z",
+      supersedesRunId: "",
+      supersededByRunId: "stress-run-08",
+      createdAt: "2026-08-27T09:00:00.000Z",
+      updatedAt: DEMO_TIME,
+    },
+    {
+      id: "stress-run-08",
+      name: "Run #204 · locked final evaluation",
+      status: "completed",
+      method: "Multi-signal volatility forecaster",
+      parameters: { learning_rate: "2e-4", optimizer: "AdamW", seed: 17 },
+      metrics: { stress_accuracy_improvement: "16.8%", normal_accuracy_improvement: "5.2%", aligned_observations: 481000 },
+      datasets: ["market-observations-2026-08"],
+      artifacts: [
+        { id: "stress-eval-v2", label: "Locked stress evaluation", type: "result", uri: "demo-research/results/stress-eval-v2.json" },
+        { id: "evaluation-script", label: "Evaluation code", type: "code", uri: "demo-research/scripts/evaluate.py" },
+      ],
+      figures: ["demo/stress-regime-accuracy-v2.svg"],
+      notes: "Final locked evaluation. Its changed metric, configuration, table, and figure make four manuscript dependencies reviewable.",
+      sourceCommit: "7b39d24",
+      startedAt: "2026-09-01T09:00:00.000Z",
+      completedAt: "2026-09-01T11:18:00.000Z",
+      supersedesRunId: "stress-run-07",
+      supersededByRunId: "",
+      createdAt: "2026-09-01T09:00:00.000Z",
+      updatedAt: DEMO_TIME,
+    },
+  ];
+
   const evidence = [
     {
       id: "demo-evidence-stress-v2",
       type: "experiment-result",
+      evidenceKind: "quantitative-result",
       label: "demo-research/results/stress-eval-v2.json",
       artifactId: "stress-eval-v2",
       experimentId: "stress-run-08",
@@ -60,9 +105,10 @@ export function buildDemoResearchProject(markdown) {
     {
       id: "demo-evidence-data",
       type: "dataset",
+      evidenceKind: "quantitative-result",
       label: "demo-research/data/dataset-manifest.json",
       artifactId: "market-observations-2026-08",
-      experimentId: "",
+      experimentId: "stress-run-08",
       commit: "7b39d24",
       metric: "aligned_observations=481000",
       uri: "demo-research/data/dataset-manifest.json",
@@ -73,6 +119,7 @@ export function buildDemoResearchProject(markdown) {
     {
       id: "demo-evidence-config-v2",
       type: "configuration",
+      evidenceKind: "methodological-configuration",
       label: "demo-research/configs/train-v2.yaml",
       artifactId: "training-config-v2",
       experimentId: "stress-run-08",
@@ -86,6 +133,7 @@ export function buildDemoResearchProject(markdown) {
     {
       id: "demo-evidence-table-v2",
       type: "table-source",
+      evidenceKind: "table-generating-result",
       label: "demo-research/tables/evaluation-v2.csv",
       artifactId: "evaluation-table-v2",
       experimentId: "stress-run-08",
@@ -99,6 +147,7 @@ export function buildDemoResearchProject(markdown) {
     {
       id: "demo-evidence-figure-v2",
       type: "figure-source",
+      evidenceKind: "figure-generating-result",
       label: "demo-research/figures/stress-regime-accuracy-v2.svg",
       artifactId: "stress-accuracy-figure-v2",
       experimentId: "stress-run-08",
@@ -232,5 +281,5 @@ export function buildDemoResearchProject(markdown) {
     updatedAt: DEMO_TIME,
   }));
 
-  return { version: 1, objects, evidence, links, diffReviews: {} };
+  return { version: 2, experiments, objects, evidence, links, diffReviews: {} };
 }

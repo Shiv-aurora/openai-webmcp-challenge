@@ -1,8 +1,14 @@
-# Research Integrity Editor
+# Potter's Wheel
 
-> **Every claim in your paper stays connected to the research that produced it.**
+> **From experiment to paper, without breaking provenance.**
 
-Research Integrity Editor is a provenance-aware scientific writing environment for the OpenAI WebMCP Challenge. It turns the manuscript into a live view of the experiments, configurations, tables, figures, and decisions behind it—while keeping the researcher in control of every consequential edit.
+Potter's Wheel is a provenance-aware research workspace for the OpenAI WebMCP Challenge. It connects experiment runs to durable evidence and the claims, methods, tables, and figures that depend on them—while keeping the researcher in control of every consequential manuscript edit.
+
+The product model is deliberately narrow:
+
+> **EXPERIMENTS → EVIDENCE → PAPER**
+
+This is not experiment orchestration or a generic MLflow replacement. Runs matter because they explain what evidence the research produced and how that evidence affects the paper.
 
 ## Try the complete demo
 
@@ -12,7 +18,7 @@ npm run build
 npm run preview -- --host 127.0.0.1
 ```
 
-Open `http://127.0.0.1:4173/?collab=false`, open the Research Integrity panel if needed, and click **Start the deterministic demo**. No account, API key, model, or backend is required.
+Open `http://127.0.0.1:4173/?collab=false`, choose **Experiments**, and click **Load demo lifecycle**. You can navigate from Run #204 to its evidence, then to every stale manuscript dependency and Research Diff. No account, API key, model, or backend is required.
 
 The demo deliberately contains four kinds of research drift:
 
@@ -23,7 +29,21 @@ The demo deliberately contains four kinds of research drift:
 
 See the [two-minute judge guide](docs/JUDGE_GUIDE.md) and [demo video script](docs/DEMO_SCRIPT.md).
 
-## Three core experiences
+## The connected research lifecycle
+
+### Experiments
+
+Create and maintain research runs with status, method, parameters, metrics, datasets, artifacts, notes, source commits, timestamps, and supersession relationships. Compare runs and publish a result as evidence without leaving the workspace.
+
+### Evidence
+
+Inspect the bridge between a run and the paper. Each evidence record retains its experiment, result or configuration, artifact, commit, and manuscript usage. A researcher can create a linked claim, table, figure, or method statement, or attach the result to an existing manuscript object.
+
+### Paper
+
+The complete scientific editor remains intact, including comments, suggestions, collaboration, equations, tables, figures, templates, Research X-Ray, Verify This, and human-controlled Research Diff review.
+
+## Three integrity experiences
 
 ### Research X-Ray
 
@@ -39,7 +59,7 @@ See a Git-like review of where live research has drifted from the paper. Each en
 
 ## Why WebMCP
 
-The editor owns live manuscript context and safe controls. The user's external agent owns broader research context and reasoning. Through 23 registered WebMCP tools, an agent can read the selection, section, provenance, integrity state, and diffs; attach evidence; verify claims; add comments; navigate; and stage reviewable corrections. It cannot silently accept its own rewrite.
+The editor owns live manuscript context and safe controls. The user's external agent owns broader research context and reasoning. Through 36 registered WebMCP tools, an agent can maintain experiment runs, publish and compare evidence, connect results to manuscript objects, inspect integrity state, verify claims, navigate, and stage reviewable corrections. It cannot silently accept its own rewrite.
 
 The tools are registered with `document.modelContext.registerTool(tool, { signal })`, operate on the exact state visible to the human, return structured errors for stale or invalid context, and unregister with the editor lifecycle. The full contract and test examples are in [docs/WEBMCP.md](docs/WEBMCP.md).
 
@@ -47,13 +67,13 @@ The tools are registered with `document.modelContext.registerTool(tool, { signal
 
 | Researcher without an agent | External agent through WebMCP | Better together |
 | --- | --- | --- |
-| Write and preview scientific Markdown; create claims; link evidence; inspect X-Ray; review diffs; accept or reject changes | Read live manuscript context; add structured evidence; run or record verification; navigate affected objects; add comments; stage corrections | The agent brings repository and experiment context into the exact passage the human is reviewing, while acceptance authority stays with the author |
+| Record and compare experiments; publish and link evidence; write scientific Markdown; inspect X-Ray; review diffs; accept or reject changes | Maintain the same run/evidence graph; read live manuscript context; verify claims; navigate affected objects; add comments; stage corrections | Run outputs become manuscript-ready evidence at agent scale, while acceptance authority stays with the author |
 
 ## Foundation and attribution
 
 This repository incorporates [Antmicro MyST Editor](https://github.com/antmicro/myst-editor) at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`. Its scientific editor, preview, collaboration, comments, suggestions, templates, and base diff capabilities are the foundation.
 
-The provenance model, research-integrity panel, Research X-Ray, Verify This, evidence-driven Research Diff, deterministic research fixture, and 23-tool WebMCP surface are challenge-specific work. See [NOTICE.md](NOTICE.md), [LICENSE](LICENSE), and the preserved [upstream README](docs/UPSTREAM_MYST_EDITOR.md).
+The experiment/evidence graph, lifecycle workspace, provenance model, research-integrity panel, Research X-Ray, Verify This, evidence-driven Research Diff, deterministic research fixture, and 36-tool WebMCP surface are challenge-specific work. See [NOTICE.md](NOTICE.md), [LICENSE](LICENSE), and the preserved [upstream README](docs/UPSTREAM_MYST_EDITOR.md).
 
 ## Development and validation
 

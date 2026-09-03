@@ -1036,34 +1036,53 @@ export default function ResearchIntegrityPanel() {
           <>
             {activeEvidence.length ? (
               <EvidenceList data-testid="evidence-list">
-                {activeEvidence.map((entry) => (
-                  <EvidenceCard key={entry.evidence.id} data-testid="evidence-card">
-                    <EvidenceTitle>{entry.evidence.label}</EvidenceTitle>
-                    <EvidenceMeta>
-                      {prettyValue(entry.evidence.type)} · {prettyValue(entry.link.relation)}
-                      {entry.evidence.experimentId ? ` · experiment ${entry.evidence.experimentId}` : ""}
-                      {entry.evidence.metric ? ` · metric ${entry.evidence.metric}` : ""}
-                      {entry.evidence.commit ? ` · commit ${entry.evidence.commit}` : ""}
-                      {entry.evidence.artifactId ? ` · artifact ${entry.evidence.artifactId}` : ""}
-                    </EvidenceMeta>
-                    {entry.evidence.notes && <Muted>{entry.evidence.notes}</Muted>}
-                    <ButtonRow>
-                      <ActionButton type="button" aria-label={`Edit evidence ${entry.evidence.label}`} onClick={() => editEvidence(entry)}>
-                        Edit
-                      </ActionButton>
-                      <ActionButton
-                        type="button"
-                        aria-label={`Remove evidence ${entry.evidence.label}`}
-                        onClick={() => {
-                          provenance.removeEvidence(entry.evidence.id);
-                          if (editing?.evidenceId === entry.evidence.id) resetEvidenceForm();
-                        }}
-                      >
-                        Remove
-                      </ActionButton>
-                    </ButtonRow>
-                  </EvidenceCard>
-                ))}
+                {activeEvidence.map((entry) => {
+                  const experiment = provenance.data.value.experiments.find((item) => item.id === entry.evidence.experimentId);
+                  return (
+                    <EvidenceCard key={entry.evidence.id} data-testid="evidence-card">
+                      <EvidenceTitle>{entry.evidence.label}</EvidenceTitle>
+                      <EvidenceMeta>
+                        {prettyValue(entry.evidence.type)} · {prettyValue(entry.link.relation)}
+                        {entry.evidence.experimentId ? ` · experiment ${entry.evidence.experimentId}` : ""}
+                        {entry.evidence.metric ? ` · metric ${entry.evidence.metric}` : ""}
+                        {entry.evidence.commit ? ` · commit ${entry.evidence.commit}` : ""}
+                        {entry.evidence.artifactId ? ` · artifact ${entry.evidence.artifactId}` : ""}
+                      </EvidenceMeta>
+                      {entry.evidence.notes && <Muted>{entry.evidence.notes}</Muted>}
+                      {experiment && (
+                        <Muted>
+                          Run → <strong>{experiment.name}</strong> → evidence → {activeObject.kind}
+                        </Muted>
+                      )}
+                      <ButtonRow>
+                        {experiment && (
+                          <ActionButton
+                            type="button"
+                            onClick={() => {
+                              editorState.activeExperimentId.value = experiment.id;
+                              editorState.workspaceView.value = "experiments";
+                            }}
+                          >
+                            Open run
+                          </ActionButton>
+                        )}
+                        <ActionButton type="button" aria-label={`Edit evidence ${entry.evidence.label}`} onClick={() => editEvidence(entry)}>
+                          Edit
+                        </ActionButton>
+                        <ActionButton
+                          type="button"
+                          aria-label={`Remove evidence ${entry.evidence.label}`}
+                          onClick={() => {
+                            provenance.removeEvidence(entry.evidence.id);
+                            if (editing?.evidenceId === entry.evidence.id) resetEvidenceForm();
+                          }}
+                        >
+                          Remove
+                        </ActionButton>
+                      </ButtonRow>
+                    </EvidenceCard>
+                  );
+                })}
               </EvidenceList>
             ) : (
               <EmptyState>No research evidence is linked to this tracked object yet.</EmptyState>
