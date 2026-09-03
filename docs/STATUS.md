@@ -1,7 +1,7 @@
 # Status
 
-Current phase: Phase 5 — Build Verify This
-Current objective: Implement the one-click verification loop for selected quantitative claims by resolving linked evidence, comparing manuscript claim values with stored evidence metrics, identifying stale, missing, or mismatched evidence, and returning a deterministic pass/fail reason without fabricating external execution.
+Current phase: Phase 6 — Build Research Diff
+Current objective: Detect evidence-driven drift across tracked manuscript objects and provide a real, grouped review workflow showing manuscript state beside current research state with inspect, accept-for-visible-review, reject, and defer actions.
 
 Completed:
 - Imported and attributed Antmicro MyST Editor at pinned revision `c32e8e77f504a57aee253e07d4e7a44b8c8ecc30`.
@@ -26,16 +26,24 @@ Completed:
 - Preserved the product's evidence-gated verification rules through the WebMCP action surface.
 - Added browser coverage for the complete 19-tool WebMCP surface, shared human/agent provenance state, stale-context rejection, evidence workflows, verification gating, review-only manuscript writes, additive comments, non-mutating navigation, and pending review diffs.
 - Added repeatable CI for formatting, lint, production build, collaboration runtime, and browser tests.
+- Added the deterministic Verify This workflow for selected quantitative claims.
+- Added honest verified, contradicted, missing-evidence, stale, partially-supported, and review-required outcomes with explicit reasons.
+- Added deterministic comparison for percentages, grouped numbers, decimals, and scientific notation while rejecting ambiguous, conflicting, or incompatible values.
+- Persisted structured verification outcomes, evidence references, source, timestamps, and bounded history on provenance objects.
+- Made edits to evidence automatically stale previously verified linked objects.
+- Added `verify_claim` and `record_verification_result` WebMCP tools that synchronize with the visible researcher UI.
+- Preserved the manuscript boundary: external verification conclusions never rewrite text, and corrections still use researcher-reviewed CriticMarkup proposals.
+- Confirmed the current WebMCP draft still uses `document.modelContext.registerTool(tool, { signal })` and supports only `readOnlyHint` and `untrustedContentHint` annotations.
 
 Last verified:
 - `npm ci`
 - `npm run check-format`
 - `npm run lint` with zero errors
 - `npm run build`
-- `npm run test` — 79/79 Playwright tests passed against the production preview and live collaboration server
+- `npm run test` — 89/89 Playwright tests passed against the production preview and live collaboration server
 
 Blockers:
-- None for Phase 5 implementation.
+- None for Phase 6 implementation.
 
 Known risks:
 - The inherited dependency lock reports 43 npm audit findings that require production-impact triage before public deployment.
@@ -43,7 +51,7 @@ Known risks:
 - Provenance and X-Ray state remain browser-local and are not yet synchronized through the inherited collaboration server; the storage/synchronization boundary must be resolved before multi-user or production WebMCP use.
 
 Next:
-- Build the deterministic Verify This loop for a selected quantitative claim.
-- Resolve the claim's linked evidence and parse comparable manuscript/evidence metric values without inventing missing data.
-- Distinguish verified, mismatched, stale, and missing-evidence outcomes with explicit reasons and provenance references.
-- Surface the result through the researcher UI and WebMCP while keeping external experiment execution out of scope until a real execution backend exists.
+- Build evidence-driven Research Diff detection from real provenance objects and linked evidence, not presentation fixtures.
+- Cover quantitative, method/configuration, figure, table, and artifact changes with stable grouped diff entries.
+- Add inspect, accept-for-visible-review, reject, and defer workflows without giving agents acceptance authority over manuscript rewrites.
+- Expose the same pending diff state and navigation through the researcher UI and WebMCP.

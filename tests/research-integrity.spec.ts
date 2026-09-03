@@ -318,3 +318,51 @@ test.describe("Research integrity workspace", () => {
     await expect(page.getByTestId("evidence-card")).toContainText("configs/train.yaml");
   });
 });
+
+test.describe("Verify This", () => {
+  test.beforeEach(async ({ page }) => loadWorkspace(page));
+
+  test("records an honest missing-evidence result for a selected claim", async ({ page }) => {
+    await selectText(page, "18.2% improvement in stress-regime accuracy");
+    await page.getByTestId("verify-this").click();
+
+    await expect(page.getByTestId("verification-result")).toContainText("Missing Evidence");
+    await expect(page.getByTestId("verification-reason")).toContainText("No research evidence is linked");
+    await expect(page.getByTestId("selection-status")).toHaveText("Unlinked");
+  });
+
+  test("verifies a claim when its value matches linked evidence", async ({ page }) => {
+    await trackStressClaim(page);
+    await addStressEvidence(page);
+    await page.getByTestId("verify-this").click();
+
+    await expect(page.getByTestId("verification-result")).toContainText("Verified");
+    await expect(page.getByTestId("verification-reason")).toContainText("18.2%");
+    await expect(page.getByTestId("selection-status")).toHaveText("Verified");
+  });
+
+  test("contradicts a mismatched claim and exposes the evidence-backed value", async ({ page }) => {
+    await trackStressClaim(page);
+    await addStressEvidence(page);
+    await page.getByRole("button", { name: "Edit evidence results/stress_eval.json" }).click();
+    await page.getByTestId("evidence-metric").fill("stress_accuracy_improvement=16.8%");
+    await page.getByTestId("save-evidence").click();
+    await page.getByTestId("verify-this").click();
+
+    await expect(page.getByTestId("verification-result")).toContainText("Contradicted");
+    await expect(page.getByTestId("verification-reason")).toContainText("does not match");
+    await expect(page.getByTestId("verification-result")).toContainText("16.8%");
+  });
+
+  test("persists the structured verification outcome across reloads", async ({ page }) => {
+    await trackStressClaim(page);
+    await addStressEvidence(page);
+    await page.getByTestId("verify-this").click();
+    await page.reload();
+    await page.waitForSelector(".cm-content");
+    await selectText(page, "18.2% improvement in stress-regime accuracy");
+
+    await expect(page.getByTestId("verification-result")).toContainText("Verified");
+    await expect(page.getByTestId("verification-result")).toContainText("1 evidence reference");
+  });
+});

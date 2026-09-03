@@ -1,4 +1,5 @@
 import { effect, signal } from "@preact/signals";
+import { refreshXray } from "./xray";
 
 export const VERIFICATION_STATES = ["unlinked", "needs-review", "verified", "stale", "contradicted"];
 export const EVIDENCE_TYPES = [
@@ -155,8 +156,27 @@ export function createProvenanceStore(editorId) {
   const updateEvidence = (evidenceId, patch) => {
     const current = data.peek();
     const timestamp = now();
+    const affectedObjectIds = new Set(current.links.filter((link) => link.evidenceId === evidenceId).map((link) => link.objectId));
     data.value = {
       ...current,
+      objects: current.objects.map((object) =>
+        affectedObjectIds.has(object.id) && object.verificationState === "verified"
+          ? {
+              ...object,
+              verificationState: "stale",
+              verification: {
+                outcome: "stale",
+                verificationState: "stale",
+                reason: "Linked evidence changed after this object was verified.",
+                reasons: ["Linked evidence changed after this object was verified."],
+                checkedAt: timestamp,
+                source: "evidence-update",
+                evidenceReferences: object.verification?.evidenceReferences || [],
+              },
+              updatedAt: timestamp,
+            }
+          : object,
+      ),
       evidence: current.evidence.map((evidence) =>
         evidence.id === evidenceId
           ? {
@@ -169,6 +189,23 @@ export function createProvenanceStore(editorId) {
           : evidence,
       ),
     };
+  };
+
+  const recordVerification = (objectId, verification) => {
+    const current = data.peek();
+    const object = current.objects.find((item) => item.id === objectId);
+    if (!object || !verification?.verificationState) return null;
+    const timestamp = now();
+    const record = { ...verification, checkedAt: verification.checkedAt || timestamp };
+    const updated = {
+      ...object,
+      verificationState: record.verificationState,
+      verification: record,
+      verificationHistory: [...(object.verificationHistory || []), record].slice(-20),
+      updatedAt: timestamp,
+    };
+    data.value = { ...current, objects: current.objects.map((item) => (item.id === objectId ? updated : item)) };
+    return updated;
   };
 
   const updateLink = (linkId, patch) => {
@@ -251,6 +288,7 @@ export function createProvenanceStore(editorId) {
     updateEvidence,
     updateLink,
     removeEvidence,
+    recordVerification,
     stats,
   };
 }
@@ -260,5 +298,7 @@ export function ensureProvenanceStore(editorState) {
   const store = createProvenanceStore(editorState.options.id.value);
   editorState.provenance = store;
   editorState.cleanups.push(store.cleanup);
+  const xrayCleanup = effect(() => refreshXray(editorState.editorView.value, store.xrayActive.value, store.data.value.objects));
+  editorState.cleanups.push(xrayCleanup);
   return store;
 }

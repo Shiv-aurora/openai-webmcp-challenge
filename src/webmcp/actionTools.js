@@ -1,11 +1,14 @@
 import { deriveManuscriptSelection } from "../integrity/selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "../integrity/provenance";
+import { VERIFICATION_OUTCOMES, normalizeAgentVerification, verifyQuantitativeClaim } from "../integrity/verification";
 import { resolveXrayRange } from "../integrity/xray";
 
 export const ACTION_WEBMCP_TOOL_NAMES = [
   "create_claim",
   "attach_evidence",
   "update_evidence",
+  "verify_claim",
+  "record_verification_result",
   "set_verification_state",
   "propose_claim_change",
   "insert_comment",
@@ -235,6 +238,78 @@ export function buildResearchWebMCPActionTools(editorState) {
         if (relation !== undefined) provenance.updateLink(linked.link.id, { relation });
         const updated = provenance.evidenceForObject(object.id).find((entry) => entry.evidence.id === input.evidenceId);
         return toolResult({ ok: true, object: resolveObject(editorState, provenance, object.id), ...updated });
+      },
+    },
+    {
+      name: "verify_claim",
+      title: "Verify quantitative claim",
+      description:
+        "Run the editor's deterministic Verify This comparison for a selected or identified tracked claim. It compares only unambiguous manuscript and evidence metric values and returns an honest review-required outcome otherwise.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          claimId: { type: "string", description: "Optional tracked claim id. Omit it to use the selected tracked claim." },
+        },
+        additionalProperties: false,
+      },
+      annotations: mutatingAnnotations,
+      execute: async (input = {}) => {
+        const claim = resolveObject(editorState, provenance, input.claimId);
+        if (!claim || claim.kind !== "claim") return toolError("CLAIM_NOT_FOUND", "Select a tracked claim or provide a valid claimId.");
+        const verification = verifyQuantitativeClaim(claim, provenance.evidenceForObject(claim.id), { source: "webmcp-deterministic" });
+        const updated = provenance.recordVerification(claim.id, verification);
+        return toolResult({ ok: true, claim: updated, verification, reviewRequired: verification.verificationState === "needs-review" });
+      },
+    },
+    {
+      name: "record_verification_result",
+      title: "Record external verification result",
+      description:
+        "Record an evidence-backed conclusion from an external research agent on a tracked claim. This stores the visible result and reasons but never changes manuscript text; use propose_claim_change separately for a researcher-reviewed correction.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          claimId: { type: "string", description: "Optional tracked claim id. Omit it to use the selected tracked claim." },
+          outcome: { type: "string", enum: VERIFICATION_OUTCOMES },
+          reason: { type: "string", minLength: 1, maxLength: 2000 },
+          evidenceIds: { type: "array", items: { type: "string" }, maxItems: 50 },
+        },
+        required: ["outcome", "reason", "evidenceIds"],
+        additionalProperties: false,
+      },
+      annotations: mutatingAnnotations,
+      execute: async (input = {}) => {
+        const claim = resolveObject(editorState, provenance, input.claimId);
+        if (!claim || claim.kind !== "claim") return toolError("CLAIM_NOT_FOUND", "Select a tracked claim or provide a valid claimId.");
+        if (!VERIFICATION_OUTCOMES.includes(input.outcome))
+          return toolError("INVALID_VERIFICATION_OUTCOME", "Provide a supported verification outcome.");
+        if (!boundedString(input.reason, 2000)) return toolError("INVALID_VERIFICATION_REASON", "Provide a concise verification reason.");
+
+        const linked = provenance.evidenceForObject(claim.id);
+        const requestedIds = new Set(Array.isArray(input.evidenceIds) ? input.evidenceIds : []);
+        const references = linked.filter((entry) => requestedIds.has(entry.evidence.id));
+        if (references.length !== requestedIds.size)
+          return toolError("EVIDENCE_NOT_LINKED", "Every evidenceId must identify evidence linked to this claim.");
+        if (["verified", "contradicted", "stale", "partially-supported"].includes(input.outcome) && !references.length)
+          return toolError("EVIDENCE_REQUIRED", "This verification outcome requires at least one linked evidence reference.");
+        if (input.outcome === "missing-evidence" && references.length)
+          return toolError("INVALID_MISSING_EVIDENCE", "A missing-evidence result cannot cite evidence as support.");
+
+        const evidenceReferences = references.map(({ link, evidence }) => ({
+          evidenceId: evidence.id,
+          label: evidence.label,
+          type: evidence.type,
+          relation: link.relation,
+          artifactId: evidence.artifactId || "",
+          experimentId: evidence.experimentId || "",
+          commit: evidence.commit || "",
+          metric: evidence.metric || "",
+          uri: evidence.uri || "",
+          updatedAt: evidence.updatedAt,
+        }));
+        const verification = normalizeAgentVerification(input, evidenceReferences);
+        const updated = provenance.recordVerification(claim.id, verification);
+        return toolResult({ ok: true, claim: updated, verification, manuscriptChanged: false, reviewRequired: input.outcome !== "verified" });
       },
     },
     {

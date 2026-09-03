@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { MystState } from "../mystState";
 import { manuscriptStats } from "./selection";
 import { EVIDENCE_TYPES, PROVENANCE_RELATIONS, VERIFICATION_STATES, ensureProvenanceStore } from "./provenance";
+import { verifyQuantitativeClaim } from "./verification";
 import { refreshXray, resolveXrayRange } from "./xray";
 
 const Panel = styled.aside`
@@ -243,6 +244,19 @@ const EvidenceCard = styled.div`
   background: color-mix(in srgb, var(--editor-bg) 72%, transparent);
 `;
 
+const VerificationCard = styled.div`
+  padding: 14px;
+  border: 1px solid ${(props) => statusTone(props.$status)};
+  border-radius: var(--border-radius);
+  background: color-mix(in srgb, ${(props) => statusTone(props.$status)} 8%, var(--editor-bg));
+`;
+
+const VerificationReason = styled.p`
+  margin: 9px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+`;
+
 const EvidenceTitle = styled.div`
   font-size: 12px;
   font-weight: 700;
@@ -457,6 +471,7 @@ export default function ResearchIntegrityPanel() {
   const provenanceStats = provenance.stats();
   const activeObject = provenance.findObjectForSelection(selection);
   const activeEvidence = activeObject ? provenance.evidenceForObject(activeObject.id) : [];
+  const activeVerification = activeObject?.verification || null;
   const selectionKind = kindLabels[selection.kind] || "Text";
   const selectionState = activeObject?.verificationState || selection.verificationState;
   const selectionStatus = statusLabels[selectionState] || prettyValue(selectionState);
@@ -517,6 +532,14 @@ export default function ResearchIntegrityPanel() {
     if (!range) return;
     view.dispatch({ selection: { anchor: range.from, head: range.to }, scrollIntoView: true });
     view.focus();
+  };
+
+  const verifySelection = () => {
+    let object = activeObject;
+    if (!object && selection.kind === "claim" && selection.snippet) object = provenance.createObject(selection, "claim");
+    if (!object) return;
+    const verification = verifyQuantitativeClaim(object, provenance.evidenceForObject(object.id));
+    provenance.recordVerification(object.id, verification);
   };
 
   return (
@@ -693,6 +716,40 @@ export default function ResearchIntegrityPanel() {
           </>
         ) : (
           <EmptyState>Select text, a claim, method, figure, or table to create a provenance-aware manuscript object.</EmptyState>
+        )}
+      </Section>
+
+      <Section>
+        <SectionHeading>Verify This</SectionHeading>
+        {selection.kind !== "claim" && activeObject?.kind !== "claim" ? (
+          <EmptyState>Select a quantitative claim to run an evidence-backed deterministic check.</EmptyState>
+        ) : (
+          <>
+            <ActionButton $primary data-testid="verify-this" type="button" onClick={verifySelection}>
+              Verify This
+            </ActionButton>
+            <Muted>Compares one unambiguous manuscript value with linked evidence. It never reruns experiments or guesses missing metrics.</Muted>
+            {activeVerification && (
+              <VerificationCard $status={activeVerification.verificationState} data-testid="verification-result">
+                <SelectionHeading>
+                  <ObjectTitle>{prettyValue(activeVerification.outcome)}</ObjectTitle>
+                  <Status $status={activeVerification.verificationState}>{statusLabels[activeVerification.verificationState]}</Status>
+                </SelectionHeading>
+                <VerificationReason data-testid="verification-reason">{activeVerification.reason}</VerificationReason>
+                <EvidenceMeta>
+                  {activeVerification.evidenceReferences?.length || 0} evidence reference
+                  {(activeVerification.evidenceReferences?.length || 0) === 1 ? "" : "s"} · checked{" "}
+                  {new Date(activeVerification.checkedAt).toLocaleString()}
+                </EvidenceMeta>
+                {activeVerification.suggestedValue && (
+                  <Muted>
+                    Evidence-backed value: <strong>{activeVerification.suggestedValue.raw}</strong>. A manuscript correction must be proposed through
+                    the visible review workflow and accepted by the researcher.
+                  </Muted>
+                )}
+              </VerificationCard>
+            )}
+          </>
         )}
       </Section>
 

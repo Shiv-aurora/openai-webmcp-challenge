@@ -31,7 +31,7 @@ const loadWorkspace = async (page: Page, collaboration = false) => {
   await page.reload();
   await page.waitForSelector(".cm-content");
   if (collaboration) await page.waitForFunction(() => (window as any).myst_editor?.demo?.state?.collab?.value?.ready?.value === true);
-  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(19);
+  await expect.poll(async () => page.evaluate(() => (window as any).__webmcpTools?.size || 0)).toBe(21);
 };
 
 const selectText = async (page: Page, needle: string) => {
@@ -68,15 +68,17 @@ const createStressClaim = async (page: Page) => {
 test.describe("review-safe WebMCP actions", () => {
   test.beforeEach(async ({ page }) => loadWorkspace(page));
 
-  test("registers the full Phase 4 surface with current WebMCP annotations", async ({ page }) => {
+  test("registers the Phase 5 surface with current WebMCP annotations", async ({ page }) => {
     const tools = await page.evaluate(async () => (document as any).modelContext.getTools());
-    expect(tools).toHaveLength(19);
+    expect(tools).toHaveLength(21);
 
     const byName = new Map(tools.map((tool: any) => [tool.name, tool]));
     for (const name of [
       "create_claim",
       "attach_evidence",
       "update_evidence",
+      "verify_claim",
+      "record_verification_result",
       "set_verification_state",
       "propose_claim_change",
       "insert_comment",
@@ -259,4 +261,57 @@ test("inserts an additive comment without overwriting an existing thread", async
   const second = await executeTool(page, "insert_comment", { text: "This must not merge into the existing thread." });
   expect(second.isError).toBe(true);
   expect(payload(second).error.code).toBe("COMMENT_ALREADY_EXISTS");
+});
+
+test("runs deterministic Verify This through WebMCP", async ({ page }) => {
+  await loadWorkspace(page);
+  const { claim } = await createStressClaim(page);
+  const attached = payload(
+    await executeTool(page, "attach_evidence", {
+      objectId: claim.id,
+      label: "results/stress_eval.json",
+      type: "experiment-result",
+      metric: "stress_accuracy_improvement=16.8%",
+      artifactId: "stress-eval-v8",
+      relation: "supports",
+    }),
+  );
+
+  const result = payload(await executeTool(page, "verify_claim", { claimId: claim.id }));
+  expect(result.ok).toBe(true);
+  expect(result.verification.outcome).toBe("contradicted");
+  expect(result.verification.suggestedValue.raw).toBe("16.8%");
+  expect(result.verification.evidenceReferences[0].evidenceId).toBe(attached.evidence.id);
+  await expect(page.getByTestId("verification-result")).toContainText("Contradicted");
+});
+
+test("records an external agent conclusion without changing manuscript text", async ({ page }) => {
+  await loadWorkspace(page);
+  const { text, claim } = await createStressClaim(page);
+  const attached = payload(
+    await executeTool(page, "attach_evidence", {
+      objectId: claim.id,
+      label: "results/stress_eval.json",
+      metric: "stress_accuracy_improvement=18.2%",
+      relation: "supports",
+    }),
+  );
+  const sourceBefore = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
+
+  const result = payload(
+    await executeTool(page, "record_verification_result", {
+      claimId: claim.id,
+      outcome: "partially-supported",
+      reason: "The aggregate value matches, but subgroup evidence still needs researcher review.",
+      evidenceIds: [attached.evidence.id],
+    }),
+  );
+  const sourceAfter = await page.evaluate(() => (window as any).myst_editor.demo.main_editor.state.doc.toString());
+
+  expect(result.ok).toBe(true);
+  expect(result.manuscriptChanged).toBe(false);
+  expect(result.verification.source).toBe("external-agent");
+  expect(sourceAfter).toBe(sourceBefore);
+  expect(sourceAfter).toContain(text);
+  await expect(page.getByTestId("verification-result")).toContainText("Partially Supported");
 });
