@@ -22,7 +22,7 @@ Current objective: preserve the verified release while completing the external h
 - `npm run check-format`
 - `npm run lint` — 0 errors; 16 inherited non-blocking hook/JSDoc warnings
 - `npm run build` — production bundle succeeds with a deterministic Node heap budget
-- Playwright — **105/105 passed** against the production preview and live collaboration server
+- Playwright — **112/112 passed** against the production preview and live collaboration server
 - Focused lifecycle suite — **4/4 passed** for experiment creation, evidence publication, paper linkage, supersession, and laptop layout
 - Real in-app browser — all **37 tools** registered; the run/evidence/paper trace and four Research Diffs are visible against shared live state
 - Visual review — loaded Experiments and Evidence workspaces verified at 1440×900 and the two-column experiment layout verified at 768×900
