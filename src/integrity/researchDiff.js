@@ -39,11 +39,21 @@ function changesForObject(object, evidenceEntries) {
   const changes = [];
   let proposedText = null;
   const manuscriptValues = extractComparableValues(object.text);
+  const previousReferences = object.verification?.evidenceReferences || [];
+  const currentReferences = evidenceEntries.map(currentReference);
+  const referenceHasChanged = currentReferences.some((current) => {
+    const previous = previousReferences.find((reference) => reference.evidenceId === current.evidenceId);
+    return !previous || changedReferenceFields(previous, current).length > 0;
+  });
   const evidenceValues = evidenceEntries.flatMap((entry) =>
     extractComparableValues(entry.evidence.metric).map((value) => ({ value, evidenceId: entry.evidence.id, label: entry.evidence.label })),
   );
 
-  if (["claim", "method", "table"].includes(object.kind) && evidenceValues.length) {
+  if (
+    ["claim", "method", "table"].includes(object.kind) &&
+    evidenceValues.length &&
+    (referenceHasChanged || ["stale", "contradicted"].includes(object.verificationState))
+  ) {
     const researchValues = evidenceValues.map((entry) => entry.value);
     const matched = researchValues.every((researchValue) => manuscriptValues.some((manuscriptValue) => sameValue(manuscriptValue, researchValue)));
     if (!matched) {
@@ -79,8 +89,6 @@ function changesForObject(object, evidenceEntries) {
     }
   }
 
-  const previousReferences = object.verification?.evidenceReferences || [];
-  const currentReferences = evidenceEntries.map(currentReference);
   for (const current of currentReferences) {
     const previous = previousReferences.find((reference) => reference.evidenceId === current.evidenceId);
     const fields = changedReferenceFields(previous, current);

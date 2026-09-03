@@ -54,7 +54,7 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
     await expect(page.getByRole("heading", { name: "Run #254 · locked Astra evaluation" })).toBeVisible();
     await expect(page.getByTestId("run-performance-chart")).toBeVisible();
     await expect(page.getByTestId("metric-history-chart")).toContainText("8 logged steps");
-    await expect(page.getByTestId("nav-evidence")).toContainText("10");
+    await expect(page.getByTestId("nav-evidence")).toContainText("19");
   });
 
   test("loads a bidirectional, demo-ready lifecycle without hiding the paper", async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
 
     await page.getByTestId("nav-evidence").click();
     await expect(page.getByTestId("evidence-workspace")).toBeVisible();
-    await expect(page.getByTestId("evidence-list-item")).toHaveCount(10);
+    await expect(page.getByTestId("evidence-list-item")).toHaveCount(19);
     await expect(page.getByText("RUN", { exact: true })).toBeVisible();
 
     await page.getByTestId("nav-paper").click();

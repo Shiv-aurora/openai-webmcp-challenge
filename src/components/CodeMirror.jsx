@@ -115,6 +115,31 @@ const CodeEditor = styled.div`
     border-radius: 3px;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
+    position: relative;
+    cursor: help;
+  }
+
+  .cm-xray-object:hover::after {
+    content: attr(data-xray-details);
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 8px);
+    z-index: 30;
+    width: max-content;
+    max-width: 360px;
+    white-space: pre-line;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 14%);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.45;
+    text-decoration: none;
+    pointer-events: none;
   }
 
   .cm-xray-verified {
@@ -348,9 +373,9 @@ const CodeMirror = () => {
   useSignalEffect(() => {
     const view = editorView.value;
     const active = provenance.xrayActive.value;
-    const objects = provenance.data.value.objects;
+    const data = provenance.data.value;
     if (!view?.dispatch) return;
-    refreshXray(view, active, objects);
+    refreshXray(view, active, data);
   });
 
   useSignalEffect(() => {

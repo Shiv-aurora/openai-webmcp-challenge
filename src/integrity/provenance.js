@@ -608,7 +608,7 @@ export function ensureProvenanceStore(editorState) {
   const store = createProvenanceStore(editorState.options.id.value);
   editorState.provenance = store;
   editorState.cleanups.push(store.cleanup);
-  const xrayCleanup = effect(() => refreshXray(editorState.editorView.value, store.xrayActive.value, store.data.value.objects));
+  const xrayCleanup = effect(() => refreshXray(editorState.editorView.value, store.xrayActive.value, store.data.value));
   editorState.cleanups.push(xrayCleanup);
   return store;
 }

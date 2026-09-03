@@ -24,12 +24,20 @@ test.describe("deterministic demo research project", () => {
   test.beforeEach(async ({ page }) => loadWorkspace(page));
 
   test("loads a complete provenance graph for claims, method, table, and figure", async ({ page }) => {
-    await expect(page.getByTestId("xray-item")).toHaveCount(9);
+    await expect(page.getByTestId("xray-item")).toHaveCount(35);
     await page.getByTestId("toggle-xray").click();
-    await expect(page.getByTestId("xray-count-verified")).toHaveText("5");
+    await expect(page.getByTestId("xray-count-verified")).toHaveText("29");
+    await expect(page.getByTestId("xray-count-needs-review")).toHaveText("2");
     await expect(page.getByTestId("xray-count-stale")).toHaveText("3");
     await expect(page.getByTestId("xray-count-contradicted")).toHaveText("1");
-    await expect(page.getByTestId("xray-item")).toHaveCount(9);
+    await expect(page.getByTestId("xray-item")).toHaveCount(35);
+
+    const modelClaim = page.locator('[data-xray-object-id="astra-object-model-claim"]').first();
+    await expect(modelClaim).toHaveAttribute("title", /Verified · claim/);
+    await expect(modelClaim).toHaveAttribute("title", /Run #254 · locked Astra evaluation/);
+    await expect(modelClaim).toHaveAttribute("title", /Metric: parameters_total=126B; parameters_active=31B/);
+    await expect(modelClaim).toHaveAttribute("title", /Artifact: astra-model-card/);
+    await expect(modelClaim).toHaveAttribute("title", /Commit: f6a57aa/);
   });
 
   test("links every demo result into the manuscript provenance graph", async ({ page }) => {

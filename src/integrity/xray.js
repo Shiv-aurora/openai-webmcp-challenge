@@ -66,8 +66,62 @@ export function buildXrayDecorations(objects, doc) {
   return Decoration.set(ranges, true);
 }
 
-export function refreshXray(view, active, objects) {
+const displayState = (state = "unlinked") => state.replaceAll("-", " ").replace(/^./, (letter) => letter.toUpperCase());
+
+export function describeXrayObject(object, data = {}) {
+  const evidenceById = new Map((data.evidence || []).map((item) => [item.id, item]));
+  const experimentById = new Map((data.experiments || []).map((item) => [item.id, item]));
+  const linkedIds = (data.links || []).filter((link) => link.objectId === object.id).map((link) => link.evidenceId);
+  const referenceIds = (object.verification?.evidenceReferences || []).map((reference) => reference.evidenceId);
+  const evidenceIds = [...new Set([...linkedIds, ...referenceIds])];
+  const lines = [`${displayState(object.verificationState)} · ${object.kind || "claim"}`];
+  if (object.verification?.reason) lines.push(object.verification.reason);
+
+  for (const evidenceId of evidenceIds) {
+    const evidence = evidenceById.get(evidenceId);
+    const reference = object.verification?.evidenceReferences?.find((item) => item.evidenceId === evidenceId);
+    const experimentId = reference?.experimentId || evidence?.experimentId;
+    const experiment = experimentById.get(experimentId);
+    lines.push(`Evidence: ${evidence?.label || reference?.label || evidenceId}`);
+    if (experiment?.name || experimentId) lines.push(`Run: ${experiment?.name || experimentId}`);
+    if (reference?.metric || evidence?.metric) lines.push(`Metric: ${reference?.metric || evidence.metric}`);
+    if (reference?.artifactId || evidence?.artifactId) lines.push(`Artifact: ${reference?.artifactId || evidence.artifactId}`);
+    if (reference?.commit || evidence?.commit || experiment?.sourceCommit) {
+      lines.push(`Commit: ${reference?.commit || evidence?.commit || experiment?.sourceCommit}`);
+    }
+  }
+  if (!evidenceIds.length) lines.push("Evidence: none linked");
+  return lines.join("\n");
+}
+
+export function buildDetailedXrayDecorations(data, doc) {
+  const objects = Array.isArray(data) ? data : data?.objects;
+  if (!doc || !objects?.length) return Decoration.set([]);
+  const context = Array.isArray(data) ? { objects } : data;
+  const ranges = objects
+    .map((object) => {
+      const range = resolveXrayRange(doc, object);
+      const statusClass = statusClasses[object.verificationState];
+      if (!range || !statusClass) return null;
+      const description = describeXrayObject(object, context);
+      return Decoration.mark({
+        class: `cm-xray-object ${statusClass}`,
+        attributes: {
+          "data-xray-object-id": object.id,
+          "data-xray-state": object.verificationState,
+          "data-xray-details": description,
+          "aria-label": description,
+          title: description,
+        },
+      }).range(range.from, range.to);
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.from - right.from || left.to - right.to);
+  return Decoration.set(ranges, true);
+}
+
+export function refreshXray(view, active, data) {
   if (!view?.dispatch) return;
-  const decorations = active ? buildXrayDecorations(objects, view.state.doc) : Decoration.set([]);
+  const decorations = active ? buildDetailedXrayDecorations(data, view.state.doc) : Decoration.set([]);
   view.dispatch({ effects: setXrayDecorations.of(decorations) });
 }

@@ -623,7 +623,7 @@ export default function ResearchIntegrityPanel() {
             onClick={() => {
               const next = !provenance.xrayActive.peek();
               provenance.xrayActive.value = next;
-              refreshXray(editorState.editorView.value, next, provenance.data.peek().objects);
+              refreshXray(editorState.editorView.value, next, provenance.data.peek());
             }}
           >
             {xrayActive ? "Exit X-Ray" : "Enter X-Ray"}
