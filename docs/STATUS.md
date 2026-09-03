@@ -1,6 +1,6 @@
 # Status
 
-Current phase: Phase 11 — implementation complete; public deployment being finalized.
+Current phase: Phase 11 — complete and publicly deployed.
 
 ## Completed phases
 
@@ -22,6 +22,8 @@ Current phase: Phase 11 — implementation complete; public deployment being fin
 - Playwright — **102/102 passed** against the production preview and live collaboration server
 - Focused release suite — **23/23 passed** for demo, Research Diff, WebMCP action/error boundaries, and laptop layout
 - Real in-app browser — all 23 tools registered; live integrity/diff reads succeeded; WebMCP diff navigation moved the visible manuscript selection without changing content
+- GitHub Actions — CI and Pages deployment succeeded on the release commit
+- Public deployment — `https://shiv-aurora.github.io/openai-webmcp-challenge/` returned HTTP 200 and passed a live UI smoke test (5 objects, 5 evidence records, 4 Research Diffs, 23 WebMCP tools)
 - `npm audit --omit=dev` — critical findings reduced from 2 to 0; 14 inherited production-tree advisories remain documented in `docs/SECURITY.md`
 
 ## Known limitations
@@ -34,4 +36,4 @@ Current phase: Phase 11 — implementation complete; public deployment being fin
 
 ## Submission readiness
 
-Source, license, attribution, deterministic demo, automated tests, CI, public deployment workflow, judge instructions, and accurate limitation disclosures are present. After the Pages workflow reports a successful public URL, the repository is ready to submit; the remaining submission operation is the external hackathon form/video upload.
+Source, license, attribution, deterministic demo, automated tests, green CI, verified public deployment, judge instructions, and accurate limitation disclosures are present. The repository and live product are ready to submit; the only remaining operations are the external hackathon form and final video upload.
