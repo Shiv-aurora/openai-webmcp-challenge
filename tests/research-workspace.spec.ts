@@ -50,7 +50,7 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
     await page.reload();
     await page.getByTestId("nav-experiments").click();
 
-    await expect(page.getByTestId("experiment-list-item")).toHaveCount(6);
+    await expect(page.getByTestId("experiment-list-item")).toHaveCount(28);
     await expect(page.getByRole("heading", { name: "Run #254 · locked Astra evaluation" })).toBeVisible();
     await expect(page.getByTestId("run-performance-chart")).toBeVisible();
     await expect(page.getByTestId("metric-history-chart")).toContainText("8 logged steps");
@@ -62,7 +62,7 @@ test.describe("Experiments → Evidence → Paper workspace", () => {
     await expect(page.getByTestId("experiments-workspace")).toBeVisible();
     await page.getByTestId("load-lifecycle-demo").click();
 
-    await expect(page.getByTestId("experiment-list-item")).toHaveCount(6);
+    await expect(page.getByTestId("experiment-list-item")).toHaveCount(28);
     await expect(page.getByRole("heading", { name: "Run #254 · locked Astra evaluation" })).toBeVisible();
     await expect(page.getByText("reasoning_index", { exact: true })).toBeVisible();
     await expect(page.getByTestId("run-performance-chart")).toBeVisible();

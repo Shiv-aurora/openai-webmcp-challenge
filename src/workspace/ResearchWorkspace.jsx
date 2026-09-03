@@ -606,7 +606,11 @@ function ExperimentsWorkspace({ provenance }) {
   const [dataset, setDataset] = useState("");
   const [compareId, setCompareId] = useState("");
   const requestedActiveId = editorState.activeExperimentId.value;
-  const active = data.experiments.find((item) => item.id === requestedActiveId) || data.experiments.at(-1) || null;
+  const active =
+    data.experiments.find((item) => item.id === requestedActiveId) ||
+    data.experiments.find((item) => item.tags?.stage === "locked-eval") ||
+    data.experiments.at(-1) ||
+    null;
   const activeId = active?.id || null;
   const evidence = active ? data.evidence.filter((item) => item.experimentId === active.id) : [];
   const affectedObjectIds = new Set(data.links.filter((link) => evidence.some((item) => item.id === link.evidenceId)).map((link) => link.objectId));
@@ -1306,7 +1310,7 @@ export function ResearchWorkspace({ children }) {
     const allowEmpty = new URLSearchParams(window.location.search).get("empty") === "true";
     const isEmpty = !data.experiments.length && !data.objects.length && !data.evidence.length && !data.links.length;
     const isPreviousDemo =
-      (!!data.demoProject && data.demoProject !== "gpt6-astra-v1") ||
+      (!!data.demoProject && data.demoProject !== "gpt6-astra-v2") ||
       data.experiments.some((run) => run.id.startsWith("audio-run-")) ||
       (!data.demoProject && data.experiments.length > 0 && data.experiments.every((run) => run.id.startsWith("stress-run-")));
     const source = editorState.editorView.value?.state.doc.toString() || editorState.text.text.value || "";

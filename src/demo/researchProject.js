@@ -162,6 +162,85 @@ export function buildDemoResearchProject(markdown) {
     }),
   ];
 
+  const sweepSpecs = [
+    [204, "GQA head-ratio sweep", "Dense 34B · grouped-query attention", "completed", 0.651, 0.594, 0.721, "attention"],
+    [207, "code-heavy mixture v1", "Dense 34B · code upweight 1.7×", "superseded", 0.667, 0.632, 0.703, "data-mixture"],
+    [209, "math-heavy mixture v2", "Dense 34B · math upweight 2.1×", "completed", 0.681, 0.601, 0.696, "data-mixture"],
+    [214, "router z-loss ablation", "Sparse MoE · no router z-loss", "failed", 0.548, 0.577, 0.688, "routing"],
+    [216, "top-1 expert routing", "126B MoE · 18B active", "completed", 0.684, 0.617, 0.742, "routing"],
+    [219, "top-4 expert routing", "126B MoE · 52B active", "superseded", 0.719, 0.656, 0.751, "routing"],
+    [222, "expert capacity 1.10", "126B MoE · capacity constrained", "failed", 0.603, 0.589, 0.731, "routing"],
+    [229, "64k continuation, naive", "Astra MoE · rotary extrapolation", "completed", 0.724, 0.691, 0.784, "long-context"],
+    [231, "64k position-balanced", "Astra MoE · balanced positions", "completed", 0.741, 0.714, 0.861, "long-context"],
+    [234, "128k retrieval curriculum", "Astra MoE · retrieval continuation", "completed", 0.752, 0.739, 0.903, "long-context"],
+    [237, "256k batch-size recovery", "Astra MoE · gradient accumulation", "failed", 0.716, 0.702, 0.874, "long-context"],
+    [241, "instruction SFT v1", "Astra MoE + supervised fine-tuning", "superseded", 0.758, 0.748, 0.918, "post-training"],
+    [243, "reasoning trace filter", "Astra MoE + verified reasoning traces", "completed", 0.771, 0.763, 0.921, "post-training"],
+    [245, "preference beta sweep", "Astra MoE + DPO β=0.05", "completed", 0.768, 0.794, 0.919, "post-training"],
+    [246, "preference beta 0.20", "Astra MoE + DPO β=0.20", "failed", 0.739, 0.806, 0.906, "post-training"],
+    [249, "browser trajectory replay", "Astra MoE + browser tool replay", "completed", 0.779, 0.842, 0.946, "tools"],
+    [250, "tool-call penalty ablation", "Astra MoE · no unnecessary-call penalty", "completed", 0.773, 0.816, 0.943, "tools"],
+    [251, "calibration temperature fit", "Astra MoE · held-out calibration", "completed", 0.778, 0.841, 0.947, "calibration"],
+    [252, "safety refusal balance", "Astra MoE · policy mixture sweep", "running", 0.761, 0.823, 0.939, "alignment"],
+    [253, "contamination audit rerun", "Frozen Astra evaluator", "completed", 0.781, 0.845, 0.949, "evaluation"],
+    [256, "quantized serving probe", "Astra MoE · FP8 serving candidate", "planned", null, null, null, "serving"],
+    [258, "speculative decoding draft", "Astra MoE + 3B draft model", "planned", null, null, null, "serving"],
+  ];
+
+  const sweepRuns = sweepSpecs.map(([number, name, model, status, reasoning, tools, retrieval, stage], index) => {
+    const hasMetrics = Number.isFinite(reasoning);
+    const day = String(12 + (index % 18)).padStart(2, "0");
+    const metrics = hasMetrics
+      ? {
+          reasoning_index: reasoning,
+          tool_completion: tools,
+          retrieval_128k: retrieval,
+          hallucination_rate: Number(Math.max(0.055, 0.15 - reasoning * 0.11).toFixed(3)),
+          tokens_per_second: 58 + ((index * 7) % 31),
+        }
+      : {};
+    return run({
+      id: `astra-run-${number}`,
+      number,
+      name,
+      status,
+      model,
+      commit: `${(0x91ab20 + number * 7919).toString(16).slice(0, 7)}`,
+      startedAt: `2026-08-${day}T${String(5 + (index % 11)).padStart(2, "0")}:20:00.000Z`,
+      completedAt: ["planned", "running"].includes(status) ? "" : `2026-08-${day}T${String(9 + (index % 11)).padStart(2, "0")}:48:00.000Z`,
+      parameters: {
+        sweep_group: stage,
+        learning_rate: index < 7 ? "2.4e-4" : index < 12 ? "8e-5" : "2e-5",
+        global_batch_tokens: `${4 + (index % 4)}M`,
+        seed: [11, 17, 23, 29][index % 4],
+        checkpoint_interval: 500,
+      },
+      metrics,
+      metricHistory: hasMetrics
+        ? {
+            reasoning_index: history([reasoning - 0.094, reasoning - 0.061, reasoning - 0.036, reasoning - 0.017, reasoning]),
+            training_loss: history([2.63, 2.39 - index * 0.006, 2.21 - index * 0.004, 2.08 - index * 0.003, 1.99 - index * 0.002]),
+          }
+        : {},
+      artifacts: status === "failed"
+        ? [{ id: `failure-${number}`, label: `${name} failure trace`, type: "log", uri: `demo-research/logs/astra-run-${number}.txt` }]
+        : status === "planned"
+          ? []
+          : [{ id: `scorecard-${number}`, label: `${name} scorecard`, type: "result", uri: `demo-research/results/astra-run-${number}.json` }],
+      notes:
+        status === "failed"
+          ? "Stopped by the automated run-health gate; failure artifacts and partial metrics were retained for diagnosis."
+          : status === "planned"
+            ? "Queued behind the locked evaluation so serving work cannot mutate the research checkpoint."
+            : status === "running"
+              ? "Active sweep. Intermediate metrics are visible but are not eligible to support manuscript claims."
+              : "Controlled branch from the Astra training graph with immutable configuration and evaluation outputs.",
+      tags: { stage, sweep: `astra-${stage}`, priority: index % 3 === 0 ? "high" : "normal" },
+    });
+  });
+  experiments.push(...sweepRuns);
+  experiments.sort((left, right) => Number(left.name.match(/#(\d+)/)?.[1]) - Number(right.name.match(/#(\d+)/)?.[1]));
+
   const e = (id, type, kind, label, artifactId, experimentId, commit, metric, value, uri, notes) => ({ id, type, evidenceKind: kind, label, artifactId, experimentId, commit, metric, value, uri, notes, createdAt: DEMO_TIME, updatedAt: DEMO_TIME });
   const evidence = [
     e("astra-evidence-eval-v2", "experiment-result", "quantitative-result", "Locked Astra scorecard", "astra-locked-eval", "astra-run-254", "f6a57aa", "reasoning_index=78.4%", "78.4%", "demo-research/results/astra-eval-v2.json", "Frozen aggregate from math, code repair, grounded browser tasks, and retrieval."),
@@ -214,5 +293,5 @@ export function buildDemoResearchProject(markdown) {
     "astra-object-figure": ["astra-evidence-figure-v2", "produces"],
   };
   const links = objects.map((object) => ({ id: `astra-link-${object.id}`, objectId: object.id, evidenceId: relationByObject[object.id][0], relation: relationByObject[object.id][1], createdAt: DEMO_TIME, updatedAt: DEMO_TIME }));
-  return { version: 2, demoProject: "gpt6-astra-v1", experiments, objects, evidence, links, diffReviews: {} };
+  return { version: 2, demoProject: "gpt6-astra-v2", experiments, objects, evidence, links, diffReviews: {} };
 }
