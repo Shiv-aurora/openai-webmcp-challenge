@@ -1,6 +1,8 @@
-# Potter's Wheel
+<p align="center">
+  <img src="logo-text.png" alt="Potter's Wheel" width="520" />
+</p>
 
-> **From experiment to paper, without breaking provenance.**
+<p align="center"><strong>From experiment to paper, without breaking provenance.</strong></p>
 
 Potter's Wheel is a provenance-aware research workspace for the OpenAI WebMCP Challenge. It connects experiment runs to durable evidence and the claims, methods, tables, and figures that depend on them—while keeping the researcher in control of every consequential manuscript edit.
 
@@ -27,7 +29,7 @@ The demo deliberately contains four kinds of research drift:
 - a table still contains the previous stress-regime result;
 - a figure points to the v1 output while provenance points to v2.
 
-See the [two-minute judge guide](docs/JUDGE_GUIDE.md) and [demo video script](docs/DEMO_SCRIPT.md).
+See the [two-minute judge guide](docs/JUDGE_GUIDE.md).
 
 ## The connected research lifecycle
 
